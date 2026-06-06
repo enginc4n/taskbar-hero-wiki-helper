@@ -4,6 +4,15 @@ import { itemIconUrl } from './icons';
 
 export const GAME_UI_BASE = 'https://www.taskbarhero.wiki/game/ui';
 
+/** Bundled game UI assets served from /public (respects Vite BASE_URL). */
+export function bundledGameUiUrl(relativePath: string): string {
+  return `${import.meta.env.BASE_URL}game-ui/${relativePath}`.replace(/\/{2,}/g, '/');
+}
+
+export function heroWindowBgUrl(): string {
+  return bundledGameUiUrl('bg_hero.png');
+}
+
 export const HERO_ILLUST_CLASS: Record<number, string> = {
   101: 'Knight',
   201: 'Ranger',

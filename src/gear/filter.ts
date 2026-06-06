@@ -7,7 +7,6 @@ export interface GearFilterState {
   levelMin: number;
   levelMax: number;
   search: string;
-  obtainableOnly: boolean;
 }
 
 export const DEFAULT_GEAR_FILTER: GearFilterState = {
@@ -16,14 +15,12 @@ export const DEFAULT_GEAR_FILTER: GearFilterState = {
   levelMin: 1,
   levelMax: 100,
   search: '',
-  obtainableOnly: false,
 };
 
 export function filterGear(items: EnrichedItem[], filter: GearFilterState): EnrichedItem[] {
   return items.filter((item) => {
     if (item.type !== 'GEAR') return false;
     if (filter.grade !== 'ALL' && item.grade !== filter.grade) return false;
-    if (filter.obtainableOnly && item.obtainable === false) return false;
 
     const level = item.level ?? 0;
     if (level < filter.levelMin || level > filter.levelMax) return false;

@@ -8,6 +8,10 @@ import type {
 
 const ENRICHED_BASE = 'https://www.taskbarherowiki.com/data';
 
+export function isObtainableItem(item: EnrichedItem): boolean {
+  return item.obtainable !== false;
+}
+
 /** Browser: same-origin /wiki-data (bundled or dev proxy). Node/scripts: fetch wiki directly. */
 function getWikiBase(): string {
   if (typeof window === 'undefined') {
@@ -73,5 +77,11 @@ export async function loadWikiRefData() {
 
 export async function loadAllData() {
   const [enriched, wiki] = await Promise.all([loadEnrichedData(), loadWikiRefData()]);
-  return { ...enriched, wiki };
+  const allItems = enriched.items;
+  return {
+    ...enriched,
+    allItems,
+    items: allItems.filter(isObtainableItem),
+    wiki,
+  };
 }

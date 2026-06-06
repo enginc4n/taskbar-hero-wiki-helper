@@ -3,6 +3,7 @@ import {
   GEAR_SLOT_LAYOUT,
   gameUiUrl,
   heroIllustUrl,
+  heroWindowBgUrl,
   renderGearSlotHtml,
 } from '../data/game-ui';
 import { itemIconHtml, itemIconUrl, runeIconUrl } from '../data/icons';
@@ -46,6 +47,8 @@ import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, type GearFilterState } fro
 
 export interface SimulatorContext {
   items: EnrichedItem[];
+  /** Full item catalog — used to resolve save equipment, including legacy unobtainable gear. */
+  allItems: EnrichedItem[];
   heroes: EnrichedHero[];
   effects: EffectMaterial[];
   runes: RuneGraph;
@@ -75,7 +78,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     working: createEmptySave(ctx.heroes[0]?.key ?? 101),
     heroKey: ctx.heroes[0]?.key ?? 101,
     refs,
-    itemsByKey: syncSaveItemKeys(createEmptySave(ctx.heroes[0]?.key ?? 101), ctx.items),
+    itemsByKey: syncSaveItemKeys(createEmptySave(ctx.heroes[0]?.key ?? 101), ctx.allItems),
     effectsByKey: new Map(ctx.effects.map((e) => [e.key, e])),
     socketDraft: new Map(),
   };
@@ -142,9 +145,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     return `
       <section class="hero-window" aria-label="Hero equipment">
         <div class="hero-window-stage">
-        <img class="frame" src="${gameUiUrl('BG_hero.png')}" alt="" />
-        <img class="abs decor" src="${gameUiUrl('BG_Hero_Decor.png')}" alt="" />
-        <img class="abs dragon" src="${gameUiUrl('BG_hero_dragonHead.png')}" alt="" />
+        <img class="frame" src="${heroWindowBgUrl()}" alt="" />
         <img class="abs title" src="${gameUiUrl('TextImage_Hero_Eng.png')}" alt="Hero" />
 
         <div class="abs namebar">
@@ -399,7 +400,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
             <div class="filters">
               <label>Grade<select data-field="grade"><option value="ALL">All</option>${ctx.meta.grades.map((g) => `<option value="${g}">${g}</option>`).join('')}</select></label>
               <label>Search<input data-field="search" value="${filter.search}" /></label>
-              <label style="flex-direction:row;align-items:center;gap:0.5rem;margin-top:1.4rem;"><input type="checkbox" data-field="obtainableOnly" ${filter.obtainableOnly ? 'checked' : ''}/> Obtainable</label>
             </div>
             <div class="gear-grid">
               ${visible
@@ -427,7 +427,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       modalRoot.querySelectorAll('[data-action="equip"]').forEach((el) => {
         el.addEventListener('click', () => {
           const key = Number(el.getAttribute('data-key'));
-          const item = state.itemsByKey.get(key) ?? ctx.items.find((i) => i.key === key);
+          const item = state.itemsByKey.get(key) ?? ctx.allItems.find((i) => i.key === key);
           const h = heroSave();
           if (!item || !h) return;
           state.itemsByKey.set(item.key, item);
@@ -447,7 +447,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
           const field = el.getAttribute('data-field')!;
           if (field === 'grade') filter.grade = (el as HTMLSelectElement).value;
           if (field === 'search') filter.search = (el as HTMLInputElement).value;
-          if (field === 'obtainableOnly') filter.obtainableOnly = (el as HTMLInputElement).checked;
           page = 1;
           renderModal();
         });
@@ -493,13 +492,49 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
                 const groups = mat ? getEffectGroupsForGear(mat, item!) : [];
                 return `
                   <div class="socket-editor">
-                    <strong>${slot.category} ${slot.index + 1}</strong>
-                    <label>Material
-                      <select data-slot="${idx}" data-field="material">
-                        <option value="">— Empty —</option>
-                        ${mats.map((m) => `<option value="${m.key}" ${slot.materialKey === m.key ? 'selected' : ''}>${m.name}</option>`).join('')}
-                      </select>
-                    </label>
+                    <div class="socket-editor-head">
+                      <strong>${slot.category} ${slot.index + 1}</strong>
+                      <div class="socket-selected">
+                        ${
+                          mat
+                            ? itemIconHtml(mat.icon, mat.name, 'socket-mat-icon')
+                            : '<span class="socket-mat-empty" aria-hidden="true">—</span>'
+                        }
+                        <span class="socket-mat-name">${mat?.name ?? 'Empty'}</span>
+                      </div>
+                    </div>
+                    <div class="socket-mat-label">Material</div>
+                    <div class="material-picker" role="listbox" aria-label="${slot.category} ${slot.index + 1} material">
+                      <button
+                        type="button"
+                        class="material-chip${slot.materialKey == null ? ' selected' : ''}"
+                        data-action="pick-material"
+                        data-slot="${idx}"
+                        data-key=""
+                        title="Empty"
+                        role="option"
+                        aria-selected="${slot.materialKey == null}"
+                      >
+                        <span class="material-chip-empty">∅</span>
+                      </button>
+                      ${mats
+                        .map(
+                          (m) => `
+                        <button
+                          type="button"
+                          class="material-chip${slot.materialKey === m.key ? ' selected' : ''}"
+                          data-action="pick-material"
+                          data-slot="${idx}"
+                          data-key="${m.key}"
+                          title="${m.name.replace(/"/g, '&quot;')}"
+                          role="option"
+                          aria-selected="${slot.materialKey === m.key}"
+                        >
+                          ${itemIconHtml(m.icon, m.name, 'material-chip-icon')}
+                        </button>`,
+                        )
+                        .join('')}
+                    </div>
                     ${
                       groups.length > 1
                         ? `<label>Stat option<select data-slot="${idx}" data-field="group">${groups.map((g, gi) => `<option value="${gi}" ${slot.groupIndex === gi ? 'selected' : ''}>${g.stat} ${g.disp ?? ''}</option>`).join('')}</select></label>`
@@ -523,16 +558,22 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
           modalRoot.innerHTML = '';
         });
       });
+      modalRoot.querySelectorAll('[data-action="pick-material"]').forEach((el) => {
+        el.addEventListener('click', () => {
+          const idx = Number(el.getAttribute('data-slot'));
+          const keyRaw = el.getAttribute('data-key');
+          const slot = draft[idx];
+          slot.materialKey = keyRaw ? Number(keyRaw) : null;
+          slot.groupIndex = 0;
+          renderModal();
+        });
+      });
       modalRoot.querySelectorAll('[data-field]').forEach((el) => {
         el.addEventListener('change', () => {
           const idx = Number(el.getAttribute('data-slot'));
           const field = el.getAttribute('data-field')!;
           const slot = draft[idx];
-          if (field === 'material') {
-            const val = (el as HTMLSelectElement).value;
-            slot.materialKey = val ? Number(val) : null;
-            slot.groupIndex = 0;
-          } else if (field === 'group') {
+          if (field === 'group') {
             slot.groupIndex = Number((el as HTMLSelectElement).value);
           } else if (field === 'roll') {
             slot.roll = (el as HTMLSelectElement).value as SocketSlotState['roll'];
@@ -559,7 +600,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         state.working = clonePlayerSave(parsed.PlayerSaveData);
         state.baseline = clonePlayerSave(parsed.PlayerSaveData);
         state.heroKey = state.working.heroSaveDatas.find((h) => h.IsUnLock)?.heroKey ?? state.heroKey;
-        state.itemsByKey = syncSaveItemKeys(state.working, ctx.items);
+        state.itemsByKey = syncSaveItemKeys(state.working, ctx.allItems);
         for (const inst of state.working.itemSaveDatas) {
           const enriched = state.itemsByKey.get(inst.ItemKey);
           const detail = enriched ? enrichedItemToDetail(enriched) : null;

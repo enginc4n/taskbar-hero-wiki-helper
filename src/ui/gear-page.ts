@@ -58,24 +58,18 @@ export function renderGearPage(root: HTMLElement, ctx: GearPageContext): void {
           <label>Search
             <input type="search" data-field="search" value="${filter.search}" placeholder="Item name" />
           </label>
-          <label style="flex-direction:row;align-items:center;gap:0.5rem;margin-top:1.4rem;">
-            <input type="checkbox" data-field="obtainableOnly" ${filter.obtainableOnly ? 'checked' : ''} />
-            Obtainable only
-          </label>
         </div>
         <p class="small">${filtered.length.toLocaleString()} results · showing ${visible.length.toLocaleString()}</p>
         <div class="gear-grid">
           ${visible
             .map((item) => {
               const affix = gearAffixLabel(item);
-              const unob = item.obtainable === false ? ' unobtainable' : '';
               return `
-                <article class="gear-card${unob}">
+                <article class="gear-card">
                   ${itemIconHtml(item.icon, item.name)}
                   <h3 class="${gradeClass(item.grade)}">${item.name}${item.variant ? ` (${item.variant})` : ''}</h3>
                   <div class="meta">${item.grade} · Lv${item.level ?? '?'} · ${item.gearType ?? 'Gear'}</div>
                   ${affix ? `<div class="meta">${affix}</div>` : ''}
-                  ${item.obtainable === false ? '<div class="meta">No longer obtainable</div>' : ''}
                   ${item.slots ? `<div class="meta">Sockets D${item.slots.decoration} E${item.slots.engraving} I${item.slots.inscription}</div>` : ''}
                 </article>`;
             })
@@ -99,9 +93,7 @@ export function renderGearPage(root: HTMLElement, ctx: GearPageContext): void {
       if (el.getAttribute('data-field') === 'category') continue;
       el.addEventListener('input', () => {
         const field = el.getAttribute('data-field')!;
-        if (field === 'obtainableOnly') {
-          filter.obtainableOnly = (el as HTMLInputElement).checked;
-        } else if (field === 'grade') {
+        if (field === 'grade') {
           filter.grade = (el as HTMLSelectElement).value;
         } else if (field === 'search') {
           filter.search = (el as HTMLInputElement).value;

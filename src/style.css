@@ -238,19 +238,18 @@ button:hover {
   filter: brightness(1.08);
 }
 
-/* Build Simulator — wiki-style hero window (cropped above inventory) */
+/* Build Simulator — hero window (local bg_hero.png) */
 .hero-window {
   width: min(430px, 100%);
   max-width: calc(100vw - 28px);
   margin: 0 auto 1rem;
-  aspect-ratio: 318 / 210;
-  overflow: hidden;
+  aspect-ratio: 1037 / 924;
   position: relative;
 }
 
 .hero-window-stage {
   width: 100%;
-  aspect-ratio: 318 / 468;
+  aspect-ratio: 1037 / 924;
   position: relative;
   container-type: inline-size;
   image-rendering: pixelated;
@@ -1080,6 +1079,103 @@ button:hover {
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--border);
+}
+
+.socket-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.socket-selected {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.socket-mat-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.socket-mat-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.socket-mat-name {
+  font-size: 0.9rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.socket-mat-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.material-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 0.35rem;
+  margin-bottom: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #15121f;
+}
+
+.material-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 2px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: #1e1a2b;
+  cursor: pointer;
+}
+
+.material-chip:hover {
+  border-color: var(--accent);
+  filter: brightness(1.08);
+}
+
+.material-chip.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(212, 175, 95, 0.35);
+}
+
+.material-chip-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.material-chip-empty {
+  font-size: 1.1rem;
+  color: var(--muted);
+  line-height: 1;
 }
 
 .hidden {

@@ -18,6 +18,7 @@ async function main(): Promise<void> {
     const data = await loadAllData();
     renderSimulatorPage(content, {
       items: data.items,
+      allItems: data.allItems,
       heroes: data.heroes,
       effects: data.effects,
       runes: data.runes,
