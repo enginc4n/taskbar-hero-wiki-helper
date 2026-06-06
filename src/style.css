@@ -240,23 +240,30 @@ button:hover {
 
 /* Build Simulator — wiki-style hero window (cropped above inventory) */
 .hero-window {
-  aspect-ratio: 318 / 232;
   width: min(430px, 100%);
   max-width: calc(100vw - 28px);
   margin: 0 auto 1rem;
-  position: relative;
+  aspect-ratio: 318 / 232;
   overflow: hidden;
+  position: relative;
+}
+
+.hero-window-stage {
+  width: 100%;
+  aspect-ratio: 318 / 468;
+  position: relative;
   container-type: inline-size;
   image-rendering: pixelated;
   user-select: none;
 }
 
 .hero-window .frame {
+  z-index: 0;
   width: 100%;
-  height: auto;
+  height: 100%;
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
+  object-fit: fill;
 }
 
 .hero-window .abs {
@@ -392,6 +399,7 @@ button:hover {
   width: 12.6%;
   aspect-ratio: 1;
   z-index: 2;
+  pointer-events: auto;
 }
 
 .game-slot {
@@ -434,6 +442,19 @@ button:hover {
   height: 88%;
   inset: 6%;
   object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.game-slot .slot-empty {
+  z-index: 2;
+  width: 56%;
+  height: 56%;
+  object-fit: contain;
+  opacity: 0.72;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   image-rendering: pixelated;
 }
 

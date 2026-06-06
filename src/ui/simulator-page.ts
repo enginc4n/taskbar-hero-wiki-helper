@@ -130,6 +130,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
 
     return `
       <section class="hero-window" aria-label="Hero equipment">
+        <div class="hero-window-stage">
         <img class="frame" src="${gameUiUrl('BG_hero.png')}" alt="" />
         <img class="abs decor" src="${gameUiUrl('BG_Hero_Decor.png')}" alt="" />
         <img class="abs dragon" src="${gameUiUrl('BG_hero_dragonHead.png')}" alt="" />
@@ -166,6 +167,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         ${gearSlots}
 
         <div class="abs herolist">${heroList}</div>
+        </div>
       </section>`;
   }
 

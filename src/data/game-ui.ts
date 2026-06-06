@@ -71,7 +71,7 @@ export function renderGearSlotHtml(options: {
       >
         <img class="slot-frame" src="${gameUiUrl(layout.frame)}" alt="" />
         ${gradeBg ? `<img class="slot-grade" src="${gradeBg}" alt="" />` : ''}
-        ${iconUrl ? `<img class="slot-icon" src="${iconUrl}" alt="" />` : ''}
+        ${iconUrl ? `<img class="slot-icon" src="${iconUrl}" alt="" />` : `<img class="slot-empty" src="${gameUiUrl('ItemSlot_Icon_NoEquip.png')}" alt="" />`}
       </button>
       ${
         item && hasSockets
