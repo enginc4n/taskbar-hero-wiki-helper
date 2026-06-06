@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "sync-wiki-data": "node scripts/sync-wiki-data.mjs",
+    "build": "npm run sync-wiki-data && tsc && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
