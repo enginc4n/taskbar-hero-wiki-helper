@@ -477,10 +477,16 @@ button:hover {
 
 .sim-build-row {
   display: grid;
-  grid-template-columns: minmax(280px, 1.1fr) minmax(320px, 430px);
+  grid-template-columns: minmax(260px, 1fr) minmax(300px, 430px) minmax(240px, 320px);
   gap: 1rem;
   align-items: start;
   margin-bottom: 1rem;
+}
+
+.panel-section-title {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  color: var(--gold);
 }
 
 .hero-column {
@@ -488,13 +494,114 @@ button:hover {
   justify-content: center;
 }
 
-.skill-tree-panel {
+.skill-tree-panel,
+.rune-panel {
   min-height: 420px;
   image-rendering: pixelated;
 }
 
-.skill-tree-tabs {
-  margin-bottom: 0.65rem;
+.rune-panel {
+  max-height: 680px;
+  display: flex;
+  flex-direction: column;
+}
+
+.rune-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  overflow-y: auto;
+  max-height: 620px;
+  scrollbar-width: thin;
+  scrollbar-color: #8b7e6a #242629;
+}
+
+.rune-card {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #15121f;
+}
+
+.rune-card-icon {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(#2a2438, #15121f);
+  border: 1px solid #4a4258;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+}
+
+.rune-icon {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.rune-lv {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 35%);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #c9cdd6;
+  text-shadow: 1px 1px #000;
+  background: #11131a;
+  border: 1px solid #3e4248;
+  padding: 0 0.2rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.rune-lv.has {
+  color: #fce454;
+}
+
+.rune-lv.max {
+  color: #54fc0c;
+}
+
+.rune-card-body strong {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 0.15rem;
+}
+
+.rune-card-controls {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.rune-card-controls button {
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  line-height: 1;
+}
+
+@media (max-width: 1100px) {
+  .sim-build-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero-column {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+}
+
+@media (max-width: 960px) {
+  .sim-build-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .attr-tree {
@@ -741,25 +848,6 @@ button:hover {
   transform: translateY(-50%);
   z-index: 2;
   image-rendering: pixelated;
-}
-
-.rune-tree-list {
-  max-height: 620px;
-  overflow-y: auto;
-}
-
-.rune-tree-list .skill-row {
-  margin-bottom: 0.45rem;
-}
-
-@media (max-width: 960px) {
-  .sim-build-row {
-    grid-template-columns: 1fr;
-  }
-
-  .hero-column {
-    order: -1;
-  }
 }
 
 .hero-picker-bar {

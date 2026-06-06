@@ -5,7 +5,7 @@ import {
   heroIllustUrl,
   renderGearSlotHtml,
 } from '../data/game-ui';
-import { itemIconHtml, itemIconUrl } from '../data/icons';
+import { itemIconHtml, itemIconUrl, runeIconUrl } from '../data/icons';
 import {
   passiveNodeLabel,
   skillIconUrl,
@@ -44,8 +44,6 @@ import type {
 import { PART_LABELS } from '../types';
 import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, type GearFilterState } from '../gear/filter';
 
-type SimTab = 'passives' | 'runes';
-
 export interface SimulatorContext {
   items: EnrichedItem[];
   heroes: EnrichedHero[];
@@ -63,7 +61,6 @@ interface SimState {
   itemsByKey: Map<number, EnrichedItem>;
   effectsByKey: Map<number, EffectMaterial>;
   socketDraft: Map<string, SocketSlotState[]>;
-  tab: SimTab;
 }
 
 export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): void {
@@ -81,7 +78,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     itemsByKey: syncSaveItemKeys(createEmptySave(ctx.heroes[0]?.key ?? 101), ctx.items),
     effectsByKey: new Map(ctx.effects.map((e) => [e.key, e])),
     socketDraft: new Map(),
-    tab: 'passives',
   };
 
   function itemForPart(part: HeroPart): EnrichedItem | undefined {
@@ -290,28 +286,53 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
 
     return `
       <aside class="skill-tree-panel panel" aria-label="Skill tree">
-        <div class="sim-tabs skill-tree-tabs">
-          <button type="button" class="sim-tab ${state.tab === 'passives' ? 'active' : ''}" data-action="sim-tab" data-tab="passives">Passives</button>
-          <button type="button" class="sim-tab ${state.tab === 'runes' ? 'active' : ''}" data-action="sim-tab" data-tab="runes">Runes</button>
-        </div>
-        ${
-          state.tab === 'passives'
-            ? `
-          <div class="attr-tree">
-            <div class="tree-content" style="--level-fill: ${fillPct}%; --level-top: ${fillPct}%">
-              <div class="level-rail" aria-hidden="true">
-                <div class="rail-bg"></div>
-                <div class="rail-fill"></div>
-                <i class="rail-handle"></i>
-              </div>
-              <div class="current-level" aria-hidden="true">
-                <span>Lv.${heroLevel}</span>
-              </div>
-              ${rows}
+        <h3 class="panel-section-title">Passives</h3>
+        <div class="attr-tree">
+          <div class="tree-content" style="--level-fill: ${fillPct}%; --level-top: ${fillPct}%">
+            <div class="level-rail" aria-hidden="true">
+              <div class="rail-bg"></div>
+              <div class="rail-fill"></div>
+              <i class="rail-handle"></i>
             </div>
-          </div>`
-            : `<div class="rune-tree-list">${drawRunes()}</div>`
-        }
+            <div class="current-level" aria-hidden="true">
+              <span>Lv.${heroLevel}</span>
+            </div>
+            ${rows}
+          </div>
+        </div>
+      </aside>`;
+  }
+
+  function drawRunePanel(): string {
+    const cards = ctx.runes.runes
+      .map((rune) => {
+        const level = getRuneLevel(state.working, rune.key);
+        const max = rune.maxLevel ?? 1;
+        const icon = runeIconUrl(rune.icon);
+        const lvClass = level >= max ? 'max' : level > 0 ? 'has' : '';
+
+        return `
+          <article class="rune-card">
+            <div class="rune-card-icon">
+              ${icon ? `<img class="rune-icon" src="${icon}" alt="" loading="lazy" />` : ''}
+              <span class="rune-lv ${lvClass}">${level}/${max}</span>
+            </div>
+            <div class="rune-card-body">
+              <strong>${rune.name}</strong>
+              <div class="small">${rune.effect ?? rune.stat ?? ''}</div>
+            </div>
+            <div class="rune-card-controls">
+              <button type="button" data-action="rune-dec" data-key="${rune.key}">−</button>
+              <button type="button" data-action="rune-inc" data-key="${rune.key}" data-max="${max}">+</button>
+            </div>
+          </article>`;
+      })
+      .join('');
+
+    return `
+      <aside class="rune-panel panel" aria-label="Runes">
+        <h3 class="panel-section-title">Runes</h3>
+        <div class="rune-grid">${cards}</div>
       </aside>`;
   }
 
@@ -320,31 +341,8 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       <div class="sim-build-row">
         ${drawSkillTree()}
         <div class="hero-column">${drawHeroWindow()}</div>
+        ${drawRunePanel()}
       </div>`;
-  }
-
-  function drawRunes(): string {
-    return ctx.runes.runes
-      .slice(0, 40)
-      .map((rune) => {
-        const level = getRuneLevel(state.working, rune.key);
-        const max = rune.maxLevel ?? 1;
-        return `
-          <div class="skill-row">
-            <div class="skill-row-main">
-              <div>
-                <strong>${rune.name}</strong>
-                <div class="small">${rune.stat ?? ''}</div>
-              </div>
-            </div>
-            <div class="skill-controls">
-              <button type="button" data-action="rune-dec" data-key="${rune.key}">−</button>
-              <span class="skill-level">${level}/${max}</span>
-              <button type="button" data-action="rune-inc" data-key="${rune.key}" data-max="${max}">+</button>
-            </div>
-          </div>`;
-      })
-      .join('');
   }
 
   function draw(): void {
@@ -598,13 +596,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       const idx = ctx.heroes.findIndex((h) => h.key === state.heroKey);
       const next = (idx + 1) % ctx.heroes.length;
       selectHero(ctx.heroes[next]?.key ?? state.heroKey);
-    });
-
-    root.querySelectorAll('[data-action="sim-tab"]').forEach((el) => {
-      el.addEventListener('click', () => {
-        state.tab = el.getAttribute('data-tab') as SimTab;
-        draw();
-      });
     });
 
     root.querySelectorAll('[data-action="pick-gear"]').forEach((el) => {

@@ -105,7 +105,10 @@ export interface RuneLevel {
 export interface RuneNode {
   key: number;
   name: string;
+  icon?: string;
   stat?: string;
+  effect?: string;
+  category?: string;
   maxLevel?: number;
   levels?: RuneLevel[];
   next?: number[];

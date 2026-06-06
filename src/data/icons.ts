@@ -10,3 +10,7 @@ export function itemIconHtml(icon: string | null | undefined, alt: string, class
   if (!url) return '';
   return `<img class="${className}" src="${url}" alt="${alt.replace(/"/g, '&quot;')}" loading="lazy" />`;
 }
+
+export function runeIconUrl(icon?: string | null): string | null {
+  return itemIconUrl(icon);
+}
