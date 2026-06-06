@@ -7,7 +7,17 @@ import type {
 } from '../types';
 
 const ENRICHED_BASE = 'https://www.taskbarherowiki.com/data';
-const WIKI_BASE = 'https://www.taskbarhero.wiki/data';
+
+/** Browser: same-origin /wiki-data (bundled or dev proxy). Node/scripts: fetch wiki directly. */
+function getWikiBase(): string {
+  if (typeof window === 'undefined') {
+    return 'https://www.taskbarhero.wiki/data';
+  }
+  const base = import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`;
+  return new URL('wiki-data', base).pathname.replace(/\/$/, '');
+}
 
 const cache = new Map<string, Promise<unknown>>();
 
@@ -37,6 +47,7 @@ export async function loadEnrichedData() {
 }
 
 export async function loadWikiRefData() {
+  const wikiBase = getWikiBase();
   const [
     heroes,
     passives,
@@ -47,14 +58,14 @@ export async function loadWikiRefData() {
     pets,
     petStats,
   ] = await Promise.all([
-    fetchJson<import('../types').WikiHero[]>(`${WIKI_BASE}/heroes.json`),
-    fetchJson<import('../types').WikiPassive[]>(`${WIKI_BASE}/passive_skills.json`),
-    fetchJson<import('../types').WikiItem[]>(`${WIKI_BASE}/items.json`),
-    fetchJson<Record<string, import('../types').WikiItemDetail>>(`${WIKI_BASE}/items_detail.json`),
-    fetchJson<import('../types').WikiGearType[]>(`${WIKI_BASE}/gear_types.json`),
-    fetchJson<{ nodes: import('../types').WikiRuneNode[] }>(`${WIKI_BASE}/rune_tree.json`),
-    fetchJson<import('../types').WikiPet[]>(`${WIKI_BASE}/t/pets.json`),
-    fetchJson<import('../types').WikiPetStat[]>(`${WIKI_BASE}/t/pet_stats.json`),
+    fetchJson<import('../types').WikiHero[]>(`${wikiBase}/heroes.json`),
+    fetchJson<import('../types').WikiPassive[]>(`${wikiBase}/passive_skills.json`),
+    fetchJson<import('../types').WikiItem[]>(`${wikiBase}/items.json`),
+    fetchJson<Record<string, import('../types').WikiItemDetail>>(`${wikiBase}/items_detail.json`),
+    fetchJson<import('../types').WikiGearType[]>(`${wikiBase}/gear_types.json`),
+    fetchJson<{ nodes: import('../types').WikiRuneNode[] }>(`${wikiBase}/rune_tree.json`),
+    fetchJson<import('../types').WikiPet[]>(`${wikiBase}/t/pets.json`),
+    fetchJson<import('../types').WikiPetStat[]>(`${wikiBase}/t/pet_stats.json`),
   ]);
 
   return { heroes, passives, items, itemsDetail, gearTypes, runeTree, pets, petStats };

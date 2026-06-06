@@ -16,7 +16,7 @@ async function main(): Promise<void> {
         <button data-tab="simulator">Build Simulator</button>
       </nav>
     </header>
-    <main id="content"><div class="loading">Loading game data from taskbarherowiki.com and taskbarhero.wiki…</div></main>
+    <main id="content"><div class="loading">Loading game data…</div></main>
   `;
 
   const content = app.querySelector('#content') as HTMLElement;
