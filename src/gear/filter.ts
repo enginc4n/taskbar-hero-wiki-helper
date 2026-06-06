@@ -52,3 +52,9 @@ export function gearAffixLabel(item: EnrichedItem): string {
 export function gradeClass(grade: string): string {
   return `grade-${grade.toLowerCase()}`;
 }
+
+export function itemMatchesHeroClass(item: EnrichedItem, heroClass: string): boolean {
+  if (!item.classes?.length) return true;
+  if (item.classes.includes('All')) return true;
+  return item.classes.includes(heroClass);
+}

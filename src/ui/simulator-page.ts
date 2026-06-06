@@ -25,9 +25,12 @@ import {
   createEmptySave,
   equipItem,
   getEffectGroupsForGear,
+  getPassiveLevel,
   getRuneLevel,
   getSelectedHero,
   getSocketSlots,
+  heroLevelFromSave,
+  normalizePlayerSave,
   partIndex,
   setPassiveLevel,
   setRuneLevel,
@@ -46,7 +49,7 @@ import type {
   RuneGraph,
 } from '../types';
 import { PART_LABELS } from '../types';
-import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, type GearFilterState } from '../gear/filter';
+import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, itemMatchesHeroClass, type GearFilterState } from '../gear/filter';
 
 export interface SimulatorContext {
   items: EnrichedItem[];
@@ -129,13 +132,21 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     return slots.decoration + slots.engraving + slots.inscription > 0;
   }
 
-  function drawHeroPicker(): string {
-    const heroList = ctx.heroes
+  function drawHeroPickerButtons(): string {
+    return ctx.heroes
       .map((h) => {
         const selected = h.key === state.heroKey;
         const icon = itemIconUrl(h.icon ?? h.art);
         return `
-          <button type="button" class="hslot${selected ? ' on' : ''}" data-action="hero-pick" data-key="${h.key}" title="${h.name}">
+          <button
+            type="button"
+            class="hslot${selected ? ' on' : ''}"
+            data-action="hero-pick"
+            data-key="${h.key}"
+            title="${h.name}"
+            aria-label="${h.name}${selected ? ' (selected)' : ''}"
+            aria-pressed="${selected}"
+          >
             <span class="hslot-inner">
               ${icon ? `<img class="hslot-portrait" src="${icon}" alt="" loading="lazy" />` : h.name[0]}
             </span>
@@ -145,12 +156,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
           </button>`;
       })
       .join('');
-
-    return `
-      <section class="hero-picker-bar panel" aria-label="Select hero">
-        <h3 class="hero-picker-title">Heroes</h3>
-        <div class="herolist">${heroList}</div>
-      </section>`;
   }
 
   function drawHeroWindow(): string {
@@ -180,11 +185,14 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         .join('');
     }
 
+    const level = heroLevelFromSave(save);
+
     return `
-      <section class="hero-window panel" aria-label="Hero equipment">
+      <section class="hero-window forge-panel" id="panel-hero" aria-label="Hero equipment">
         <header class="hero-window-header">
           <span class="hero-window-title">Hero</span>
           <span class="hero-window-name">${hero.name}</span>
+          <span class="hero-window-level">Level ${level}</span>
         </header>
         <div class="hero-window-body">
           <div class="hero-gear-side hero-gear-left">${gearSideHtml(HERO_GEAR_LEFT)}</div>
@@ -192,12 +200,16 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
             <img
               class="hero-portrait"
               src="${heroIllustUrl(hero.key, 0)}"
-              alt="${hero.name}"
+              alt="${hero.name} portrait"
               loading="lazy"
             />
           </div>
           <div class="hero-gear-side hero-gear-right">${gearSideHtml(HERO_GEAR_RIGHT)}</div>
         </div>
+        <footer class="hero-window-footer">
+          <span class="hero-footer-label">Switch hero</span>
+          <div class="herolist" role="group" aria-label="Hero roster">${drawHeroPickerButtons()}</div>
+        </footer>
       </section>`;
   }
 
@@ -224,25 +236,78 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     const dpsDelta = dps - baselineDps;
     const dpsPct = baselineDps === 0 ? 0 : (dps / baselineDps - 1) * 100;
 
+    const dpsDeltaHtml = state.baseline
+      ? `<span class="stat-delta ${dpsDelta >= 0 ? 'positive' : 'negative'}" aria-label="Change from baseline">${dpsDelta >= 0 ? '+' : ''}${Math.round(dpsDelta).toLocaleString()} (${dpsPct >= 0 ? '+' : ''}${dpsPct.toFixed(1)}%)</span>`
+      : '';
+    const atkDeltaHtml =
+      state.baseline && atkDelta
+        ? `<span class="stat-delta ${atkDelta.delta >= 0 ? 'positive' : 'negative'}">${formatDelta(atkDelta)}</span>`
+        : '';
+
     return `
-      <div class="stats-bar">
-        <div class="stat-box">
-          <div class="label">Attack Damage</div>
-          <div class="value">${formatStatValue('AttackDamage', current.AttackDamage)}</div>
-          ${state.baseline && atkDelta ? `<div class="delta ${atkDelta.delta >= 0 ? 'positive' : 'negative'}">${formatDelta(atkDelta)}</div>` : ''}
+      <section class="stats-dashboard" aria-label="Combat statistics">
+        <div class="stats-primary">
+          <article class="stat-card stat-card-hero">
+            <span class="stat-eyebrow">Basic Attack DPS</span>
+            <span class="stat-value-xl">${Math.round(dps).toLocaleString()}</span>
+            ${dpsDeltaHtml}
+          </article>
+          <article class="stat-card stat-card-hero stat-card-accent">
+            <span class="stat-eyebrow">Attack Damage</span>
+            <span class="stat-value-xl">${formatStatValue('AttackDamage', current.AttackDamage)}</span>
+            ${atkDeltaHtml}
+          </article>
         </div>
-        <div class="stat-box">
-          <div class="label">Basic Attack DPS</div>
-          <div class="value">${Math.round(dps).toLocaleString()}</div>
-          ${state.baseline ? `<div class="delta ${dpsDelta >= 0 ? 'positive' : 'negative'}">${dpsDelta >= 0 ? '+' : ''}${Math.round(dpsDelta).toLocaleString()} (${dpsPct >= 0 ? '+' : ''}${dpsPct.toFixed(1)}%)</div>` : ''}
+        <div class="stats-secondary">
+          <article class="stat-card stat-card-compact">
+            <span class="stat-eyebrow">Attack Speed</span>
+            <span class="stat-value-md">${formatStatValue('AttackSpeed', current.AttackSpeed)}</span>
+          </article>
+          <article class="stat-card stat-card-compact">
+            <span class="stat-eyebrow">Crit Chance</span>
+            <span class="stat-value-md">${formatStatValue('CriticalChance', current.CriticalChance)}</span>
+          </article>
+          <article class="stat-card stat-card-compact">
+            <span class="stat-eyebrow">Crit Damage</span>
+            <span class="stat-value-md">${formatStatValue('CriticalDamage', current.CriticalDamage)}</span>
+          </article>
         </div>
-        <div class="stat-box"><div class="label">Attack Speed</div><div class="value">${formatStatValue('AttackSpeed', current.AttackSpeed)}</div></div>
-        <div class="stat-box"><div class="label">Crit</div><div class="value">${formatStatValue('CriticalChance', current.CriticalChance)} / ${formatStatValue('CriticalDamage', current.CriticalDamage)}</div></div>
-      </div>`;
+      </section>`;
+  }
+
+  function drawCommandDeck(): string {
+    const hero = heroDef();
+    const save = heroSave();
+    const level = save ? heroLevelFromSave(save) : 1;
+    const hasBaseline = !!state.baseline;
+
+    return `
+      <section class="command-deck forge-panel" aria-label="Build controls">
+        <div class="command-deck-grid">
+          <div class="build-context">
+            <span class="eyebrow">Active build</span>
+            <h2 class="build-hero-name">
+              ${hero?.name ?? 'Unknown'}
+              <span class="build-hero-meta">Lv.${level} · ${hero?.class ?? ''}</span>
+            </h2>
+            <p class="status-pill ${hasBaseline ? 'is-set' : ''}" role="status">
+              ${hasBaseline ? 'Baseline set — stat deltas are live' : 'No baseline yet — import a save or set baseline to track changes'}
+            </p>
+          </div>
+          <div class="command-actions">
+            <label class="btn btn-secondary">
+              Import save
+              <input type="file" accept=".es3,.bak" data-action="load-save" hidden />
+            </label>
+            <button type="button" class="btn btn-ghost" data-action="new-build">New build</button>
+            <button type="button" class="btn btn-primary" data-action="set-baseline">Set baseline</button>
+          </div>
+        </div>
+      </section>`;
   }
 
   function passiveLevel(key: number): number {
-    return state.working.attributeSaveDatas?.find((a) => a.Key === key)?.Level ?? 0;
+    return getPassiveLevel(state.working, key);
   }
 
   function drawSkillNode(node: PassiveNode): string {
@@ -277,14 +342,19 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     const save = heroSave();
     if (!hero || !save) return '';
 
-    const heroLevel = save.Level ?? 1;
+    const heroLevel = heroLevelFromSave(save);
+    const unlockedGroups = new Set(save.unlockedAttributeGroupKeys ?? []);
     const groups = hero.tree;
     const maxGate = Math.max(...groups.map((g) => g.levelGate), 1);
     const fillPct = Math.min(100, (heroLevel / maxGate) * 100);
 
     const rows = groups
       .map((group) => {
-        const unlocked = heroLevel >= group.levelGate;
+        const hasPoints = group.nodes.some(
+          (n) => n.kind === 'passive' && passiveLevel(n.key) > 0,
+        );
+        const unlocked =
+          heroLevel >= group.levelGate || unlockedGroups.has(group.group) || hasPoints;
         const passives = group.nodes.filter((n) => n.kind === 'passive' && n.stat && n.stat !== 'NONE');
         const actives = group.nodes.filter((n) => n.kind === 'active');
         const nodes = [...passives.map(drawSkillNode), ...actives.map(drawActiveNode)].join('');
@@ -306,17 +376,17 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       .join('');
 
     return `
-      <aside class="skill-tree-panel panel" aria-label="Skill tree">
-        <h3 class="panel-section-title">Passives</h3>
+      <aside class="skill-tree-panel forge-panel" id="panel-passives" aria-label="Skill tree">
+        <header class="forge-panel-head">
+          <h3 class="forge-panel-title">Passive Tree</h3>
+          <p class="forge-panel-desc">Hover nodes to adjust · Lv.${heroLevel} hero</p>
+        </header>
         <div class="attr-tree">
           <div class="tree-content" style="--level-fill: ${fillPct}%; --level-top: ${fillPct}%">
             <div class="level-rail" aria-hidden="true">
               <div class="rail-bg"></div>
               <div class="rail-fill"></div>
               <i class="rail-handle"></i>
-            </div>
-            <div class="current-level" aria-hidden="true">
-              <span>Lv.${heroLevel}</span>
             </div>
             ${rows}
           </div>
@@ -351,20 +421,30 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       .join('');
 
     return `
-      <aside class="rune-panel panel" aria-label="Hero runes">
-        <h3 class="panel-section-title">Hero Runes</h3>
+      <aside class="rune-panel forge-panel" id="panel-runes" aria-label="Hero runes">
+        <header class="forge-panel-head">
+          <h3 class="forge-panel-title">Hero Runes</h3>
+          <p class="forge-panel-desc">Account-wide combat bonuses</p>
+        </header>
         <div class="rune-grid">${cards}</div>
       </aside>`;
   }
 
+  function drawWorkspaceNav(): string {
+    return `
+      <nav class="workspace-nav" aria-label="Jump to build section">
+        <a class="workspace-nav-link" href="#panel-passives">Passives</a>
+        <a class="workspace-nav-link" href="#panel-hero">Hero &amp; Gear</a>
+        <a class="workspace-nav-link" href="#panel-runes">Runes</a>
+      </nav>`;
+  }
+
   function drawBuildLayout(): string {
     return `
+      ${drawWorkspaceNav()}
       <div class="sim-build-row">
         ${drawSkillTree()}
-        <div class="hero-column">
-          ${drawHeroWindow()}
-          ${drawHeroPicker()}
-        </div>
+        <div class="hero-column">${drawHeroWindow()}</div>
         ${drawRunePanel()}
       </div>`;
   }
@@ -372,15 +452,11 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   function draw(): void {
     stopPortraitAnim();
     root.innerHTML = `
-      <div class="sim-toolbar panel">
-        <label class="toolbar-btn">Load save (.es3)
-          <input type="file" accept=".es3,.bak" data-action="load-save" hidden />
-        </label>
-        <button type="button" data-action="new-build">New Build</button>
-        <button type="button" data-action="set-baseline">Set Baseline</button>
+      <div class="sim-page">
+        ${drawCommandDeck()}
+        ${drawStats()}
+        ${drawBuildLayout()}
       </div>
-      ${drawStats()}
-      ${drawBuildLayout()}
       <div id="sim-modal"></div>
     `;
     bindEvents();
@@ -405,7 +481,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     function allowedGear(item: EnrichedItem): boolean {
       if (item.type !== 'GEAR') return false;
       if (item.parts && item.parts !== part) return false;
-      if (item.classes?.length && !item.classes.includes(hero!.class)) return false;
+      if (!itemMatchesHeroClass(item, hero!.class)) return false;
       return true;
     }
 
@@ -415,30 +491,46 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       const visible = filtered.slice(0, page * 40);
 
       modalRoot.innerHTML = `
-        <div class="modal-backdrop" data-action="close-modal">
-          <div class="modal">
+        <div class="modal-backdrop" data-action="close-modal" role="presentation">
+          <div class="modal gear-modal" role="dialog" aria-modal="true" aria-labelledby="gear-modal-title">
             <div class="modal-header">
-              <h3>Pick ${PART_LABELS[part]}</h3>
-              <button data-action="close-modal">Close</button>
+              <div>
+                <span class="eyebrow">Equipment</span>
+                <h3 id="gear-modal-title">Pick ${PART_LABELS[part]}</h3>
+              </div>
+              <button type="button" class="btn btn-ghost btn-icon" data-action="close-modal" aria-label="Close">✕</button>
             </div>
-            <div class="filters">
-              <label>Grade<select data-field="grade"><option value="ALL">All</option>${ctx.meta.grades.map((g) => `<option value="${g}">${g}</option>`).join('')}</select></label>
-              <label>Search<input data-field="search" value="${filter.search}" /></label>
+            <div class="gear-modal-body">
+              <aside class="gear-modal-filters">
+                <label class="field">
+                  <span class="field-label">Grade</span>
+                  <select data-field="grade"><option value="ALL">All grades</option>${ctx.meta.grades.map((g) => `<option value="${g}">${g}</option>`).join('')}</select>
+                </label>
+                <label class="field">
+                  <span class="field-label">Search</span>
+                  <input data-field="search" value="${filter.search}" placeholder="Item name…" />
+                </label>
+                <p class="gear-modal-count small">${filtered.length} items match</p>
+              </aside>
+              <div class="gear-modal-results">
+                <div class="gear-grid">
+                  ${visible
+                    .map(
+                      (item) => `
+                    <article class="gear-card ${gradeClass(item.grade)}">
+                      ${itemIconHtml(item.icon, item.name)}
+                      <div class="gear-card-body">
+                        <h4>${item.name}${item.variant ? ` (${item.variant})` : ''}</h4>
+                        <p class="meta">${item.grade} · Lv${item.level ?? '?'}</p>
+                      </div>
+                      <button type="button" class="btn btn-primary btn-sm" data-action="equip" data-key="${item.key}">Equip</button>
+                    </article>`,
+                    )
+                    .join('')}
+                </div>
+                ${visible.length < filtered.length ? `<button type="button" class="btn btn-secondary gear-load-more" data-action="more">Load more</button>` : ''}
+              </div>
             </div>
-            <div class="gear-grid">
-              ${visible
-                .map(
-                  (item) => `
-                <article class="gear-card ${gradeClass(item.grade)}">
-                  ${itemIconHtml(item.icon, item.name)}
-                  <h3>${item.name}${item.variant ? ` (${item.variant})` : ''}</h3>
-                  <div class="meta">${item.grade} · Lv${item.level ?? '?'}</div>
-                  <button type="button" data-action="equip" data-key="${item.key}">Equip</button>
-                </article>`,
-                )
-                .join('')}
-            </div>
-            ${visible.length < filtered.length ? `<button data-action="more">More</button>` : ''}
           </div>
         </div>`;
 
@@ -467,13 +559,15 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         renderModal();
       });
       modalRoot.querySelectorAll('[data-field]').forEach((el) => {
-        el.addEventListener('input', () => {
+        const handler = () => {
           const field = el.getAttribute('data-field')!;
           if (field === 'grade') filter.grade = (el as HTMLSelectElement).value;
           if (field === 'search') filter.search = (el as HTMLInputElement).value;
           page = 1;
           renderModal();
-        });
+        };
+        el.addEventListener('input', handler);
+        el.addEventListener('change', handler);
       });
     }
 
@@ -501,19 +595,30 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     const draft = state.socketDraft.get(draftKey)!;
     const modalRoot = root.querySelector('#sim-modal') as HTMLElement;
 
+    function formatRollHint(group: import('../types').EffectGroup): string {
+      return group.disp ?? `${group.min} – ${group.max}`;
+    }
+
     function renderModal(): void {
       modalRoot.innerHTML = `
-        <div class="modal-backdrop" data-action="close-modal">
-          <div class="modal">
+        <div class="modal-backdrop" data-action="close-modal" role="presentation">
+          <div class="modal socket-modal" role="dialog" aria-modal="true" aria-labelledby="socket-modal-title">
             <div class="modal-header">
-              <h3>Sockets — ${item!.name}</h3>
-              <button data-action="close-modal">Close</button>
+              <div>
+                <span class="eyebrow">Socket editor</span>
+                <h3 id="socket-modal-title">${item!.name}</h3>
+              </div>
+              <button type="button" class="btn btn-ghost btn-icon" data-action="close-modal" aria-label="Close">✕</button>
             </div>
+            <div class="socket-modal-body">
             ${draft
               .map((slot, idx) => {
                 const mats = ctx.effects.filter((e) => e.category === slot.category);
                 const mat = slot.materialKey ? state.effectsByKey.get(slot.materialKey) : null;
                 const groups = mat ? getEffectGroupsForGear(mat, item!) : [];
+                const group = groups[slot.groupIndex] ?? groups[0];
+                const rollHint = group ? formatRollHint(group) : '';
+
                 return `
                   <div class="socket-editor">
                     <div class="socket-editor-head">
@@ -524,7 +629,10 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
                             ? itemIconHtml(mat.icon, mat.name, 'socket-mat-icon')
                             : '<span class="socket-mat-empty" aria-hidden="true">—</span>'
                         }
-                        <span class="socket-mat-name">${mat?.name ?? 'Empty'}</span>
+                        <div class="socket-mat-meta">
+                          <span class="socket-mat-name">${mat?.name ?? 'Empty'}</span>
+                          ${group ? `<span class="socket-roll-hint">${rollHint}</span>` : ''}
+                        </div>
                       </div>
                     </div>
                     <div class="socket-mat-label">Material</div>
@@ -535,6 +643,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
                         data-action="pick-material"
                         data-slot="${idx}"
                         data-key=""
+                        data-label="Empty"
                         title="Empty"
                         role="option"
                         aria-selected="${slot.materialKey == null}"
@@ -542,37 +651,66 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
                         <span class="material-chip-empty">∅</span>
                       </button>
                       ${mats
-                        .map(
-                          (m) => `
+                        .map((m) => {
+                          const label = m.name.replace(/"/g, '&quot;');
+                          return `
                         <button
                           type="button"
                           class="material-chip${slot.materialKey === m.key ? ' selected' : ''}"
                           data-action="pick-material"
                           data-slot="${idx}"
                           data-key="${m.key}"
-                          title="${m.name.replace(/"/g, '&quot;')}"
+                          data-label="${label}"
+                          title="${label}"
                           role="option"
                           aria-selected="${slot.materialKey === m.key}"
                         >
                           ${itemIconHtml(m.icon, m.name, 'material-chip-icon')}
-                        </button>`,
-                        )
+                          <span class="material-chip-tooltip">${m.name}</span>
+                        </button>`;
+                        })
                         .join('')}
                     </div>
+                    <div class="socket-options">
                     ${
                       groups.length > 1
-                        ? `<label>Stat option<select data-slot="${idx}" data-field="group">${groups.map((g, gi) => `<option value="${gi}" ${slot.groupIndex === gi ? 'selected' : ''}>${g.stat} ${g.disp ?? ''}</option>`).join('')}</select></label>`
+                        ? `<label class="socket-field">Stat
+                            <select data-slot="${idx}" data-field="group">${groups.map((g, gi) => `<option value="${gi}" ${slot.groupIndex === gi ? 'selected' : ''}>${g.stat} ${g.disp ?? ''}</option>`).join('')}</select>
+                          </label>`
                         : ''
                     }
-                    <label>Roll<select data-slot="${idx}" data-field="roll">
-                      <option value="min" ${slot.roll === 'min' ? 'selected' : ''}>Min</option>
-                      <option value="mid" ${slot.roll === 'mid' ? 'selected' : ''}>Mid</option>
-                      <option value="max" ${slot.roll === 'max' ? 'selected' : ''}>Max</option>
-                    </select></label>
+                    <label class="socket-field">Roll
+                      <select data-slot="${idx}" data-field="roll">
+                        <option value="min" ${slot.roll === 'min' ? 'selected' : ''}>Min${group ? ` (${group.min})` : ''}</option>
+                        <option value="mid" ${slot.roll === 'mid' ? 'selected' : ''}>Mid</option>
+                        <option value="max" ${slot.roll === 'max' ? 'selected' : ''}>Max${group ? ` (${group.max})` : ''}</option>
+                        <option value="custom" ${slot.roll === 'custom' ? 'selected' : ''}>Custom</option>
+                      </select>
+                    </label>
+                    ${
+                      slot.roll === 'custom' && group
+                        ? `<label class="socket-field socket-custom-field">Value
+                            <input
+                              type="number"
+                              step="any"
+                              data-slot="${idx}"
+                              data-field="customValue"
+                              value="${slot.customValue ?? group.max}"
+                              min="${group.min}"
+                              max="${group.max}"
+                            />
+                            <span class="socket-roll-range">${group.min} – ${group.max}</span>
+                          </label>`
+                        : ''
+                    }
+                    </div>
                   </div>`;
               })
               .join('')}
-            <button class="primary" data-action="apply-sockets">Apply & Recompute</button>
+            </div>
+            <footer class="modal-footer">
+              <button type="button" class="btn btn-primary" data-action="apply-sockets">Apply &amp; recompute stats</button>
+            </footer>
           </div>
         </div>`;
 
@@ -593,16 +731,36 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         });
       });
       modalRoot.querySelectorAll('[data-field]').forEach((el) => {
-        el.addEventListener('change', () => {
+        const handler = () => {
           const idx = Number(el.getAttribute('data-slot'));
           const field = el.getAttribute('data-field')!;
           const slot = draft[idx];
+          const mat = slot.materialKey ? state.effectsByKey.get(slot.materialKey) : null;
+          const groups = mat ? getEffectGroupsForGear(mat, item!) : [];
+          const group = groups[slot.groupIndex] ?? groups[0];
+
           if (field === 'group') {
             slot.groupIndex = Number((el as HTMLSelectElement).value);
           } else if (field === 'roll') {
             slot.roll = (el as HTMLSelectElement).value as SocketSlotState['roll'];
+            if (slot.roll === 'custom' && group && slot.customValue == null) {
+              slot.customValue = group.max;
+            }
+            renderModal();
+            return;
+          } else if (field === 'customValue') {
+            slot.customValue = Number((el as HTMLInputElement).value);
+            if (group) {
+              slot.customValue = Math.max(group.min, Math.min(group.max, slot.customValue));
+            }
+            return;
           }
-        });
+          renderModal();
+        };
+        el.addEventListener('change', handler);
+        if (el.getAttribute('data-field') === 'customValue') {
+          el.addEventListener('input', handler);
+        }
       });
       modalRoot.querySelector('[data-action="apply-sockets"]')?.addEventListener('click', () => {
         if (!inst || !item) return;
@@ -621,8 +779,9 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       if (!file) return;
       try {
         const parsed = await parseSaveFile(await file.arrayBuffer(), DEFAULT_ES3_PASSWORD);
-        state.working = clonePlayerSave(parsed.PlayerSaveData);
-        state.baseline = clonePlayerSave(parsed.PlayerSaveData);
+        const loaded = normalizePlayerSave(parsed.PlayerSaveData);
+        state.working = loaded;
+        state.baseline = clonePlayerSave(loaded);
         state.heroKey = state.working.heroSaveDatas.find((h) => h.IsUnLock)?.heroKey ?? state.heroKey;
         state.itemsByKey = syncSaveItemKeys(state.working, ctx.allItems);
         for (const inst of state.working.itemSaveDatas) {
@@ -663,7 +822,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       el.addEventListener('click', () => {
         const key = Number(el.getAttribute('data-key'));
         const max = Number(el.getAttribute('data-max'));
-        const cur = state.working.attributeSaveDatas?.find((a) => a.Key === key)?.Level ?? 0;
+        const cur = getPassiveLevel(state.working, key);
         setPassiveLevel(state.working, key, cur + 1, max);
         draw();
       });
@@ -672,7 +831,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     root.querySelectorAll('[data-action="passive-dec"]').forEach((el) => {
       el.addEventListener('click', () => {
         const key = Number(el.getAttribute('data-key'));
-        const cur = state.working.attributeSaveDatas?.find((a) => a.Key === key)?.Level ?? 0;
+        const cur = getPassiveLevel(state.working, key);
         setPassiveLevel(state.working, key, cur - 1, 999);
         draw();
       });

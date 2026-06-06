@@ -102,7 +102,9 @@ export function collectContributions(
     }
   }
 
-  const attrLevels = new Map((player.attributeSaveDatas ?? []).map((a) => [a.Key, a.Level]));
+  const attrLevels = new Map(
+    (player.attributeSaveDatas ?? []).map((a) => [Number(a.Key), Number(a.Level) || 0]),
+  );
   for (const attr of heroDef?.attributes ?? []) {
     if (attr.type !== 'PASSIVESKILL') continue;
     const level = attrLevels.get(attr.key) ?? 0;

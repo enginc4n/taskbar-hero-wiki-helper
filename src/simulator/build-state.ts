@@ -19,6 +19,44 @@ export function clonePlayerSave(save: PlayerSaveData): PlayerSaveData {
   return structuredClone(save);
 }
 
+export function heroLevelFromSave(hero: HeroSaveData): number {
+  return hero.Level ?? hero.HeroLevel ?? 1;
+}
+
+function normalizeAttributeSaveDatas(raw: unknown): import('../types').AttributeSaveEntry[] {
+  const rows = Array.isArray(raw) ? raw : raw && typeof raw === 'object' ? Object.values(raw) : [];
+  const byKey = new Map<number, number>();
+
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') continue;
+    const record = row as Record<string, unknown>;
+    const key = Number(record.Key ?? record.key);
+    const level = Number(record.Level ?? record.level);
+    if (!Number.isFinite(key)) continue;
+    byKey.set(key, Number.isFinite(level) ? level : 0);
+  }
+
+  return [...byKey.entries()].map(([Key, Level]) => ({ Key, Level }));
+}
+
+/** Map game save field names to the shape the simulator expects. */
+export function normalizePlayerSave(save: PlayerSaveData): PlayerSaveData {
+  const normalized = clonePlayerSave(save);
+
+  for (const hero of normalized.heroSaveDatas ?? []) {
+    if (hero.Level == null && hero.HeroLevel != null) hero.Level = hero.HeroLevel;
+    if (hero.Exp == null && hero.HeroExp != null) hero.Exp = hero.HeroExp;
+  }
+
+  normalized.attributeSaveDatas = normalizeAttributeSaveDatas(normalized.attributeSaveDatas);
+  return normalized;
+}
+
+export function getPassiveLevel(save: PlayerSaveData, passiveKey: number): number {
+  const entry = save.attributeSaveDatas?.find((a) => Number(a.Key) === passiveKey);
+  return Number(entry?.Level) || 0;
+}
+
 export function createEmptySave(heroKey: number): PlayerSaveData {
   return {
     heroSaveDatas: [
@@ -128,7 +166,16 @@ export interface SocketSlotState {
   index: number;
   materialKey: number | null;
   groupIndex: number;
-  roll: 'min' | 'max' | 'mid';
+  roll: 'min' | 'max' | 'mid' | 'custom';
+  customValue?: number;
+}
+
+export function socketRollValue(slot: SocketSlotState, group: EffectGroup): number {
+  if (slot.roll === 'min') return group.min;
+  if (slot.roll === 'max') return group.max;
+  if (slot.roll === 'mid') return (group.min + group.max) / 2;
+  const custom = slot.customValue ?? group.max;
+  return Math.max(group.min, Math.min(group.max, custom));
 }
 
 export function getSocketSlots(gear: EnrichedItem): { category: SocketSlotState['category']; count: number }[] {
@@ -157,8 +204,7 @@ export function applySocketsToItem(
     const group = groups[slot.groupIndex] ?? groups[0];
     if (!group) continue;
 
-    const value =
-      slot.roll === 'min' ? group.min : slot.roll === 'max' ? group.max : (group.min + group.max) / 2;
+    const value = socketRollValue(slot, group);
     enchants.push(enchantFromEffect(group, value));
   }
 

@@ -143,8 +143,11 @@ export interface HeroSaveData {
   heroKey: number;
   IsUnLock?: boolean;
   Level?: number;
+  HeroLevel?: number;
   Exp?: number;
+  HeroExp?: number;
   equippedItemIds: (number | string | null)[];
+  unlockedAttributeGroupKeys?: number[];
 }
 
 export interface RuneSaveEntry {
