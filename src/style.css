@@ -475,6 +475,293 @@ button:hover {
   z-index: 4;
 }
 
+.sim-build-row {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.1fr) minmax(320px, 430px);
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.hero-column {
+  display: flex;
+  justify-content: center;
+}
+
+.skill-tree-panel {
+  min-height: 420px;
+  image-rendering: pixelated;
+}
+
+.skill-tree-tabs {
+  margin-bottom: 0.65rem;
+}
+
+.attr-tree {
+  max-height: 620px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #8b7e6a #242629;
+}
+
+.tree-content {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 0.5rem;
+  position: relative;
+  padding: 0.35rem 0 0.75rem;
+}
+
+.level-rail {
+  position: absolute;
+  top: 0.35rem;
+  bottom: 0.75rem;
+  left: 0;
+  width: 56px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.rail-bg {
+  background: linear-gradient(90deg, #14100b, #2b231a 50%, #14100b);
+  border-radius: 8px;
+  width: 14px;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 18px;
+  box-shadow: inset 0 0 0 1px #0b0907, inset 1px 1px 1.5px #000000b3;
+}
+
+.rail-fill {
+  width: 14px;
+  height: var(--level-fill, 0%);
+  background: linear-gradient(90deg, #7c120e, #ff5142 45%, #ff9384 56%, #b8160f);
+  border-radius: 8px;
+  position: absolute;
+  top: 0;
+  left: 18px;
+  box-shadow: inset 0 0 0 1px #0000004d, 0 0 6px #ff4a3680;
+}
+
+.rail-handle {
+  top: calc(var(--level-top, 0%) - 4px);
+  z-index: 2;
+  background: linear-gradient(#fff6df, #f0c478);
+  border-radius: 4px;
+  width: 22px;
+  height: 6px;
+  position: absolute;
+  left: 14px;
+  box-shadow: 0 0 6px #ffe0a0b3, 0 1px #000;
+}
+
+.current-level {
+  top: calc(var(--level-top, 0%) + 6px);
+  z-index: 5;
+  pointer-events: none;
+  color: #e22620;
+  white-space: nowrap;
+  text-shadow: 1px 1px #fff3d5;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  position: absolute;
+  left: 28px;
+  transform: translate(-50%, -50%);
+}
+
+.tree-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  column-gap: 0.5rem;
+  min-height: 88px;
+  position: relative;
+  z-index: 2;
+}
+
+.rail-row {
+  position: relative;
+  min-height: 88px;
+}
+
+.rail-row span {
+  color: #c5c6cb;
+  text-shadow: 1px 1px #1c1e22;
+  font-size: 0.8rem;
+  font-weight: 700;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.rail-row span.active {
+  color: #f6e6c0;
+  text-shadow: 1px 1px #000;
+}
+
+.rail-tick {
+  background: #eee5ca;
+  width: 18px;
+  height: 3px;
+  position: absolute;
+  top: 50%;
+  left: 22px;
+  transform: translateY(-50%);
+  box-shadow: 0 -1px #5c5042, 0 1px #5c5042;
+}
+
+.row-arrow {
+  filter: drop-shadow(1px 1px #15110d);
+  border-bottom: 5px solid #c6ad87;
+  border-left: 5px solid #c6ad87;
+  width: 14px;
+  height: 14px;
+  position: absolute;
+  top: 50%;
+  right: -4px;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.skill-section {
+  position: relative;
+  min-height: 88px;
+  width: 100%;
+}
+
+.section-bg {
+  object-fit: fill;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.nodes {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 100%;
+  min-height: 88px;
+  padding: 0.85rem 0.85rem 0.85rem 3.5rem;
+}
+
+.skill-node {
+  position: relative;
+  width: 52px;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+}
+
+.skill-node .node-frame,
+.skill-node .node-icon {
+  position: absolute;
+  inset: 0;
+}
+
+.skill-node .node-icon {
+  object-fit: contain;
+  width: 76%;
+  height: 76%;
+  inset: 12%;
+  image-rendering: pixelated;
+}
+
+.node-lv {
+  z-index: 3;
+  color: #c9cdd6;
+  white-space: nowrap;
+  text-shadow: 1px 1px #000;
+  background: #11131a;
+  border: 1px solid #3e4248;
+  padding: 0 0.25rem;
+  font-size: 0.65rem;
+  line-height: 1.2;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.node-lv.has {
+  color: #fce454;
+}
+
+.node-lv.max {
+  color: #54fc0c;
+}
+
+.node-controls {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  z-index: 4;
+}
+
+.skill-node:hover .node-controls {
+  opacity: 1;
+}
+
+.node-controls button {
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.tree-row.locked .rail-row span {
+  color: #5d626d;
+  text-shadow: none;
+}
+
+.tree-row.locked .rail-tick,
+.tree-row.locked .row-arrow {
+  opacity: 0.42;
+}
+
+.tree-row.locked .skill-node {
+  filter: grayscale(0.8) brightness(0.55);
+  opacity: 0.72;
+}
+
+.locked-icon {
+  width: 28px;
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  z-index: 2;
+  image-rendering: pixelated;
+}
+
+.rune-tree-list {
+  max-height: 620px;
+  overflow-y: auto;
+}
+
+.rune-tree-list .skill-row {
+  margin-bottom: 0.45rem;
+}
+
+@media (max-width: 960px) {
+  .sim-build-row {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-column {
+    order: -1;
+  }
+}
+
 .hero-picker-bar {
   margin-top: 1rem;
   image-rendering: pixelated;

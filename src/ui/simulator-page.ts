@@ -6,6 +6,13 @@ import {
   renderGearSlotHtml,
 } from '../data/game-ui';
 import { itemIconHtml, itemIconUrl } from '../data/icons';
+import {
+  passiveNodeLabel,
+  skillIconUrl,
+  skillNodeFrameUrl,
+  skillSectionBgUrl,
+  skillSectionLockedIconUrl,
+} from '../data/skill-ui';
 import { computeAllStats, computeBasicDps, compareStats, formatStatValue, formatDelta } from '../engine/stats';
 import { parseSaveFile, isSaveFileError, DEFAULT_ES3_PASSWORD } from '../engine/save-decrypt';
 import {
@@ -17,7 +24,6 @@ import {
   getRuneLevel,
   getSelectedHero,
   getSocketSlots,
-  listPassiveNodes,
   partIndex,
   setPassiveLevel,
   setRuneLevel,
@@ -30,6 +36,7 @@ import type {
   EnrichedItem,
   HeroPart,
   MetaData,
+  PassiveNode,
   PlayerSaveData,
   RefMaps,
   RuneGraph,
@@ -217,30 +224,103 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       </div>`;
   }
 
-  function drawPassives(): string {
+  function passiveLevel(key: number): number {
+    return state.working.attributeSaveDatas?.find((a) => a.Key === key)?.Level ?? 0;
+  }
+
+  function drawSkillNode(node: PassiveNode): string {
+    const level = passiveLevel(node.key);
+    const max = node.maxLevel ?? 1;
+    const icon = skillIconUrl(node.icon);
+    const lvClass = level >= max ? 'max' : level > 0 ? 'has' : '';
+
+    return `
+      <div class="skill-node" title="${passiveNodeLabel(node)} · ${node.perPoint ?? ''}/lvl">
+        <img class="node-frame" src="${skillNodeFrameUrl('passive', level, max)}" alt="" />
+        ${icon ? `<img class="node-icon" src="${icon}" alt="" loading="lazy" />` : ''}
+        <span class="node-lv ${lvClass}">${level}</span>
+        <div class="node-controls">
+          <button type="button" data-action="passive-dec" data-key="${node.key}">−</button>
+          <button type="button" data-action="passive-inc" data-key="${node.key}" data-max="${max}">+</button>
+        </div>
+      </div>`;
+  }
+
+  function drawActiveNode(node: PassiveNode): string {
+    const icon = skillIconUrl(node.icon);
+    return `
+      <div class="skill-node active-only" title="${node.name ?? 'Skill'}">
+        <img class="node-frame" src="${skillNodeFrameUrl('active', 0, 1)}" alt="" />
+        ${icon ? `<img class="node-icon" src="${icon}" alt="" loading="lazy" />` : ''}
+      </div>`;
+  }
+
+  function drawSkillTree(): string {
     const hero = heroDef();
-    if (!hero) return '';
-    return listPassiveNodes(hero)
-      .map((node) => {
-        const level = state.working.attributeSaveDatas?.find((a) => a.Key === node.key)?.Level ?? 0;
-        const max = node.maxLevel ?? 1;
+    const save = heroSave();
+    if (!hero || !save) return '';
+
+    const heroLevel = save.Level ?? 1;
+    const groups = hero.tree;
+    const maxGate = Math.max(...groups.map((g) => g.levelGate), 1);
+    const fillPct = Math.min(100, (heroLevel / maxGate) * 100);
+
+    const rows = groups
+      .map((group) => {
+        const unlocked = heroLevel >= group.levelGate;
+        const passives = group.nodes.filter((n) => n.kind === 'passive' && n.stat && n.stat !== 'NONE');
+        const actives = group.nodes.filter((n) => n.kind === 'active');
+        const nodes = [...passives.map(drawSkillNode), ...actives.map(drawActiveNode)].join('');
+
         return `
-          <div class="skill-row">
-            <div class="skill-row-main">
-              ${node.icon ? itemIconHtml(node.icon, node.stat ?? 'Passive', 'skill-icon') : ''}
-              <div>
-                <strong>${node.stat}</strong>
-                <div class="small">${node.perPoint ?? ''} / level · max ${max}</div>
-              </div>
+          <div class="tree-row${unlocked ? '' : ' locked'}">
+            <div class="rail-row">
+              <span class="${unlocked ? 'active' : ''}">${group.levelGate}</span>
+              <i class="rail-tick"></i>
+              <i class="row-arrow"></i>
             </div>
-            <div class="skill-controls">
-              <button type="button" data-action="passive-dec" data-key="${node.key}">−</button>
-              <span class="skill-level">${level}</span>
-              <button type="button" data-action="passive-inc" data-key="${node.key}" data-max="${max}">+</button>
+            <div class="skill-section">
+              <img class="section-bg" src="${skillSectionBgUrl(unlocked)}" alt="" />
+              <div class="nodes">${nodes}</div>
+              ${unlocked ? '' : `<img class="locked-icon" src="${skillSectionLockedIconUrl()}" alt="" />`}
             </div>
           </div>`;
       })
       .join('');
+
+    return `
+      <aside class="skill-tree-panel panel" aria-label="Skill tree">
+        <div class="sim-tabs skill-tree-tabs">
+          <button type="button" class="sim-tab ${state.tab === 'passives' ? 'active' : ''}" data-action="sim-tab" data-tab="passives">Passives</button>
+          <button type="button" class="sim-tab ${state.tab === 'runes' ? 'active' : ''}" data-action="sim-tab" data-tab="runes">Runes</button>
+        </div>
+        ${
+          state.tab === 'passives'
+            ? `
+          <div class="attr-tree">
+            <div class="tree-content" style="--level-fill: ${fillPct}%; --level-top: ${fillPct}%">
+              <div class="level-rail" aria-hidden="true">
+                <div class="rail-bg"></div>
+                <div class="rail-fill"></div>
+                <i class="rail-handle"></i>
+              </div>
+              <div class="current-level" aria-hidden="true">
+                <span>Lv.${heroLevel}</span>
+              </div>
+              ${rows}
+            </div>
+          </div>`
+            : `<div class="rune-tree-list">${drawRunes()}</div>`
+        }
+      </aside>`;
+  }
+
+  function drawBuildLayout(): string {
+    return `
+      <div class="sim-build-row">
+        ${drawSkillTree()}
+        <div class="hero-column">${drawHeroWindow()}</div>
+      </div>`;
   }
 
   function drawRunes(): string {
@@ -267,21 +347,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       .join('');
   }
 
-  function drawTabPanel(): string {
-    return `
-      <div class="sim-tabs">
-        <button type="button" class="sim-tab ${state.tab === 'passives' ? 'active' : ''}" data-action="sim-tab" data-tab="passives">Passives</button>
-        <button type="button" class="sim-tab ${state.tab === 'runes' ? 'active' : ''}" data-action="sim-tab" data-tab="runes">Runes</button>
-      </div>
-      <div class="panel sim-tab-panel">
-        ${
-          state.tab === 'passives'
-            ? `<div class="skill-list">${drawPassives()}</div>`
-            : `<p class="small">First 40 rune nodes from your save/build.</p><div class="skill-list">${drawRunes()}</div>`
-        }
-      </div>`;
-  }
-
   function draw(): void {
     root.innerHTML = `
       <div class="sim-toolbar panel">
@@ -292,8 +357,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         <button type="button" data-action="set-baseline">Set Baseline</button>
       </div>
       ${drawStats()}
-      ${drawHeroWindow()}
-      ${drawTabPanel()}
+      ${drawBuildLayout()}
       ${drawHeroPicker()}
       <div id="sim-modal"></div>
     `;
