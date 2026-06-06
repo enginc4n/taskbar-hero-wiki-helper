@@ -13,10 +13,10 @@ function getWikiBase(): string {
   if (typeof window === 'undefined') {
     return 'https://www.taskbarhero.wiki/data';
   }
-  const base = import.meta.env.BASE_URL.endsWith('/')
-    ? import.meta.env.BASE_URL
-    : `${import.meta.env.BASE_URL}/`;
-  return new URL('wiki-data', base).pathname.replace(/\/$/, '');
+  return new URL(`${import.meta.env.BASE_URL}wiki-data`, window.location.origin).pathname.replace(
+    /\/$/,
+    '',
+  );
 }
 
 const cache = new Map<string, Promise<unknown>>();
