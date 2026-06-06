@@ -322,45 +322,6 @@ button:hover {
   image-rendering: pixelated;
 }
 
-.hero-levelbar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  width: 100%;
-  max-width: 150px;
-}
-
-.hero-levelbar .lv {
-  color: #fff;
-  text-shadow: 1px 1px #000;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.hero-levelbar .exp {
-  aspect-ratio: 56 / 10;
-  width: 100%;
-  position: relative;
-}
-
-.hero-levelbar .exp-bg {
-  width: 100%;
-  height: 150%;
-  position: absolute;
-  inset: 0;
-}
-
-.hero-levelbar .exp-fill {
-  height: 85%;
-  image-rendering: pixelated;
-  background: url('https://www.taskbarhero.wiki/game/ui/ExpSlider_Fill.png') 0 0 / 100% 100%;
-  position: absolute;
-  top: 34%;
-  left: 3.6%;
-  max-width: 92%;
-}
-
 .game-slot-wrap {
   position: relative;
   width: 40px;
@@ -469,7 +430,9 @@ button:hover {
 
 .hero-column {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
 }
 
 .skill-tree-panel,
@@ -840,7 +803,8 @@ button:hover {
 }
 
 .hero-picker-bar {
-  margin-top: 1rem;
+  width: min(380px, 100%);
+  margin-top: 0;
   image-rendering: pixelated;
 }
 

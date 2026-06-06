@@ -1,4 +1,5 @@
 import { mergeRefMaps, buildRefMaps, enrichedItemToDetail } from '../data/adapters';
+import { heroCombatRunesForPanel } from '../data/runes';
 import {
   HERO_GEAR_LEFT,
   HERO_GEAR_RIGHT,
@@ -157,9 +158,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     const save = heroSave();
     if (!hero || !save) return '';
 
-    const level = save.Level ?? 1;
-    const expPct = 72;
-
     function gearSideHtml(rows: HeroPart[][]): string {
       return rows
         .map(
@@ -197,13 +195,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
               alt="${hero.name}"
               loading="lazy"
             />
-            <div class="hero-levelbar">
-              <span class="lv">Lv.${level}</span>
-              <div class="exp">
-                <img class="exp-bg" src="${gameUiUrl('ExpSlider_Bg.png')}" alt="" />
-                <div class="exp-fill" style="width:${expPct}%"></div>
-              </div>
-            </div>
           </div>
           <div class="hero-gear-side hero-gear-right">${gearSideHtml(HERO_GEAR_RIGHT)}</div>
         </div>
@@ -334,7 +325,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   }
 
   function drawRunePanel(): string {
-    const cards = ctx.runes.runes
+    const cards = heroCombatRunesForPanel(ctx.runes.runes)
       .map((rune) => {
         const level = getRuneLevel(state.working, rune.key);
         const max = rune.maxLevel ?? 1;
@@ -360,8 +351,8 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       .join('');
 
     return `
-      <aside class="rune-panel panel" aria-label="Runes">
-        <h3 class="panel-section-title">Runes</h3>
+      <aside class="rune-panel panel" aria-label="Hero runes">
+        <h3 class="panel-section-title">Hero Runes</h3>
         <div class="rune-grid">${cards}</div>
       </aside>`;
   }
@@ -370,7 +361,10 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     return `
       <div class="sim-build-row">
         ${drawSkillTree()}
-        <div class="hero-column">${drawHeroWindow()}</div>
+        <div class="hero-column">
+          ${drawHeroWindow()}
+          ${drawHeroPicker()}
+        </div>
         ${drawRunePanel()}
       </div>`;
   }
@@ -387,7 +381,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       </div>
       ${drawStats()}
       ${drawBuildLayout()}
-      ${drawHeroPicker()}
       <div id="sim-modal"></div>
     `;
     bindEvents();
