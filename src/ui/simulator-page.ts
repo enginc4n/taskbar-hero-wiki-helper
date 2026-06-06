@@ -1,4 +1,11 @@
 import { mergeRefMaps, buildRefMaps, enrichedItemToDetail } from '../data/adapters';
+import {
+  GEAR_SLOT_LAYOUT,
+  gameUiUrl,
+  heroIllustUrl,
+  renderGearSlotHtml,
+} from '../data/game-ui';
+import { itemIconHtml, itemIconUrl } from '../data/icons';
 import { computeAllStats, computeBasicDps, compareStats, formatStatValue, formatDelta } from '../engine/stats';
 import { parseSaveFile, isSaveFileError, DEFAULT_ES3_PASSWORD } from '../engine/save-decrypt';
 import {
@@ -27,8 +34,10 @@ import type {
   RefMaps,
   RuneGraph,
 } from '../types';
-import { HERO_PARTS, PART_LABELS } from '../types';
-import { filterGear, DEFAULT_GEAR_FILTER, type GearFilterState } from '../gear/filter';
+import { PART_LABELS } from '../types';
+import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, type GearFilterState } from '../gear/filter';
+
+type SimTab = 'passives' | 'runes';
 
 export interface SimulatorContext {
   items: EnrichedItem[];
@@ -47,6 +56,7 @@ interface SimState {
   itemsByKey: Map<number, EnrichedItem>;
   effectsByKey: Map<number, EffectMaterial>;
   socketDraft: Map<string, SocketSlotState[]>;
+  tab: SimTab;
 }
 
 export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): void {
@@ -64,7 +74,100 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     itemsByKey: syncSaveItemKeys(createEmptySave(ctx.heroes[0]?.key ?? 101), ctx.items),
     effectsByKey: new Map(ctx.effects.map((e) => [e.key, e])),
     socketDraft: new Map(),
+    tab: 'passives',
   };
+
+  function itemForPart(part: HeroPart): EnrichedItem | undefined {
+    const hero = heroSave();
+    if (!hero) return undefined;
+    const uid = hero.equippedItemIds[partIndex(part)];
+    const inst = uid
+      ? state.working.itemSaveDatas.find((i) => String(i.UniqueId) === String(uid))
+      : null;
+    return inst ? state.itemsByKey.get(inst.ItemKey) : undefined;
+  }
+
+  function itemHasSockets(item: EnrichedItem): boolean {
+    const slots = item.slots;
+    if (!slots) return false;
+    return slots.decoration + slots.engraving + slots.inscription > 0;
+  }
+
+  function drawHeroWindow(): string {
+    const hero = heroDef();
+    const save = heroSave();
+    if (!hero || !save) return '';
+
+    const level = save.Level ?? 1;
+    const expPct = 72;
+
+    const gearSlots = GEAR_SLOT_LAYOUT.map((layout) =>
+      renderGearSlotHtml({
+        layout,
+        item: itemForPart(layout.part),
+        hasSockets: (() => {
+          const item = itemForPart(layout.part);
+          return item ? itemHasSockets(item) : false;
+        })(),
+      }),
+    ).join('');
+
+    const heroList = ctx.heroes
+      .map((h) => {
+        const selected = h.key === state.heroKey;
+        const icon = itemIconUrl(h.icon ?? h.art);
+        return `
+          <button type="button" class="hslot${selected ? ' on' : ''}" data-action="hero-pick" data-key="${h.key}" title="${h.name}">
+            <span class="hslot-inner">
+              ${icon ? `<img class="hslot-portrait" src="${icon}" alt="" loading="lazy" />` : h.name[0]}
+            </span>
+            <img class="hslot-frame" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
+            <img class="hslot-hover" src="${gameUiUrl('HeroSlot_InnerBoader_Hover.png')}" alt="" />
+            ${selected ? `<img class="hslot-active" src="${gameUiUrl('HeroSlot_InnerBoader_Active.png')}" alt="" />` : ''}
+          </button>`;
+      })
+      .join('');
+
+    return `
+      <section class="hero-window" aria-label="Hero equipment">
+        <img class="frame" src="${gameUiUrl('BG_hero.png')}" alt="" />
+        <img class="abs decor" src="${gameUiUrl('BG_Hero_Decor.png')}" alt="" />
+        <img class="abs dragon" src="${gameUiUrl('BG_hero_dragonHead.png')}" alt="" />
+        <img class="abs title" src="${gameUiUrl('TextImage_Hero_Eng.png')}" alt="Hero" />
+
+        <div class="abs namebar">
+          <button type="button" class="arrow" data-action="hero-prev" aria-label="Previous hero">
+            <img src="${gameUiUrl('ChaChangeButton_Left_Active.png')}" alt="" />
+          </button>
+          <div class="nameplate">
+            <img src="${gameUiUrl('Arrange_NamePlate_Character.png')}" alt="" />
+            <span>${hero.name}</span>
+          </div>
+          <button type="button" class="arrow" data-action="hero-next" aria-label="Next hero">
+            <img src="${gameUiUrl('ChaChangeButton_Right_Active.png')}" alt="" />
+          </button>
+        </div>
+
+        <img
+          class="abs portrait"
+          src="${heroIllustUrl(hero.key, 0)}"
+          alt="${hero.name}"
+          loading="lazy"
+        />
+
+        <div class="abs levelbar">
+          <span class="lv">Lv.${level}</span>
+          <div class="exp">
+            <img class="exp-bg" src="${gameUiUrl('ExpSlider_Bg.png')}" alt="" />
+            <div class="exp-fill" style="width:${expPct}%"></div>
+          </div>
+        </div>
+
+        ${gearSlots}
+
+        <div class="abs herolist">${heroList}</div>
+      </section>`;
+  }
 
   function heroDef(): EnrichedHero | undefined {
     return ctx.heroes.find((h) => h.key === state.heroKey);
@@ -106,40 +209,26 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       </div>`;
   }
 
-  function drawGearSlots(): string {
-    const hero = heroSave();
-    if (!hero) return '';
-    return HERO_PARTS.map((part) => {
-      const uid = hero.equippedItemIds[partIndex(part)];
-      const inst = uid
-        ? state.working.itemSaveDatas.find((i) => String(i.UniqueId) === String(uid))
-        : null;
-      const item = inst ? state.itemsByKey.get(inst.ItemKey) : undefined;
-      const label = item ? `${item.name}${item.variant ? ` (${item.variant})` : ''}` : 'Empty';
-      return `
-        <div class="slot-row">
-          <div><strong>${PART_LABELS[part]}</strong><div class="small">${label}</div></div>
-          <div>
-            <button data-action="pick-gear" data-part="${part}">Change</button>
-            ${item ? `<button data-action="edit-sockets" data-part="${part}">Sockets</button>` : ''}
-          </div>
-        </div>`;
-    }).join('');
-  }
-
   function drawPassives(): string {
     const hero = heroDef();
     if (!hero) return '';
     return listPassiveNodes(hero)
       .map((node) => {
         const level = state.working.attributeSaveDatas?.find((a) => a.Key === node.key)?.Level ?? 0;
+        const max = node.maxLevel ?? 1;
         return `
-          <div class="passive-row">
-            <div><strong>${node.stat}</strong><div class="small">${node.perPoint ?? ''} per level · max ${node.maxLevel ?? 1}</div></div>
-            <div>
-              <button data-action="passive-dec" data-key="${node.key}">-</button>
-              <span>${level}</span>
-              <button data-action="passive-inc" data-key="${node.key}" data-max="${node.maxLevel ?? 1}">+</button>
+          <div class="skill-row">
+            <div class="skill-row-main">
+              ${node.icon ? itemIconHtml(node.icon, node.stat ?? 'Passive', 'skill-icon') : ''}
+              <div>
+                <strong>${node.stat}</strong>
+                <div class="small">${node.perPoint ?? ''} / level · max ${max}</div>
+              </div>
+            </div>
+            <div class="skill-controls">
+              <button type="button" data-action="passive-dec" data-key="${node.key}">−</button>
+              <span class="skill-level">${level}</span>
+              <button type="button" data-action="passive-inc" data-key="${node.key}" data-max="${max}">+</button>
             </div>
           </div>`;
       })
@@ -153,53 +242,61 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         const level = getRuneLevel(state.working, rune.key);
         const max = rune.maxLevel ?? 1;
         return `
-          <div class="rune-row">
-            <div><strong>${rune.name}</strong><div class="small">${rune.stat ?? ''}</div></div>
-            <div>
-              <button data-action="rune-dec" data-key="${rune.key}">-</button>
-              <span>${level}/${max}</span>
-              <button data-action="rune-inc" data-key="${rune.key}" data-max="${max}">+</button>
+          <div class="skill-row">
+            <div class="skill-row-main">
+              <div>
+                <strong>${rune.name}</strong>
+                <div class="small">${rune.stat ?? ''}</div>
+              </div>
+            </div>
+            <div class="skill-controls">
+              <button type="button" data-action="rune-dec" data-key="${rune.key}">−</button>
+              <span class="skill-level">${level}/${max}</span>
+              <button type="button" data-action="rune-inc" data-key="${rune.key}" data-max="${max}">+</button>
             </div>
           </div>`;
       })
       .join('');
   }
 
+  function drawTabPanel(): string {
+    return `
+      <div class="sim-tabs">
+        <button type="button" class="sim-tab ${state.tab === 'passives' ? 'active' : ''}" data-action="sim-tab" data-tab="passives">Passives</button>
+        <button type="button" class="sim-tab ${state.tab === 'runes' ? 'active' : ''}" data-action="sim-tab" data-tab="runes">Runes</button>
+      </div>
+      <div class="panel sim-tab-panel">
+        ${
+          state.tab === 'passives'
+            ? `<div class="skill-list">${drawPassives()}</div>`
+            : `<p class="small">First 40 rune nodes from your save/build.</p><div class="skill-list">${drawRunes()}</div>`
+        }
+      </div>`;
+  }
+
   function draw(): void {
     root.innerHTML = `
-      <div class="toolbar">
-        <label class="small">Load save (.es3)
-          <input type="file" accept=".es3,.bak" data-action="load-save" />
+      <div class="sim-toolbar panel">
+        <label class="toolbar-btn">Load save (.es3)
+          <input type="file" accept=".es3,.bak" data-action="load-save" hidden />
         </label>
-        <button data-action="new-build">New Build</button>
-        <button data-action="set-baseline">Set Baseline</button>
-        <label>Hero
-          <select data-action="hero-select">
-            ${ctx.heroes.map((h) => `<option value="${h.key}" ${h.key === state.heroKey ? 'selected' : ''}>${h.name}</option>`).join('')}
-          </select>
-        </label>
+        <button type="button" data-action="new-build">New Build</button>
+        <button type="button" data-action="set-baseline">Set Baseline</button>
       </div>
       ${drawStats()}
-      <div class="sim-layout">
-        <div class="panel">
-          <h3>Gear</h3>
-          <div class="slot-list">${drawGearSlots()}</div>
-        </div>
-        <div>
-          <div class="panel" style="margin-bottom:1rem">
-            <h3>Passives</h3>
-            <div class="passive-list">${drawPassives()}</div>
-          </div>
-          <div class="panel">
-            <h3>Runes</h3>
-            <p class="small">Showing first 40 rune nodes.</p>
-            <div class="rune-list">${drawRunes()}</div>
-          </div>
-        </div>
-      </div>
+      ${drawHeroWindow()}
+      ${drawTabPanel()}
       <div id="sim-modal"></div>
     `;
     bindEvents();
+  }
+
+  function selectHero(key: number): void {
+    state.heroKey = key;
+    if (!getSelectedHero(state.working, state.heroKey)) {
+      state.working.heroSaveDatas.push(...createEmptySave(state.heroKey).heroSaveDatas);
+    }
+    draw();
   }
 
   function openGearPicker(part: HeroPart): void {
@@ -237,10 +334,11 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
               ${visible
                 .map(
                   (item) => `
-                <article class="gear-card">
+                <article class="gear-card ${gradeClass(item.grade)}">
+                  ${itemIconHtml(item.icon, item.name)}
                   <h3>${item.name}${item.variant ? ` (${item.variant})` : ''}</h3>
-                  <div class="meta">${item.grade} Lv${item.level}</div>
-                  <button data-action="equip" data-key="${item.key}">Equip</button>
+                  <div class="meta">${item.grade} · Lv${item.level ?? '?'}</div>
+                  <button type="button" data-action="equip" data-key="${item.key}">Equip</button>
                 </article>`,
                 )
                 .join('')}
@@ -413,12 +511,27 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       draw();
     });
 
-    root.querySelector('[data-action="hero-select"]')?.addEventListener('change', (e) => {
-      state.heroKey = Number((e.target as HTMLSelectElement).value);
-      if (!getSelectedHero(state.working, state.heroKey)) {
-        state.working.heroSaveDatas.push(...createEmptySave(state.heroKey).heroSaveDatas);
-      }
-      draw();
+    root.querySelectorAll('[data-action="hero-pick"]').forEach((el) => {
+      el.addEventListener('click', () => selectHero(Number(el.getAttribute('data-key'))));
+    });
+
+    root.querySelector('[data-action="hero-prev"]')?.addEventListener('click', () => {
+      const idx = ctx.heroes.findIndex((h) => h.key === state.heroKey);
+      const next = (idx - 1 + ctx.heroes.length) % ctx.heroes.length;
+      selectHero(ctx.heroes[next]?.key ?? state.heroKey);
+    });
+
+    root.querySelector('[data-action="hero-next"]')?.addEventListener('click', () => {
+      const idx = ctx.heroes.findIndex((h) => h.key === state.heroKey);
+      const next = (idx + 1) % ctx.heroes.length;
+      selectHero(ctx.heroes[next]?.key ?? state.heroKey);
+    });
+
+    root.querySelectorAll('[data-action="sim-tab"]').forEach((el) => {
+      el.addEventListener('click', () => {
+        state.tab = el.getAttribute('data-tab') as SimTab;
+        draw();
+      });
     });
 
     root.querySelectorAll('[data-action="pick-gear"]').forEach((el) => {

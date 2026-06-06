@@ -146,6 +146,15 @@ button:hover {
   background: #15121f;
 }
 
+.item-icon {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+  image-rendering: pixelated;
+}
+
 .gear-card.unobtainable {
   opacity: 0.65;
 }
@@ -203,6 +212,398 @@ button:hover {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 1rem;
+}
+
+/* Build Simulator — hero equipment sheet */
+.sim-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #2a2440;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.toolbar-btn:hover {
+  filter: brightness(1.08);
+}
+
+/* Build Simulator — wiki-style hero window (cropped above inventory) */
+.hero-window {
+  aspect-ratio: 318 / 232;
+  width: min(430px, 100%);
+  max-width: calc(100vw - 28px);
+  margin: 0 auto 1rem;
+  position: relative;
+  overflow: hidden;
+  container-type: inline-size;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+.hero-window .frame {
+  width: 100%;
+  height: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.hero-window .abs {
+  position: absolute;
+}
+
+.hero-window .decor {
+  z-index: 1;
+  width: 95%;
+  top: 16.4%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.hero-window .dragon {
+  z-index: 4;
+  width: 31%;
+  top: -1.2%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.hero-window .title {
+  z-index: 5;
+  width: 43%;
+  top: 8.6%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.hero-window .namebar {
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 1cqw;
+  top: 16.5%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.hero-window .namebar .arrow {
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  width: 3.5cqw;
+  margin-top: 13%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.hero-window .namebar .arrow img {
+  width: 100%;
+}
+
+.hero-window .nameplate {
+  display: grid;
+  place-items: center;
+  min-width: 18cqw;
+  position: relative;
+}
+
+.hero-window .nameplate img {
+  width: 100%;
+  min-width: 18cqw;
+}
+
+.hero-window .nameplate span {
+  position: absolute;
+  top: 64%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #f6e6c0;
+  white-space: nowrap;
+  text-shadow: 1px 1px #000;
+  font-size: 3.1cqw;
+  font-weight: 700;
+}
+
+.hero-window .portrait {
+  z-index: 2;
+  width: 27%;
+  height: 17.2%;
+  object-fit: contain;
+  top: 21.3%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.hero-window .levelbar {
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  top: 30.9%;
+  left: 50%;
+  transform: translate(-50%);
+}
+
+.hero-window .levelbar .lv {
+  color: #fff;
+  text-shadow: 1px 1px #000;
+  font-size: 4cqw;
+  font-weight: 700;
+}
+
+.hero-window .exp {
+  aspect-ratio: 56 / 10;
+  width: 18.5cqw;
+  position: relative;
+}
+
+.hero-window .exp-bg {
+  width: 100%;
+  height: 150%;
+  position: absolute;
+  inset: 0;
+}
+
+.hero-window .exp-fill {
+  height: 85%;
+  image-rendering: pixelated;
+  background: url('https://www.taskbarhero.wiki/game/ui/ExpSlider_Fill.png') 0 0 / 100% 100%;
+  position: absolute;
+  top: 34%;
+  left: 3.6%;
+  max-width: 92%;
+}
+
+.game-slot-wrap {
+  position: absolute;
+  width: 12.6%;
+  aspect-ratio: 1;
+  z-index: 2;
+}
+
+.game-slot {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.game-slot:hover {
+  filter: brightness(1.1);
+}
+
+.game-slot .slot-frame,
+.game-slot .slot-grade,
+.game-slot .slot-icon {
+  position: absolute;
+  inset: 0;
+}
+
+.game-slot .slot-frame {
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.game-slot .slot-grade {
+  z-index: 1;
+  width: 84%;
+  height: 84%;
+  inset: 8%;
+}
+
+.game-slot .slot-icon {
+  z-index: 2;
+  width: 88%;
+  height: 88%;
+  inset: 6%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.game-socket-btn {
+  position: absolute;
+  top: -6%;
+  right: -10%;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--gold);
+  background: #46381a;
+  color: var(--gold);
+  font-size: 0.5rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 4;
+}
+
+.hero-window .herolist {
+  z-index: 3;
+  display: flex;
+  gap: 0.4cqw;
+  top: 39.2%;
+  left: 50%;
+  transform: translate(-50%);
+  max-width: 88%;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+}
+
+.hero-window .hslot {
+  aspect-ratio: 30 / 45;
+  width: 36px;
+  flex: 0 0 auto;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  position: relative;
+}
+
+.hero-window .hslot-inner {
+  z-index: 0;
+  background: linear-gradient(#fcf7ea 0%, #efe3c8 100%);
+  border-radius: 14%;
+  display: grid;
+  place-items: center;
+  position: absolute;
+  inset: 7%;
+  overflow: hidden;
+}
+
+.hero-window .hslot-portrait {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.hero-window .hslot-frame,
+.hero-window .hslot-hover,
+.hero-window .hslot-active {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.hero-window .hslot-frame {
+  z-index: 1;
+}
+
+.hero-window .hslot-hover {
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 80ms;
+}
+
+.hero-window .hslot:hover .hslot-hover {
+  opacity: 1;
+}
+
+.hero-window .hslot-active {
+  z-index: 3;
+  pointer-events: none;
+}
+
+.hero-window .hslot.on {
+  filter: drop-shadow(0 0 0.55cqw #54fc0cd9);
+}
+
+.sim-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.sim-tab {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+}
+
+.sim-tab.active {
+  color: var(--gold);
+  border-color: var(--gold);
+  border-bottom-color: var(--panel);
+  background: var(--panel);
+}
+
+.sim-tab-panel {
+  border-top-left-radius: 0;
+}
+
+.skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 420px;
+  overflow: auto;
+}
+
+.skill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #15121f;
+}
+
+.skill-row-main {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.skill-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  image-rendering: pixelated;
+}
+
+.skill-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.skill-level {
+  min-width: 2rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .hero-window {
+    width: min(360px, 100%);
+  }
 }
 
 @media (max-width: 900px) {

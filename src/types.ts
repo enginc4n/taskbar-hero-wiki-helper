@@ -90,6 +90,8 @@ export interface EnrichedHero {
   description?: string;
   mainWeapon?: string;
   subWeapon?: string;
+  icon?: string;
+  art?: string;
   stats: HeroStatLine[];
   tree: HeroTreeGroup[];
 }

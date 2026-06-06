@@ -1,4 +1,5 @@
 import type { EnrichedItem, MetaData } from '../types';
+import { itemIconHtml } from '../data/icons';
 import {
   DEFAULT_GEAR_FILTER,
   filterGear,
@@ -70,6 +71,7 @@ export function renderGearPage(root: HTMLElement, ctx: GearPageContext): void {
               const unob = item.obtainable === false ? ' unobtainable' : '';
               return `
                 <article class="gear-card${unob}">
+                  ${itemIconHtml(item.icon, item.name)}
                   <h3 class="${gradeClass(item.grade)}">${item.name}${item.variant ? ` (${item.variant})` : ''}</h3>
                   <div class="meta">${item.grade} · Lv${item.level ?? '?'} · ${item.gearType ?? 'Gear'}</div>
                   ${affix ? `<div class="meta">${affix}</div>` : ''}
