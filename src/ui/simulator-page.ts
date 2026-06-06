@@ -93,6 +93,30 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     return slots.decoration + slots.engraving + slots.inscription > 0;
   }
 
+  function drawHeroPicker(): string {
+    const heroList = ctx.heroes
+      .map((h) => {
+        const selected = h.key === state.heroKey;
+        const icon = itemIconUrl(h.icon ?? h.art);
+        return `
+          <button type="button" class="hslot${selected ? ' on' : ''}" data-action="hero-pick" data-key="${h.key}" title="${h.name}">
+            <span class="hslot-inner">
+              ${icon ? `<img class="hslot-portrait" src="${icon}" alt="" loading="lazy" />` : h.name[0]}
+            </span>
+            <img class="hslot-frame" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
+            <img class="hslot-hover" src="${gameUiUrl('HeroSlot_InnerBoader_Hover.png')}" alt="" />
+            ${selected ? `<img class="hslot-active" src="${gameUiUrl('HeroSlot_InnerBoader_Active.png')}" alt="" />` : ''}
+          </button>`;
+      })
+      .join('');
+
+    return `
+      <section class="hero-picker-bar panel" aria-label="Select hero">
+        <h3 class="hero-picker-title">Heroes</h3>
+        <div class="herolist">${heroList}</div>
+      </section>`;
+  }
+
   function drawHeroWindow(): string {
     const hero = heroDef();
     const save = heroSave();
@@ -111,22 +135,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         })(),
       }),
     ).join('');
-
-    const heroList = ctx.heroes
-      .map((h) => {
-        const selected = h.key === state.heroKey;
-        const icon = itemIconUrl(h.icon ?? h.art);
-        return `
-          <button type="button" class="hslot${selected ? ' on' : ''}" data-action="hero-pick" data-key="${h.key}" title="${h.name}">
-            <span class="hslot-inner">
-              ${icon ? `<img class="hslot-portrait" src="${icon}" alt="" loading="lazy" />` : h.name[0]}
-            </span>
-            <img class="hslot-frame" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
-            <img class="hslot-hover" src="${gameUiUrl('HeroSlot_InnerBoader_Hover.png')}" alt="" />
-            ${selected ? `<img class="hslot-active" src="${gameUiUrl('HeroSlot_InnerBoader_Active.png')}" alt="" />` : ''}
-          </button>`;
-      })
-      .join('');
 
     return `
       <section class="hero-window" aria-label="Hero equipment">
@@ -165,8 +173,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         </div>
 
         ${gearSlots}
-
-        <div class="abs herolist">${heroList}</div>
         </div>
       </section>`;
   }
@@ -288,6 +294,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       ${drawStats()}
       ${drawHeroWindow()}
       ${drawTabPanel()}
+      ${drawHeroPicker()}
       <div id="sim-modal"></div>
     `;
     bindEvents();
