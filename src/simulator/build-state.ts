@@ -1,0 +1,236 @@
+import type {
+  EffectGroup,
+  EffectMaterial,
+  EnchantEntry,
+  EnrichedHero,
+  EnrichedItem,
+  HeroPart,
+  HeroSaveData,
+  ItemSaveData,
+  PlayerSaveData,
+  RuneSaveEntry,
+} from '../types';
+import { HERO_PARTS, STAT_TYPE_BY_NAME } from '../types';
+import { enrichedItemToDetail } from '../data/adapters';
+
+let nextUniqueId = 1_000_000;
+
+export function clonePlayerSave(save: PlayerSaveData): PlayerSaveData {
+  return structuredClone(save);
+}
+
+export function createEmptySave(heroKey: number): PlayerSaveData {
+  return {
+    heroSaveDatas: [
+      {
+        heroKey,
+        IsUnLock: true,
+        Level: 1,
+        Exp: 0,
+        equippedItemIds: new Array(HERO_PARTS.length).fill(null),
+      },
+    ],
+    itemSaveDatas: [],
+    RuneSaveData: [],
+    attributeSaveDatas: [],
+    PetSaveData: [],
+    currenySaveDatas: [{ Key: 100001, Quantity: 0 }],
+    commonSaveData: { arrangedHeroKey: [heroKey] },
+    inventorySaveDatas: [],
+  };
+}
+
+export function getSelectedHero(save: PlayerSaveData, heroKey: number): HeroSaveData | undefined {
+  return save.heroSaveDatas.find((h) => h.heroKey === heroKey);
+}
+
+export function partIndex(part: HeroPart): number {
+  return HERO_PARTS.indexOf(part);
+}
+
+export function findEquippedItem(
+  save: PlayerSaveData,
+  hero: HeroSaveData,
+  part: HeroPart,
+): { inst: ItemSaveData; item: EnrichedItem | undefined } | null {
+  const uid = hero.equippedItemIds[partIndex(part)];
+  if (!uid) return null;
+  const inst = save.itemSaveDatas.find((i) => String(i.UniqueId) === String(uid));
+  if (!inst) return null;
+  return { inst, item: undefined };
+}
+
+export function equipItem(
+  save: PlayerSaveData,
+  hero: HeroSaveData,
+  part: HeroPart,
+  item: EnrichedItem,
+  itemsByKey: Map<number, EnrichedItem>,
+): void {
+  const idx = partIndex(part);
+  if (item.parts && item.parts !== part) {
+    throw new Error(`${item.name} cannot be equipped in ${part}`);
+  }
+
+  const uniqueId = nextUniqueId++;
+  const inst: ItemSaveData = {
+    UniqueId: uniqueId,
+    ItemKey: item.key,
+    EnchantData: [],
+  };
+
+  save.itemSaveDatas.push(inst);
+  hero.equippedItemIds[idx] = uniqueId;
+  itemsByKey.set(item.key, item);
+}
+
+export function unequipPart(_save: PlayerSaveData, hero: HeroSaveData, part: HeroPart): void {
+  const idx = partIndex(part);
+  hero.equippedItemIds[idx] = null;
+}
+
+export function modTypeToNumber(mod: string): number {
+  if (mod === 'ADDITIVE') return 1;
+  if (mod === 'MULTIPLICATIVE') return 2;
+  return 0;
+}
+
+export function enchantFromEffect(group: EffectGroup, value: number): EnchantEntry {
+  return {
+    StatModKey: 0,
+    StatType: STAT_TYPE_BY_NAME[group.stat] ?? 0,
+    ModType: modTypeToNumber(group.mod),
+    Value: value,
+  };
+}
+
+export function getEffectGroupsForGear(
+  material: EffectMaterial,
+  gear: EnrichedItem,
+): EffectGroup[] {
+  const slotName =
+    gear.gearGroup === 'WEAPON'
+      ? 'Weapon'
+      : gear.gearGroup === 'ARMOR'
+        ? 'Armor'
+        : gear.gearGroup === 'ACCESSORY'
+          ? 'Accessory'
+          : 'All';
+
+  if (material.category === 'INSCRIPTION') {
+    return material.groups.filter((g) => g.slot === 'All' || g.slot === slotName);
+  }
+  return material.groups.filter((g) => g.slot === slotName);
+}
+
+export interface SocketSlotState {
+  category: 'DECORATION' | 'ENGRAVING' | 'INSCRIPTION';
+  index: number;
+  materialKey: number | null;
+  groupIndex: number;
+  roll: 'min' | 'max' | 'mid';
+}
+
+export function getSocketSlots(gear: EnrichedItem): { category: SocketSlotState['category']; count: number }[] {
+  const slots = gear.slots ?? { decoration: 0, engraving: 0, inscription: 0 };
+  const rows: { category: SocketSlotState['category']; count: number }[] = [
+    { category: 'DECORATION', count: slots.decoration },
+    { category: 'ENGRAVING', count: slots.engraving },
+    { category: 'INSCRIPTION', count: slots.inscription },
+  ];
+  return rows.filter((s) => s.count > 0);
+}
+
+export function applySocketsToItem(
+  inst: ItemSaveData,
+  gear: EnrichedItem,
+  socketStates: SocketSlotState[],
+  effectsByKey: Map<number, EffectMaterial>,
+): void {
+  const enchants: EnchantEntry[] = [];
+
+  for (const slot of socketStates) {
+    if (slot.materialKey == null) continue;
+    const material = effectsByKey.get(slot.materialKey);
+    if (!material) continue;
+    const groups = getEffectGroupsForGear(material, gear);
+    const group = groups[slot.groupIndex] ?? groups[0];
+    if (!group) continue;
+
+    const value =
+      slot.roll === 'min' ? group.min : slot.roll === 'max' ? group.max : (group.min + group.max) / 2;
+    enchants.push(enchantFromEffect(group, value));
+  }
+
+  inst.EnchantData = enchants;
+}
+
+export function setPassiveLevel(
+  save: PlayerSaveData,
+  passiveKey: number,
+  level: number,
+  maxLevel: number,
+): void {
+  const clamped = Math.max(0, Math.min(maxLevel, level));
+  const list = save.attributeSaveDatas ?? [];
+  const idx = list.findIndex((a) => a.Key === passiveKey);
+  if (idx >= 0) {
+    if (clamped === 0) list.splice(idx, 1);
+    else list[idx].Level = clamped;
+  } else if (clamped > 0) {
+    list.push({ Key: passiveKey, Level: clamped });
+  }
+  save.attributeSaveDatas = list;
+}
+
+export function setRuneLevel(save: PlayerSaveData, runeKey: number, level: number, maxLevel: number): void {
+  const list = save.RuneSaveData ?? [];
+  const idx = list.findIndex((r) => r.RuneKey === runeKey);
+  const clamped = Math.max(0, Math.min(maxLevel, level));
+  if (idx >= 0) {
+    if (clamped === 0) list.splice(idx, 1);
+    else list[idx].Level = clamped;
+  } else if (clamped > 0) {
+    list.push({ RuneKey: runeKey, Level: clamped });
+  }
+  save.RuneSaveData = list;
+}
+
+export function getRuneLevel(save: PlayerSaveData, runeKey: number): number {
+  return save.RuneSaveData?.find((r) => r.RuneKey === runeKey)?.Level ?? 0;
+}
+
+export function ensureItemDetailsForSave(
+  save: PlayerSaveData,
+  itemsByKey: Map<number, EnrichedItem>,
+  itemDetailById: Map<string | number, import('../types').WikiItemDetail>,
+): void {
+  for (const inst of save.itemSaveDatas) {
+    if (itemDetailById.has(inst.ItemKey) || itemDetailById.has(String(inst.ItemKey))) continue;
+    const enriched = itemsByKey.get(inst.ItemKey);
+    if (!enriched) continue;
+    const detail = enrichedItemToDetail(enriched);
+    if (detail) itemDetailById.set(String(inst.ItemKey), detail);
+  }
+}
+
+export function buildItemsMap(items: EnrichedItem[]): Map<number, EnrichedItem> {
+  return new Map(items.map((i) => [i.key, i]));
+}
+
+export function listPassiveNodes(hero: EnrichedHero) {
+  return hero.tree.flatMap((g) => g.nodes.filter((n) => n.kind === 'passive' && n.stat && n.stat !== 'NONE'));
+}
+
+export function syncSaveItemKeys(save: PlayerSaveData, items: EnrichedItem[]): Map<number, EnrichedItem> {
+  const map = buildItemsMap(items);
+  for (const inst of save.itemSaveDatas) {
+    if (!map.has(inst.ItemKey)) {
+      const wikiItem = items.find((i) => i.key === inst.ItemKey);
+      if (wikiItem) map.set(inst.ItemKey, wikiItem);
+    }
+  }
+  return map;
+}
+
+export type { RuneSaveEntry };
