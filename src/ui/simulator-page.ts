@@ -148,19 +148,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         <img class="frame" src="${heroWindowBgUrl()}" alt="" />
         <img class="abs title" src="${gameUiUrl('TextImage_Hero_Eng.png')}" alt="Hero" />
 
-        <div class="abs namebar">
-          <button type="button" class="arrow" data-action="hero-prev" aria-label="Previous hero">
-            <img src="${gameUiUrl('ChaChangeButton_Left_Active.png')}" alt="" />
-          </button>
-          <div class="nameplate">
-            <img src="${gameUiUrl('Arrange_NamePlate_Character.png')}" alt="" />
-            <span>${hero.name}</span>
-          </div>
-          <button type="button" class="arrow" data-action="hero-next" aria-label="Next hero">
-            <img src="${gameUiUrl('ChaChangeButton_Right_Active.png')}" alt="" />
-          </button>
-        </div>
-
         <img
           class="abs portrait"
           src="${heroIllustUrl(hero.key, 0)}"
@@ -625,18 +612,6 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
 
     root.querySelectorAll('[data-action="hero-pick"]').forEach((el) => {
       el.addEventListener('click', () => selectHero(Number(el.getAttribute('data-key'))));
-    });
-
-    root.querySelector('[data-action="hero-prev"]')?.addEventListener('click', () => {
-      const idx = ctx.heroes.findIndex((h) => h.key === state.heroKey);
-      const next = (idx - 1 + ctx.heroes.length) % ctx.heroes.length;
-      selectHero(ctx.heroes[next]?.key ?? state.heroKey);
-    });
-
-    root.querySelector('[data-action="hero-next"]')?.addEventListener('click', () => {
-      const idx = ctx.heroes.findIndex((h) => h.key === state.heroKey);
-      const next = (idx + 1) % ctx.heroes.length;
-      selectHero(ctx.heroes[next]?.key ?? state.heroKey);
     });
 
     root.querySelectorAll('[data-action="pick-gear"]').forEach((el) => {

@@ -13,6 +13,10 @@ export function heroWindowBgUrl(): string {
   return bundledGameUiUrl('bg_hero.png');
 }
 
+export function slotFrameUrl(file: string): string {
+  return bundledGameUiUrl(`slots/${file}`);
+}
+
 export const HERO_ILLUST_CLASS: Record<number, string> = {
   101: 'Knight',
   201: 'Ranger',
@@ -30,16 +34,16 @@ export interface GearSlotLayout {
 }
 
 export const GEAR_SLOT_LAYOUT: GearSlotLayout[] = [
-  { part: 'MAIN_WEAPON', left: 9.5, top: 21, frame: 'Slot_Gear_MainWeapon_Active.png' },
-  { part: 'SUB_WEAPON', left: 23, top: 21, frame: 'Slot_Gear_SubWeapon_Active.png' },
-  { part: 'HELMET', left: 9.5, top: 30.5, frame: 'Slot_Gear_Helmet_Active.png' },
-  { part: 'ARMOR', left: 23, top: 30.5, frame: 'Slot_Gear_Armor_Active.png' },
-  { part: 'GLOVES', left: 9.5, top: 40, frame: 'Slot_Gear_Gloves_Active.png' },
-  { part: 'BOOTS', left: 23, top: 40, frame: 'Slot_Gear_Boots_Active.png' },
-  { part: 'AMULET', left: 65.5, top: 21, frame: 'Slot_Gear_Amulet_Active.png' },
-  { part: 'EARING', left: 79, top: 21, frame: 'Slot_Gear_Ring2.png' },
-  { part: 'RING', left: 65.5, top: 30.5, frame: 'Slot_Gear_Ring_Active.png' },
-  { part: 'BRACER', left: 79, top: 30.5, frame: 'Slot_Gear_Bracer_Active.png' },
+  { part: 'MAIN_WEAPON', left: 5.5, top: 37, frame: 'Slot_Gear_MainWeapon_Active.png' },
+  { part: 'SUB_WEAPON', left: 16, top: 37, frame: 'Slot_Gear_SubWeapon_Active.png' },
+  { part: 'HELMET', left: 5.5, top: 49, frame: 'Slot_Gear_Helmet_Active.png' },
+  { part: 'ARMOR', left: 16, top: 49, frame: 'Slot_Gear_Armor_Active.png' },
+  { part: 'GLOVES', left: 5.5, top: 61, frame: 'Slot_Gear_Gloves_Active.png' },
+  { part: 'BOOTS', left: 16, top: 61, frame: 'Slot_Gear_Boots_Active.png' },
+  { part: 'AMULET', left: 74, top: 37, frame: 'Slot_Gear_Amulet_Active.png' },
+  { part: 'EARING', left: 85, top: 37, frame: 'Slot_Gear_Ring2.png' },
+  { part: 'RING', left: 74, top: 49, frame: 'Slot_Gear_Ring_Active.png' },
+  { part: 'BRACER', left: 85, top: 49, frame: 'Slot_Gear_Bracer_Active.png' },
 ];
 
 export function gameUiUrl(file: string): string {
@@ -78,9 +82,9 @@ export function renderGearSlotHtml(options: {
         data-part="${layout.part}"
         title="${item?.name ?? layout.part.replace('_', ' ')}"
       >
-        <img class="slot-frame" src="${gameUiUrl(layout.frame)}" alt="" />
+        <img class="slot-frame" src="${slotFrameUrl(layout.frame)}" alt="" />
         ${gradeBg ? `<img class="slot-grade" src="${gradeBg}" alt="" />` : ''}
-        ${iconUrl ? `<img class="slot-icon" src="${iconUrl}" alt="" />` : `<img class="slot-empty" src="${gameUiUrl('ItemSlot_Icon_NoEquip.png')}" alt="" />`}
+        ${iconUrl ? `<img class="slot-icon" src="${iconUrl}" alt="" />` : `<img class="slot-empty" src="${slotFrameUrl('ItemSlot_Icon_NoEquip.png')}" alt="" />`}
       </button>
       ${
         item && hasSockets
