@@ -1,9 +1,11 @@
 import { mergeRefMaps, buildRefMaps, enrichedItemToDetail } from '../data/adapters';
 import {
-  GEAR_SLOT_LAYOUT,
+  HERO_GEAR_LEFT,
+  HERO_GEAR_RIGHT,
+  HERO_ILLUST_FRAME_MS,
   gameUiUrl,
+  heroIllustFrameCount,
   heroIllustUrl,
-  heroWindowBgUrl,
   renderGearSlotHtml,
 } from '../data/game-ui';
 import { itemIconHtml, itemIconUrl, runeIconUrl } from '../data/icons';
@@ -83,6 +85,33 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     socketDraft: new Map(),
   };
 
+  let portraitAnimTimer: ReturnType<typeof setInterval> | null = null;
+
+  function stopPortraitAnim(): void {
+    if (portraitAnimTimer !== null) {
+      clearInterval(portraitAnimTimer);
+      portraitAnimTimer = null;
+    }
+  }
+
+  function startPortraitAnim(): void {
+    stopPortraitAnim();
+    const img = root.querySelector<HTMLImageElement>('.hero-portrait');
+    if (!img) return;
+
+    const heroKey = state.heroKey;
+    const frameCount = heroIllustFrameCount(heroKey);
+    if (frameCount <= 1) return;
+
+    let frame = 0;
+    img.src = heroIllustUrl(heroKey, frame);
+
+    portraitAnimTimer = setInterval(() => {
+      frame = (frame + 1) % frameCount;
+      img.src = heroIllustUrl(heroKey, frame);
+    }, HERO_ILLUST_FRAME_MS);
+  }
+
   function itemForPart(part: HeroPart): EnrichedItem | undefined {
     const hero = heroSave();
     if (!hero) return undefined;
@@ -131,39 +160,52 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     const level = save.Level ?? 1;
     const expPct = 72;
 
-    const gearSlots = GEAR_SLOT_LAYOUT.map((layout) =>
-      renderGearSlotHtml({
-        layout,
-        item: itemForPart(layout.part),
-        hasSockets: (() => {
-          const item = itemForPart(layout.part);
-          return item ? itemHasSockets(item) : false;
-        })(),
-      }),
-    ).join('');
+    function gearSideHtml(rows: HeroPart[][]): string {
+      return rows
+        .map(
+          (row) => `
+        <div class="hero-gear-row">
+          ${row
+            .map((part) =>
+              renderGearSlotHtml({
+                part,
+                item: itemForPart(part),
+                hasSockets: (() => {
+                  const item = itemForPart(part);
+                  return item ? itemHasSockets(item) : false;
+                })(),
+              }),
+            )
+            .join('')}
+        </div>`,
+        )
+        .join('');
+    }
 
     return `
-      <section class="hero-window" aria-label="Hero equipment">
-        <div class="hero-window-stage">
-        <img class="frame" src="${heroWindowBgUrl()}" alt="" />
-        <img class="abs title" src="${gameUiUrl('TextImage_Hero_Eng.png')}" alt="Hero" />
-
-        <img
-          class="abs portrait"
-          src="${heroIllustUrl(hero.key, 0)}"
-          alt="${hero.name}"
-          loading="lazy"
-        />
-
-        <div class="abs levelbar">
-          <span class="lv">Lv.${level}</span>
-          <div class="exp">
-            <img class="exp-bg" src="${gameUiUrl('ExpSlider_Bg.png')}" alt="" />
-            <div class="exp-fill" style="width:${expPct}%"></div>
+      <section class="hero-window panel" aria-label="Hero equipment">
+        <header class="hero-window-header">
+          <span class="hero-window-title">Hero</span>
+          <span class="hero-window-name">${hero.name}</span>
+        </header>
+        <div class="hero-window-body">
+          <div class="hero-gear-side hero-gear-left">${gearSideHtml(HERO_GEAR_LEFT)}</div>
+          <div class="hero-center">
+            <img
+              class="hero-portrait"
+              src="${heroIllustUrl(hero.key, 0)}"
+              alt="${hero.name}"
+              loading="lazy"
+            />
+            <div class="hero-levelbar">
+              <span class="lv">Lv.${level}</span>
+              <div class="exp">
+                <img class="exp-bg" src="${gameUiUrl('ExpSlider_Bg.png')}" alt="" />
+                <div class="exp-fill" style="width:${expPct}%"></div>
+              </div>
+            </div>
           </div>
-        </div>
-
-        ${gearSlots}
+          <div class="hero-gear-side hero-gear-right">${gearSideHtml(HERO_GEAR_RIGHT)}</div>
         </div>
       </section>`;
   }
@@ -334,6 +376,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   }
 
   function draw(): void {
+    stopPortraitAnim();
     root.innerHTML = `
       <div class="sim-toolbar panel">
         <label class="toolbar-btn">Load save (.es3)
@@ -348,6 +391,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       <div id="sim-modal"></div>
     `;
     bindEvents();
+    startPortraitAnim();
   }
 
   function selectHero(key: number): void {

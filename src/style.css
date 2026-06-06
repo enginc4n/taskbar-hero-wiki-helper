@@ -238,103 +238,120 @@ button:hover {
   filter: brightness(1.08);
 }
 
-/* Build Simulator — hero window (local bg_hero.png) */
+/* Build Simulator — hero equipment panel (grid layout) */
 .hero-window {
-  width: min(430px, 100%);
+  width: min(380px, 100%);
   max-width: calc(100vw - 28px);
   margin: 0 auto 1rem;
-  aspect-ratio: 1037 / 924;
-  position: relative;
-}
-
-.hero-window-stage {
-  width: 100%;
-  aspect-ratio: 1037 / 924;
-  position: relative;
-  container-type: inline-size;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid #3a3530;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #2a2620 0%, #1e1a18 9%, #c4a574 9%, #d8c4a0 100%);
   image-rendering: pixelated;
   user-select: none;
 }
 
-.hero-window .frame {
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  inset: 0;
-  object-fit: fill;
-}
-
-.hero-window .abs {
-  position: absolute;
-}
-
-.hero-window .decor {
-  z-index: 1;
-  width: 95%;
-  top: 16.4%;
-  left: 50%;
-  transform: translate(-50%);
-}
-
-.hero-window .dragon {
-  z-index: 4;
-  width: 31%;
-  top: -1.2%;
-  left: 50%;
-  transform: translate(-50%);
-}
-
-.hero-window .title {
-  z-index: 5;
-  width: 36%;
-  top: 11%;
-  left: 50%;
-  transform: translate(-50%);
-}
-
-.hero-window .portrait {
-  z-index: 2;
-  width: 24%;
-  height: 30%;
-  object-fit: contain;
-  top: 44%;
-  left: 50%;
-  transform: translate(-50%);
-}
-
-.hero-window .levelbar {
-  z-index: 3;
+.hero-window-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  top: 76%;
-  left: 50%;
-  transform: translate(-50%);
+  gap: 0.15rem;
+  padding: 0.55rem 1rem 0.65rem;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.25), transparent),
+    linear-gradient(90deg, #6b1818 0%, #9a2828 50%, #6b1818 100%);
+  border-bottom: 2px solid #4a1010;
+  box-shadow: inset 0 1px 0 rgba(255, 200, 120, 0.15);
 }
 
-.hero-window .levelbar .lv {
+.hero-window-title {
+  color: #f0a030;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-shadow: 2px 2px 0 #3a1808, -1px -1px 0 #3a1808;
+}
+
+.hero-window-name {
+  color: #f6e6c0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-shadow: 1px 1px #000;
+}
+
+.hero-window-body {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.75rem 0.55rem;
+}
+
+.hero-gear-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.hero-gear-row {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.hero-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.5rem 0.35rem;
+  background: rgba(255, 248, 230, 0.35);
+  border: 2px solid #8b6914;
+  border-radius: 6px;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.08);
+}
+
+.hero-portrait {
+  width: 100%;
+  max-width: 130px;
+  height: auto;
+  max-height: 120px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.hero-levelbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  max-width: 150px;
+}
+
+.hero-levelbar .lv {
   color: #fff;
   text-shadow: 1px 1px #000;
-  font-size: 4cqw;
+  font-size: 0.95rem;
   font-weight: 700;
 }
 
-.hero-window .exp {
+.hero-levelbar .exp {
   aspect-ratio: 56 / 10;
-  width: 18.5cqw;
+  width: 100%;
   position: relative;
 }
 
-.hero-window .exp-bg {
+.hero-levelbar .exp-bg {
   width: 100%;
   height: 150%;
   position: absolute;
   inset: 0;
 }
 
-.hero-window .exp-fill {
+.hero-levelbar .exp-fill {
   height: 85%;
   image-rendering: pixelated;
   background: url('https://www.taskbarhero.wiki/game/ui/ExpSlider_Fill.png') 0 0 / 100% 100%;
@@ -345,11 +362,10 @@ button:hover {
 }
 
 .game-slot-wrap {
-  position: absolute;
-  width: 9cqw;
-  aspect-ratio: 1;
-  z-index: 2;
-  pointer-events: auto;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
 }
 
 .game-slot {

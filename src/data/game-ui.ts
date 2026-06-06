@@ -9,10 +9,6 @@ export function bundledGameUiUrl(relativePath: string): string {
   return `${import.meta.env.BASE_URL}game-ui/${relativePath}`.replace(/\/{2,}/g, '/');
 }
 
-export function heroWindowBgUrl(): string {
-  return bundledGameUiUrl('bg_hero.png');
-}
-
 export function slotFrameUrl(file: string): string {
   return bundledGameUiUrl(`slots/${file}`);
 }
@@ -26,24 +22,41 @@ export const HERO_ILLUST_CLASS: Record<number, string> = {
   601: 'Slayer',
 };
 
-export interface GearSlotLayout {
-  part: HeroPart;
-  left: number;
-  top: number;
-  frame: string;
-}
+/** Idle animation frame count per hero (Inventory_ChaIllust_*_Mid_Anim_N). */
+export const HERO_ILLUST_FRAME_COUNT: Record<number, number> = {
+  101: 9,
+  201: 9,
+  301: 9,
+  401: 9,
+  501: 9,
+  601: 11,
+};
 
-export const GEAR_SLOT_LAYOUT: GearSlotLayout[] = [
-  { part: 'MAIN_WEAPON', left: 5.5, top: 37, frame: 'Slot_Gear_MainWeapon_Active.png' },
-  { part: 'SUB_WEAPON', left: 16, top: 37, frame: 'Slot_Gear_SubWeapon_Active.png' },
-  { part: 'HELMET', left: 5.5, top: 49, frame: 'Slot_Gear_Helmet_Active.png' },
-  { part: 'ARMOR', left: 16, top: 49, frame: 'Slot_Gear_Armor_Active.png' },
-  { part: 'GLOVES', left: 5.5, top: 61, frame: 'Slot_Gear_Gloves_Active.png' },
-  { part: 'BOOTS', left: 16, top: 61, frame: 'Slot_Gear_Boots_Active.png' },
-  { part: 'AMULET', left: 74, top: 37, frame: 'Slot_Gear_Amulet_Active.png' },
-  { part: 'EARING', left: 85, top: 37, frame: 'Slot_Gear_Ring2.png' },
-  { part: 'RING', left: 74, top: 49, frame: 'Slot_Gear_Ring_Active.png' },
-  { part: 'BRACER', left: 85, top: 49, frame: 'Slot_Gear_Bracer_Active.png' },
+export const HERO_ILLUST_FRAME_MS = 110;
+
+export const GEAR_SLOT_FRAMES: Record<HeroPart, string> = {
+  MAIN_WEAPON: 'Slot_Gear_MainWeapon_Active.png',
+  SUB_WEAPON: 'Slot_Gear_SubWeapon_Active.png',
+  HELMET: 'Slot_Gear_Helmet_Active.png',
+  ARMOR: 'Slot_Gear_Armor_Active.png',
+  GLOVES: 'Slot_Gear_Gloves_Active.png',
+  BOOTS: 'Slot_Gear_Boots_Active.png',
+  AMULET: 'Slot_Gear_Amulet_Active.png',
+  EARING: 'Slot_Gear_Ring2.png',
+  RING: 'Slot_Gear_Ring_Active.png',
+  BRACER: 'Slot_Gear_Bracer_Active.png',
+};
+
+/** Left/right gear columns for the hero equipment grid. */
+export const HERO_GEAR_LEFT: HeroPart[][] = [
+  ['MAIN_WEAPON', 'SUB_WEAPON'],
+  ['HELMET', 'ARMOR'],
+  ['GLOVES', 'BOOTS'],
+];
+
+export const HERO_GEAR_RIGHT: HeroPart[][] = [
+  ['AMULET', 'EARING'],
+  ['RING', 'BRACER'],
 ];
 
 export function gameUiUrl(file: string): string {
@@ -60,35 +73,39 @@ export function heroIllustUrl(heroKey: number, frame = 0): string {
   return gameUiUrl(`Inventory_ChaIllust_${cls}_Mid_Anim_${frame}.png`);
 }
 
+export function heroIllustFrameCount(heroKey: number): number {
+  return HERO_ILLUST_FRAME_COUNT[heroKey] ?? 9;
+}
+
 export function heroIllustClass(hero: EnrichedHero): string {
   return HERO_ILLUST_CLASS[hero.key] ?? hero.class.replace('Hunter', 'Abalist');
 }
 
 export function renderGearSlotHtml(options: {
-  layout: GearSlotLayout;
+  part: HeroPart;
   item?: EnrichedItem | null;
   hasSockets?: boolean;
 }): string {
-  const { layout, item, hasSockets } = options;
+  const { part, item, hasSockets } = options;
   const iconUrl = item?.icon ? itemIconUrl(item.icon) : null;
   const gradeBg = item ? gradeBgUrl(item.grade) : null;
 
   return `
-    <div class="game-slot-wrap" style="left:${layout.left}%;top:${layout.top}%">
+    <div class="game-slot-wrap">
       <button
         type="button"
         class="game-slot${item ? ' filled' : ''}"
         data-action="pick-gear"
-        data-part="${layout.part}"
-        title="${item?.name ?? layout.part.replace('_', ' ')}"
+        data-part="${part}"
+        title="${item?.name ?? part.replace('_', ' ')}"
       >
-        <img class="slot-frame" src="${slotFrameUrl(layout.frame)}" alt="" />
+        <img class="slot-frame" src="${slotFrameUrl(GEAR_SLOT_FRAMES[part])}" alt="" />
         ${gradeBg ? `<img class="slot-grade" src="${gradeBg}" alt="" />` : ''}
         ${iconUrl ? `<img class="slot-icon" src="${iconUrl}" alt="" />` : `<img class="slot-empty" src="${slotFrameUrl('ItemSlot_Icon_NoEquip.png')}" alt="" />`}
       </button>
       ${
         item && hasSockets
-          ? `<button type="button" class="game-socket-btn" data-action="edit-sockets" data-part="${layout.part}" title="Sockets">◆</button>`
+          ? `<button type="button" class="game-socket-btn" data-action="edit-sockets" data-part="${part}" title="Sockets">◆</button>`
           : ''
       }
     </div>`;
