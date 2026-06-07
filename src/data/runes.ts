@@ -95,6 +95,18 @@ export function runeBenefitLabel(rune: RuneNode): string {
   return rune.name;
 }
 
+export function formatRuneBonusAmount(value: number, isPercent: boolean): string {
+  if (value < 0) return `${value}${isPercent ? '%' : ''}`;
+  return `+${value}${isPercent ? '%' : ''}`;
+}
+
+/** Benefit with numeric bonus (e.g. +3 Attack Damage). Level 0 shows the level-1 increment. */
+export function runeBenefitDescription(rune: RuneNode, level: number): string {
+  const label = runeBenefitLabel(rune);
+  const { total, isPercent } = runeBonusTotalAtLevel(rune, level > 0 ? level : 1);
+  return `${formatRuneBonusAmount(total, isPercent)} ${label}`;
+}
+
 /** One rune card per hero combat stat (lowest tree key wins). */
 export function heroCombatRunesForPanel(runes: RuneNode[]): RuneNode[] {
   const order = new Map<string, number>(

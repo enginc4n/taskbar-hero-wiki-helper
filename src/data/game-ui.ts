@@ -32,7 +32,27 @@ export const HERO_ILLUST_FRAME_COUNT: Record<number, number> = {
   601: 11,
 };
 
-export const HERO_ILLUST_FRAME_MS = 110;
+/** Full idle portrait loop duration. */
+export const HERO_ILLUST_CYCLE_MS = 1000;
+
+export function heroIllustFrameMs(heroKey: number): number {
+  const count = heroIllustFrameCount(heroKey);
+  return Math.max(1, Math.round(HERO_ILLUST_CYCLE_MS / count));
+}
+
+/** Warm browser cache for all idle portrait frames before animating. */
+export function preloadHeroIllustFrames(heroKey: number): string[] {
+  const count = heroIllustFrameCount(heroKey);
+  const urls: string[] = [];
+  for (let frame = 0; frame < count; frame++) {
+    const url = heroIllustUrl(heroKey, frame);
+    urls.push(url);
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = url;
+  }
+  return urls;
+}
 
 export const GEAR_SLOT_FRAMES: Record<HeroPart, string> = {
   MAIN_WEAPON: 'Slot_Gear_MainWeapon_Active.png',
@@ -58,6 +78,18 @@ export const HERO_GEAR_RIGHT: HeroPart[][] = [
   ['AMULET', 'EARING'],
   ['RING', 'BRACER'],
 ];
+
+/** Single-column gear stacks for the hero loadout panel. */
+export const HERO_GEAR_LEFT_COL: HeroPart[] = [
+  'MAIN_WEAPON',
+  'SUB_WEAPON',
+  'HELMET',
+  'ARMOR',
+  'GLOVES',
+  'BOOTS',
+];
+
+export const HERO_GEAR_RIGHT_COL: HeroPart[] = ['AMULET', 'EARING', 'RING', 'BRACER'];
 
 export function gameUiUrl(file: string): string {
   return `${GAME_UI_BASE}/${file}`;
@@ -97,7 +129,7 @@ export function renderGearSlotHtml(options: {
     : `type="button" class="game-slot${item ? ' filled' : ''}" data-action="pick-gear" data-part="${part}" title="${item?.name ?? part.replace('_', ' ')}"`;
 
   return `
-    <div class="game-slot-wrap${readOnly ? ' is-readonly' : ''}">
+    <div class="game-slot-wrap${item ? ' is-filled' : ''}${readOnly ? ' is-readonly' : ''}">
       <${slotTag} ${slotAttrs}>
         <img class="slot-frame" src="${slotFrameUrl(GEAR_SLOT_FRAMES[part])}" alt="" />
         ${gradeBg ? `<img class="slot-grade" src="${gradeBg}" alt="" />` : ''}
