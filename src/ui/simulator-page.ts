@@ -268,7 +268,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   }
 
   function drawPreparedBuildsRail(): string {
-    if (workspaceMode !== 'prepared') return '';
+    if (workspaceMode !== 'prepared' || selectedPreparedBuild !== null) return '';
 
     const cards = preparedManifest
       .map((entry) => {
@@ -302,6 +302,17 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       </section>`;
   }
 
+  function drawPreparedLevelBar(): string {
+    if (!isPreparedReadOnly()) return '';
+
+    return `
+      <section class="prepared-level-top rpg-panel" aria-label="Hero level preview">
+        <div class="rpg-panel-inner prepared-level-panel-inner">
+          ${drawChronicleLevelScrubber()}
+        </div>
+      </section>`;
+  }
+
   function drawPreparedEmptyState(): string {
     return `
       <div class="prepared-empty-state rpg-panel">
@@ -327,7 +338,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
           </div>
           ${drawRuneVaultButton()}
         </div>
-        <p class="hero-desc">${desc}</p>
+        ${workspaceMode !== 'prepared' ? `<p class="hero-desc">${desc}</p>` : ''}
       </section>`;
   }
 
@@ -703,7 +714,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   }
 
   function syncPreparedLevelPanelUi(): void {
-    const panel = root.querySelector('.prepared-level-panel');
+    const panel = root.querySelector('.prepared-level-top');
     if (!panel) return;
 
     const level = PREPARED_LEVEL_STEPS[preparedLevelIndex] ?? 1;
@@ -725,19 +736,30 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     }
   }
 
-  function mountPreparedLevelPanel(): void {
-    root.querySelector('.prepared-level-panel')?.remove();
+  function syncPreparedHeightAlign(): void {
     if (!isPreparedReadOnly()) return;
 
-    const col = root.querySelector('.chronicle-col');
-    if (!col) return;
+    const side = root.querySelector<HTMLElement>('.prepared-hero-hall');
+    const col = root.querySelector<HTMLElement>('.chronicle-col');
+    if (!side || !col) return;
 
-    const panel = document.createElement('div');
-    panel.className = 'prepared-level-panel rpg-panel';
-    panel.setAttribute('aria-label', 'Hero level preview');
-    panel.innerHTML = `<div class="rpg-panel-inner prepared-level-panel-inner">${drawChronicleLevelScrubber()}</div>`;
-    col.insertBefore(panel, col.firstChild);
-    syncPreparedLevelPanelUi();
+    col.style.removeProperty('height');
+    col.style.removeProperty('max-height');
+
+    const height = side.offsetHeight;
+    if (height <= 0) return;
+
+    const px = `${height}px`;
+    col.style.height = px;
+    col.style.maxHeight = px;
+  }
+
+  function schedulePreparedHeightAlign(): void {
+    syncPreparedHeightAlign();
+    requestAnimationFrame(() => {
+      syncPreparedHeightAlign();
+      requestAnimationFrame(syncPreparedHeightAlign);
+    });
   }
 
   function refreshPreparedPreview(): void {
@@ -753,6 +775,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     if (charSheet) charSheet.outerHTML = drawCharacterSheet();
 
     syncPreparedLevelPanelUi();
+    schedulePreparedHeightAlign();
     restoreScrollState(scrollState);
   }
 
@@ -864,6 +887,11 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   }
 
   function syncSidePanelHeights(): void {
+    if (workspaceMode === 'prepared') {
+      schedulePreparedHeightAlign();
+      return;
+    }
+
     const heroHall = root.querySelector<HTMLElement>('.hero-hall');
     const chronicleCol = root.querySelector<HTMLElement>('.chronicle-col');
     const runeSidebar = root.querySelector<HTMLElement>('.rune-sidebar');
@@ -883,6 +911,16 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
 
   function setupChronicleHeightSync(): void {
     chronicleHeightObs?.disconnect();
+
+    if (workspaceMode === 'prepared' && isPreparedReadOnly()) {
+      const side = root.querySelector<HTMLElement>('.prepared-hero-hall');
+      if (!side) return;
+      schedulePreparedHeightAlign();
+      chronicleHeightObs = new ResizeObserver(() => schedulePreparedHeightAlign());
+      chronicleHeightObs.observe(side);
+      return;
+    }
+
     const heroHall = root.querySelector<HTMLElement>('.hero-hall');
     if (!heroHall) return;
 
@@ -897,22 +935,23 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     const showPreparedWorkspace = workspaceMode === 'prepared' && selectedPreparedBuild !== null;
 
     root.innerHTML = `
-      <div class="rpg-screen${workspaceMode === 'prepared' ? ' is-prepared-mode' : ''}${isPreparedReadOnly() ? ' is-readonly' : ''}">
+      <div class="rpg-screen${workspaceMode === 'prepared' ? ' is-prepared-mode' : ''}${showPreparedWorkspace ? ' is-prepared-active' : ''}${isPreparedReadOnly() ? ' is-readonly' : ''}">
         ${drawGuildBanner()}
         ${drawPreparedBuildsRail()}
+        ${drawPreparedLevelBar()}
         ${showPreparedWorkspace ? `
-        <div class="rpg-workspace${runeChamberOpen ? ' rune-open' : ''}">
+        <div class="rpg-workspace prepared-workspace">
           ${drawChronicleColumn()}
-          <main class="hero-hall rpg-panel">
-            <div class="rpg-panel-inner">
-              ${drawHeroShowcase()}
-              ${drawEquipmentStage()}
-              ${drawHeroCodex()}
-            </div>
-          </main>
-          ${drawRuneChamber()}
-        </div>
-        ${drawCharacterSheet()}` : workspaceMode === 'prepared' ? drawPreparedEmptyState() : `
+          <div class="prepared-side">
+            <main class="hero-hall rpg-panel prepared-hero-hall">
+              <div class="rpg-panel-inner prepared-hero-hall-inner">
+                ${drawHeroShowcase()}
+                ${drawEquipmentStage()}
+                ${drawCharacterSheet()}
+              </div>
+            </main>
+          </div>
+        </div>` : workspaceMode === 'prepared' ? drawPreparedEmptyState() : `
         <div class="rpg-workspace${runeChamberOpen ? ' rune-open' : ''}">
           ${drawChronicleColumn()}
           <main class="hero-hall rpg-panel">
@@ -929,11 +968,12 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       <div id="sim-modal" class="modal-root"></div>
     `;
     bindEvents();
-    mountPreparedLevelPanel();
+    syncPreparedLevelPanelUi();
     startPortraitAnim();
     requestAnimationFrame(() => {
       syncSidePanelHeights();
       setupChronicleHeightSync();
+      if (isPreparedReadOnly()) schedulePreparedHeightAlign();
       restoreScrollState(scrollState);
     });
   }
