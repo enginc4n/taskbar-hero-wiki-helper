@@ -3,6 +3,9 @@ import { navHref, parseRoute, type AppSection, type ParsedRoute } from '../route
 
 export interface NavItem {
   section: AppSection;
+  /** When set, matches route.sub for active state (e.g. guides/prepared-builds). */
+  sub?: string;
+  isSubNav?: boolean;
   labelKey: TranslationKey;
   icon: string;
   href: string;
@@ -12,6 +15,14 @@ const NAV_ITEMS: NavItem[] = [
   { section: 'dashboard', labelKey: 'nav.dashboard', icon: '⚔', href: navHref('dashboard') },
   { section: 'build', labelKey: 'nav.build', icon: '🛠', href: navHref('build', 'forge') },
   { section: 'guides', labelKey: 'nav.guides', icon: '📖', href: navHref('guides') },
+  {
+    section: 'guides',
+    sub: 'prepared-builds',
+    isSubNav: true,
+    labelKey: 'nav.sub.prepared',
+    icon: '📜',
+    href: navHref('guides', 'prepared-builds'),
+  },
   { section: 'utils', labelKey: 'nav.utils', icon: '🧰', href: navHref('utils') },
 ];
 
@@ -25,6 +36,7 @@ const SECTION_TITLE_KEYS: Record<AppSection, TranslationKey> = {
 const SUB_TITLE_KEYS: Partial<Record<string, TranslationKey>> = {
   forge: 'nav.sub.forge',
   prepared: 'nav.sub.prepared',
+  'prepared-builds': 'nav.sub.preparedBuildGuides',
   gear: 'nav.sub.gear',
   'build-author': 'nav.sub.buildAuthor',
 };
@@ -42,6 +54,10 @@ function navItemActive(route: ParsedRoute, item: NavItem): boolean {
   if (route.section !== item.section) return false;
   if (item.section === 'build') {
     return route.section === 'build';
+  }
+  if (item.section === 'guides') {
+    if (item.sub === 'prepared-builds') return route.sub === 'prepared-builds';
+    return !route.sub;
   }
   if (item.section === 'utils' && route.sub) {
     return route.section === 'utils';
@@ -62,18 +78,20 @@ export function mountAppShell(appRoot: HTMLElement): HTMLElement {
           </div>
         </div>
         <nav class="rpg-nav-list" aria-label="Main navigation">
-          ${NAV_ITEMS.map(
-            (item) => `
+          ${NAV_ITEMS.map((item) => {
+            const link = `
             <a
-              class="rpg-nav-item"
+              class="rpg-nav-item${item.isSubNav ? ' rpg-nav-item--sub' : ''}"
               href="${item.href}"
               data-nav-section="${item.section}"
+              ${item.sub ? `data-nav-sub="${item.sub}"` : ''}
               aria-label="${t(item.labelKey)}"
             >
               <span class="rpg-nav-icon" aria-hidden="true">${item.icon}</span>
               <span class="rpg-nav-label" data-i18n="${item.labelKey}">${t(item.labelKey)}</span>
-            </a>`,
-          ).join('')}
+            </a>`;
+            return item.isSubNav ? `<div class="rpg-nav-sublist">${link}</div>` : link;
+          }).join('')}
         </nav>
         <div class="rpg-nav-foot">
           <p class="rpg-nav-foot-note" id="shell-version">${t('shell.version')}</p>
@@ -112,7 +130,10 @@ export function refreshShellTranslations(route: ParsedRoute): void {
   if (footer) footer.textContent = t('shell.footer');
 
   for (const item of NAV_ITEMS) {
-    const el = document.querySelector<HTMLElement>(`.rpg-nav-item[data-nav-section="${item.section}"]`);
+    const selector = item.sub
+      ? `.rpg-nav-item[data-nav-section="${item.section}"][data-nav-sub="${item.sub}"]`
+      : `.rpg-nav-item[data-nav-section="${item.section}"]:not([data-nav-sub])`;
+    const el = document.querySelector<HTMLElement>(selector);
     if (!el) continue;
     el.setAttribute('aria-label', t(item.labelKey));
     const label = el.querySelector('.rpg-nav-label');
@@ -128,7 +149,8 @@ export function updateShellNav(route: ParsedRoute): void {
 
   document.querySelectorAll<HTMLElement>('.rpg-nav-item').forEach((el) => {
     const section = el.getAttribute('data-nav-section') as AppSection;
-    const item = NAV_ITEMS.find((n) => n.section === section);
+    const sub = el.getAttribute('data-nav-sub') ?? undefined;
+    const item = NAV_ITEMS.find((n) => n.section === section && n.sub === sub);
     if (!item) return;
     const active = navItemActive(route, item);
     el.classList.toggle('is-active', active);

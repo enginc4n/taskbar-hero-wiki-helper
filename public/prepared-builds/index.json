@@ -1,12 +1,12 @@
 {
   "builds": [
     {
-      "id": "my-prepared-build",
-      "file": "my-prepared-build.json",
-      "name": "My Prepared Build",
+      "id": "tbh-tr-ranger",
+      "file": "tbh-tr-ranger.json",
+      "name": "TBH Tr Ranger",
       "heroKey": 201,
       "heroClass": "Ranger",
-      "description": "Sample prepared build exported from Build Helper."
+      "description": "TBH Tr Ranger progression path."
     }
   ]
 }

@@ -24,6 +24,22 @@ export function heroLevelFromSave(hero: HeroSaveData): number {
   return hero.Level ?? hero.HeroLevel ?? 1;
 }
 
+/** Max skill points investable on the hero chronicle (matches in-game cap). */
+export const MAX_HERO_SKILL_POINTS = 101;
+
+/**
+ * Chapter unlock gate by index: 0, 11, 21, 31, … (not 10, 20, 30).
+ * Index 0 is the starter chapter; later chapters unlock every 10 points starting at 11.
+ */
+export function chapterLevelGate(groupIndex: number): number {
+  if (groupIndex <= 0) return 0;
+  return groupIndex * 10 + 1;
+}
+
+export function canInvestMoreSkillPoints(save: PlayerSaveData): boolean {
+  return totalInvestedSkillPoints(save) < MAX_HERO_SKILL_POINTS;
+}
+
 function normalizeAttributeSaveDatas(raw: unknown): import('../types').AttributeSaveEntry[] {
   const rows = Array.isArray(raw) ? raw : raw && typeof raw === 'object' ? Object.values(raw) : [];
   const byKey = new Map<number, number>();
@@ -87,8 +103,9 @@ export function isAttributeGroupUnlocked(
 ): boolean {
   const group = groups[groupIndex];
   if (!group) return false;
-  if (heroLevel >= group.levelGate) return true;
-  if (totalInvestedSkillPoints(save) >= group.levelGate) return true;
+  const gate = chapterLevelGate(groupIndex);
+  if (heroLevel >= gate) return true;
+  if (totalInvestedSkillPoints(save) >= gate) return true;
   if ((hero.unlockedAttributeGroupKeys ?? []).includes(group.group)) return true;
   if (groupInvestedPoints(save, group) > 0) return true;
   return false;
@@ -112,14 +129,13 @@ export function syncAttributeGroupUnlocks(
 
 export function attributeGroupLockHint(
   _groupIndex: number,
-  groups: HeroTreeGroup[],
+  _groups: HeroTreeGroup[],
   heroLevel: number,
   save: PlayerSaveData,
   unlocked: boolean,
 ): string {
   if (unlocked) return 'Use + / − to invest skill points';
-  const group = groups[_groupIndex];
-  const gate = group.levelGate;
+  const gate = chapterLevelGate(_groupIndex);
   const spent = totalInvestedSkillPoints(save);
   const needPoints = Math.max(0, gate - spent);
   if (heroLevel < gate && needPoints > 0) {

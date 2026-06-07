@@ -56,7 +56,7 @@ function heroCardHtml(hero: EnrichedHero): string {
   const portrait = itemIconUrl(hero.icon ?? hero.art);
 
   return `
-    <a class="dash-hero-card rpg-panel" href="${navHref('build', 'forge')}" title="${name}">
+    <a class="dash-hero-card rpg-panel" href="${navHref('build', 'forge', { hero: String(hero.key) })}" title="${name}">
       <div class="rpg-panel-inner dash-hero-card-inner">
         <div class="dash-hero-portrait" aria-hidden="true">
           ${
@@ -261,7 +261,7 @@ function bindLocalePicker(root: HTMLElement): void {
 function buildCardHtml(entry: PreparedBuildManifestEntry): string {
   const glyph = classGlyph(entry.heroClass ?? '');
   return `
-    <a class="prepared-build-card dash-build-card" href="${navHref('build', 'prepared')}">
+    <a class="prepared-build-card dash-build-card" href="${navHref('build', 'prepared', { build: entry.id })}">
       <span class="prepared-build-glyph" aria-hidden="true">${glyph}</span>
       <span class="prepared-build-name">${entry.name}</span>
       <span class="prepared-build-class">${heroClassLabel(entry.heroClass)}</span>

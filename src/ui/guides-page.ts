@@ -1,8 +1,4 @@
-import { loadPreparedBuildIndex, type PreparedBuildManifestEntry } from '../data/prepared-builds';
-import { classGlyph } from '../data/rpg-ui';
-import { heroClassLabel } from '../i18n/hero-class';
 import { t, type TranslationKey } from '../i18n';
-import { navHref } from '../router';
 import type { SimulatorContext } from './simulator-page';
 
 interface GuideCategory {
@@ -44,7 +40,6 @@ const PLACEHOLDER_GUIDES: {
 export function renderGuidesPage(root: HTMLElement, _ctx: SimulatorContext): void {
   let activeCategory = 'all';
   let searchQuery = '';
-  let preparedBuilds: PreparedBuildManifestEntry[] = [];
 
   function draw(): void {
     const filteredPlaceholders = PLACEHOLDER_GUIDES.filter((g) => {
@@ -54,17 +49,6 @@ export function renderGuidesPage(root: HTMLElement, _ctx: SimulatorContext): voi
       const desc = t(g.descKey);
       const matchesSearch = !q || title.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
       return matchesCat && matchesSearch;
-    });
-
-    const filteredBuilds = preparedBuilds.filter((b) => {
-      const q = searchQuery.trim().toLowerCase();
-      if (!q) return true;
-      return (
-        b.name.toLowerCase().includes(q) ||
-        (b.heroClass ?? '').toLowerCase().includes(q) ||
-        heroClassLabel(b.heroClass).toLowerCase().includes(q) ||
-        (b.description ?? '').toLowerCase().includes(q)
-      );
     });
 
     root.innerHTML = `
@@ -128,34 +112,9 @@ export function renderGuidesPage(root: HTMLElement, _ctx: SimulatorContext): voi
               .join('')}
           </div>
         </section>
-
-        <section class="guides-section" aria-labelledby="guides-builds-heading">
-          <h2 id="guides-builds-heading" class="dash-section-title">${t('guides.preparedBuildGuides')}</h2>
-          <div class="guide-card-grid">
-            ${
-              filteredBuilds.length
-                ? filteredBuilds.map((b) => preparedGuideCard(b)).join('')
-                : `<p class="text-muted">${t('guides.noMatch')}</p>`
-            }
-          </div>
-        </section>
       </div>`;
 
     bindEvents();
-  }
-
-  function preparedGuideCard(entry: PreparedBuildManifestEntry): string {
-    return `
-      <a class="guide-card rpg-panel guide-card--link" href="${navHref('build', 'prepared')}">
-        <div class="rpg-panel-inner guide-card-inner">
-          <span class="guide-card-icon" aria-hidden="true">${classGlyph(entry.heroClass ?? '')}</span>
-          <h3 class="guide-card-title">${entry.name}</h3>
-          <p class="guide-card-desc">${
-            entry.description ?? t('guides.progressionPath', { hero: heroClassLabel(entry.heroClass) || t('build.heroFallback') })
-          }</p>
-          <span class="guide-card-tag text-ui">${heroClassLabel(entry.heroClass) || t('guides.buildTag')}</span>
-        </div>
-      </a>`;
   }
 
   function bindEvents(): void {
@@ -171,16 +130,6 @@ export function renderGuidesPage(root: HTMLElement, _ctx: SimulatorContext): voi
       });
     });
   }
-
-  loadPreparedBuildIndex()
-    .then((builds) => {
-      preparedBuilds = builds;
-      draw();
-    })
-    .catch(() => {
-      preparedBuilds = [];
-      draw();
-    });
 
   draw();
 }

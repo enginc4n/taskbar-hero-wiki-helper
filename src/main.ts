@@ -3,6 +3,7 @@ import { initLocale, onLocaleChange } from './i18n';
 import { parseRoute, type ParsedRoute } from './router';
 import { renderDashboardPage } from './ui/dashboard-page';
 import { renderGuidesPage } from './ui/guides-page';
+import { renderPreparedBuildGuidesPage } from './ui/prepared-build-guides-page';
 import {
   mountAppShell,
   refreshShellTranslations,
@@ -40,14 +41,29 @@ function renderRoute(route: ParsedRoute): void {
     case 'dashboard':
       renderDashboardPage(pageRoot, appContext);
       break;
-    case 'build':
+    case 'build': {
+      const heroParam = route.query.get('hero');
+      const parsedHeroKey = heroParam ? Number(heroParam) : NaN;
+      const initialHeroKey =
+        Number.isFinite(parsedHeroKey) &&
+        appContext.heroes.some((h) => h.key === parsedHeroKey)
+          ? parsedHeroKey
+          : undefined;
+      const preparedBuildId = route.query.get('build') ?? undefined;
       renderSimulatorPage(pageRoot, appContext, {
         initialMode: route.sub === 'prepared' ? 'prepared' : 'forge',
         runesOpen: route.query.get('runes') === '1',
+        initialHeroKey,
+        initialPreparedBuildId: preparedBuildId,
       });
       break;
+    }
     case 'guides':
-      renderGuidesPage(pageRoot, appContext);
+      if (route.sub === 'prepared-builds') {
+        renderPreparedBuildGuidesPage(pageRoot, appContext);
+      } else {
+        renderGuidesPage(pageRoot, appContext);
+      }
       break;
     case 'utils':
       renderUtilsPage(pageRoot, appContext, route.sub);

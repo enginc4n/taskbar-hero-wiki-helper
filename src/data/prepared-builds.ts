@@ -3,13 +3,27 @@ import {
   createEmptySave,
   equipItem,
   getSelectedHero,
+  partIndex,
   setPassiveLevel,
   setRuneLevel,
   syncAttributeGroupUnlocks,
 } from '../simulator/build-state';
-import type { EnrichedHero, EnrichedItem, HeroPart, PlayerSaveData } from '../types';
+import type { EnchantEntry, EnrichedHero, EnrichedItem, HeroPart, PlayerSaveData } from '../types';
 
-export const PREPARED_LEVEL_STEPS = [1, 10, 20, 30, 40, 50, 60, 70] as const;
+export const PREPARED_LEVEL_STEPS = [11, 21, 31, 41, 51, 61, 71, 81, 91, 101] as const;
+
+/** Map legacy milestone levels (1, 10, 20, …) onto current steps. */
+export function legacyMilestoneLevel(level: number): PreparedLevelStep {
+  if ((PREPARED_LEVEL_STEPS as readonly number[]).includes(level)) {
+    return level as PreparedLevelStep;
+  }
+  if (level <= 1) return PREPARED_LEVEL_STEPS[0];
+  const mapped = Math.min(
+    PREPARED_LEVEL_STEPS[PREPARED_LEVEL_STEPS.length - 1],
+    Math.floor((level - 1) / 10) * 10 + 11,
+  );
+  return mapped as PreparedLevelStep;
+}
 
 export type PreparedLevelStep = (typeof PREPARED_LEVEL_STEPS)[number];
 
@@ -39,6 +53,7 @@ export interface PreparedRuneEntry {
 export interface PreparedGearEntry {
   part: HeroPart;
   itemKey: number;
+  enchants?: EnchantEntry[];
 }
 
 export interface PreparedBuildMilestone {
@@ -120,7 +135,13 @@ export function applyPreparedMilestone(
   for (const row of milestone.gear ?? []) {
     const item =
       itemsByKey.get(row.itemKey) ?? allItems.find((i) => i.key === row.itemKey);
-    if (item) equipItem(save, hero, row.part, item, itemsByKey);
+    if (!item) continue;
+    equipItem(save, hero, row.part, item, itemsByKey);
+    if (row.enchants?.length) {
+      const uid = hero.equippedItemIds[partIndex(row.part)];
+      const inst = save.itemSaveDatas.find((i) => String(i.UniqueId) === String(uid));
+      if (inst) inst.EnchantData = structuredClone(row.enchants);
+    }
   }
 
   syncAttributeGroupUnlocks(save, hero, heroDef);

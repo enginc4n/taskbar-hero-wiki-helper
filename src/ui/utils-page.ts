@@ -25,20 +25,6 @@ const UTIL_TILES: {
     titleKey: 'utils.buildAuthor.title',
     descKey: 'utils.buildAuthor.desc',
   },
-  {
-    id: 'rune-ref',
-    href: navHref('build', 'forge', { runes: '1' }),
-    icon: '🎲',
-    titleKey: 'utils.runeChamber.title',
-    descKey: 'utils.runeChamber.desc',
-  },
-  {
-    id: 'forge',
-    href: navHref('build', 'forge'),
-    icon: '⚔',
-    titleKey: 'utils.forge.title',
-    descKey: 'utils.forge.desc',
-  },
 ];
 
 export function renderUtilsHub(root: HTMLElement, _ctx: SimulatorContext): void {

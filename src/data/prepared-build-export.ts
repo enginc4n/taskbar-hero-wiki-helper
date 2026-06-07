@@ -39,7 +39,10 @@ export function milestoneFromWorking(
       const uid = hero.equippedItemIds[partIndex(part)];
       if (!uid) continue;
       const inst = save.itemSaveDatas.find((i) => String(i.UniqueId) === String(uid));
-      if (inst) gear.push({ part: part as HeroPart, itemKey: inst.ItemKey });
+      if (!inst) continue;
+      const entry: PreparedGearEntry = { part: part as HeroPart, itemKey: inst.ItemKey };
+      if (inst.EnchantData?.length) entry.enchants = structuredClone(inst.EnchantData);
+      gear.push(entry);
     }
   }
 
