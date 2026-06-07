@@ -8,14 +8,14 @@ import {
   type PreparedBuild,
   type PreparedBuildManifestEntry,
 } from '../data/prepared-builds';
-import { heroCombatRunesForPanel, runeBenefitLabel } from '../data/runes';
+import { heroCombatRunesForPanel, runeBenefitDescription, runeBenefitLabel } from '../data/runes';
 import {
   HERO_GEAR_LEFT,
   HERO_GEAR_RIGHT,
-  HERO_ILLUST_FRAME_MS,
+  heroIllustFrameMs,
   gameUiUrl,
-  heroIllustFrameCount,
   heroIllustUrl,
+  preloadHeroIllustFrames,
   renderGearSlotHtml,
 } from '../data/game-ui';
 import { itemIconHtml, itemIconUrl, runeIconUrl } from '../data/icons';
@@ -61,6 +61,7 @@ import type {
   PlayerSaveData,
   RefMaps,
   RuneGraph,
+  RuneNode,
 } from '../types';
 import { heroClassLabel, heroNameLabel } from '../i18n/hero-class';
 import { partLabel, t, type TranslationKey } from '../i18n';
@@ -88,7 +89,7 @@ interface SimState {
 }
 
 const STAT_ROW_KEYS: { key: keyof ComputedStats; labelKey: TranslationKey; featured?: boolean }[] = [
-  { key: 'AttackDamage', labelKey: 'stat.attackDamage', featured: true },
+  { key: 'AttackDamage', labelKey: 'stat.attackDamage' },
   { key: 'MaxHp', labelKey: 'stat.vitality' },
   { key: 'Armor', labelKey: 'stat.armor' },
   { key: 'AttackSpeed', labelKey: 'stat.attackSpeed' },
@@ -98,6 +99,15 @@ const STAT_ROW_KEYS: { key: keyof ComputedStats; labelKey: TranslationKey; featu
   { key: 'CooldownReduction', labelKey: 'stat.cooldownReduction' },
   { key: 'CastSpeed', labelKey: 'stat.castSpeed' },
 ];
+
+const RUNE_STAT_LABEL_KEYS: Partial<Record<string, TranslationKey>> = {
+  AllHeroAttackDamage: 'stat.attackDamage',
+  AllHeroAttackDamagePercent: 'stat.attackDamage',
+  AllHeroArmor: 'stat.armor',
+  AllHeroArmorPercent: 'stat.armor',
+  AllHeroAttackSpeed: 'stat.attackSpeed',
+  AllHeroMoveSpeed: 'stat.movementSpeed',
+};
 
 export interface SimulatorPageOptions {
   initialMode?: 'forge' | 'prepared';
@@ -126,6 +136,7 @@ export function renderSimulatorPage(
   };
 
   let portraitAnimTimer: ReturnType<typeof setInterval> | null = null;
+  let portraitAnimGeneration = 0;
   let chronicleHeightObs: ResizeObserver | null = null;
   let runeChamberOpen = options.runesOpen ?? false;
 
@@ -167,6 +178,7 @@ export function renderSimulatorPage(
     });
 
   function stopPortraitAnim(): void {
+    portraitAnimGeneration += 1;
     if (portraitAnimTimer !== null) {
       clearInterval(portraitAnimTimer);
       portraitAnimTimer = null;
@@ -175,19 +187,37 @@ export function renderSimulatorPage(
 
   function startPortraitAnim(): void {
     stopPortraitAnim();
-    const imgs = root.querySelectorAll<HTMLImageElement>('.hero-portrait');
-    if (!imgs.length) return;
+    const generation = portraitAnimGeneration;
     const heroKey = state.heroKey;
-    const frameCount = heroIllustFrameCount(heroKey);
-    if (frameCount <= 1) return;
-    let frame = 0;
-    const url = heroIllustUrl(heroKey, frame);
-    imgs.forEach((img) => { img.src = url; });
-    portraitAnimTimer = setInterval(() => {
-      frame = (frame + 1) % frameCount;
-      const next = heroIllustUrl(heroKey, frame);
-      imgs.forEach((img) => { img.src = next; });
-    }, HERO_ILLUST_FRAME_MS);
+    const frameUrls = preloadHeroIllustFrames(heroKey);
+    const frameMs = heroIllustFrameMs(heroKey);
+    if (frameUrls.length <= 1) return;
+
+    void Promise.all(
+      frameUrls.map((url) => {
+        const preload = new Image();
+        preload.src = url;
+        return preload.decode?.().catch(() => undefined) ?? Promise.resolve();
+      }),
+    ).then(() => {
+      if (generation !== portraitAnimGeneration) return;
+
+      const imgs = root.querySelectorAll<HTMLImageElement>('.hero-portrait');
+      if (!imgs.length) return;
+
+      let frame = 0;
+      imgs.forEach((img) => {
+        img.src = frameUrls[0]!;
+      });
+
+      portraitAnimTimer = setInterval(() => {
+        frame = (frame + 1) % frameUrls.length;
+        const next = frameUrls[frame]!;
+        imgs.forEach((img) => {
+          img.src = next;
+        });
+      }, frameMs);
+    });
   }
 
   function itemForPart(part: HeroPart): EnrichedItem | undefined {
@@ -217,85 +247,117 @@ export function renderSimulatorPage(
     return itemIconUrl(hero.icon ?? hero.art);
   }
 
+  function drawHeroPortraitMini(hero: EnrichedHero | undefined, fallbackLetter: string): string {
+    const portrait = heroPortraitUrl(hero);
+    return `
+      <span class="build-hero-portrait" aria-hidden="true">
+        ${
+          portrait
+            ? `<img class="build-hero-portrait-img pixel-art" src="${portrait}" alt="" loading="lazy" />`
+            : `<span class="build-hero-portrait-fallback">${fallbackLetter}</span>`
+        }
+        <img class="build-hero-portrait-frame pixel-art" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
+      </span>`;
+  }
+
+  function drawBuildHeroPicker(hero: EnrichedHero | undefined, heroName: string): string {
+    const menuOptions = ctx.heroes
+      .map((h) => {
+        const name = heroNameLabel(h.name);
+        const cls = heroClassLabel(h.class);
+        const saveHero = getSelectedHero(state.working, h.key);
+        const locked = saveHero ? !saveHero.IsUnLock : false;
+        const selected = h.key === state.heroKey;
+        const showClass = cls && cls !== name;
+
+        return `
+          <li role="presentation">
+            <button
+              type="button"
+              role="option"
+              class="build-hero-option${selected ? ' is-selected' : ''}${locked ? ' is-locked' : ''}"
+              data-action="hero-pick"
+              data-hero-key="${h.key}"
+              aria-selected="${selected}"
+              ${locked ? 'disabled aria-disabled="true"' : ''}
+            >
+              ${drawHeroPortraitMini(h, name[0] ?? '?')}
+              <span class="build-hero-option-copy">
+                <span class="build-hero-option-name">${name}</span>
+                ${showClass ? `<span class="build-hero-option-meta">${cls}</span>` : ''}
+              </span>
+              ${locked ? '<span class="build-hero-option-lock" aria-hidden="true">🔒</span>' : ''}
+            </button>
+          </li>`;
+      })
+      .join('');
+
+    return `
+      <div class="build-hero-picker" data-hero-picker>
+        <button
+          type="button"
+          class="build-hero-trigger"
+          data-action="hero-toggle"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          aria-label="${t('build.selectHero')}"
+        >
+          ${drawHeroPortraitMini(hero, heroName[0] ?? '?')}
+          <span class="build-hero-trigger-name">${heroName}</span>
+          <span class="build-hero-trigger-caret" aria-hidden="true">▾</span>
+        </button>
+        <ul class="build-hero-menu" role="listbox" aria-label="${t('build.selectHero')}" hidden>
+          ${menuOptions}
+        </ul>
+      </div>`;
+  }
+
+  function drawBuildHeroChip(hero: EnrichedHero | undefined, heroName: string): string {
+    return `
+      <div class="build-hero-chip">
+        ${drawHeroPortraitMini(hero, heroName[0] ?? '?')}
+        <span class="build-hero-chip-name">${heroName}</span>
+      </div>`;
+  }
+
   function drawBuildToolbar(): string {
     const hero = heroDef();
     const hasBaseline = !!state.baseline;
     const heroName = hero ? heroNameLabel(hero.name) : t('build.unknown');
-    const portrait = heroPortraitUrl(hero);
 
-    const heroPicker =
-      workspaceMode === 'forge'
-        ? `
-            <div class="guild-hero-picker">
-              <div class="guild-hero-portrait" aria-hidden="true">
-                ${portrait ? `<img class="guild-hero-portrait-img pixel-art" src="${portrait}" alt="" loading="lazy" />` : heroName[0]}
-                <img class="guild-hero-portrait-frame pixel-art" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
-              </div>
-              <div class="guild-hero-select-wrap">
-                <select class="guild-hero-select" data-field="hero-key" aria-label="${t('build.selectHero')}">
-                  ${ctx.heroes
-                    .map((h) => {
-                      const saveHero = getSelectedHero(state.working, h.key);
-                      const locked = saveHero ? !saveHero.IsUnLock : false;
-                      return `<option value="${h.key}"${h.key === state.heroKey ? ' selected' : ''}${locked ? ' disabled' : ''}>${heroNameLabel(h.name)}</option>`;
-                    })
-                    .join('')}
-                </select>
-              </div>
-            </div>`
-        : `
-            <div class="guild-hero-picker guild-hero-picker--readonly">
-              <div class="guild-hero-portrait" aria-hidden="true">
-                ${portrait ? `<img class="guild-hero-portrait-img pixel-art" src="${portrait}" alt="" loading="lazy" />` : heroName[0]}
-                <img class="guild-hero-portrait-frame pixel-art" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
-              </div>
-              <div class="guild-hero-info">
-                <h2 class="guild-hero-name">${heroName}</h2>
-                ${hero?.class && heroClassLabel(hero.class) !== heroName ? `<p class="guild-hero-meta">${heroClassLabel(hero.class)}</p>` : ''}
-              </div>
-            </div>`;
+    const heroControl =
+      workspaceMode === 'forge' ? drawBuildHeroPicker(hero, heroName) : drawBuildHeroChip(hero, heroName);
+
+    const baselineStatus = `
+      <span class="guild-status ${workspaceMode === 'prepared' ? 'is-prepared' : hasBaseline ? 'is-set' : ''}" role="status">
+        <span class="guild-status-dot" aria-hidden="true"></span>
+        ${workspaceMode === 'prepared'
+          ? selectedPreparedBuild?.name ?? t('build.preparedBuilds')
+          : hasBaseline
+            ? t('build.baselineActive')
+            : t('build.noBaseline')}
+      </span>`;
 
     return `
       <header class="build-toolbar" aria-label="Build workspace">
         <div class="build-toolbar-inner">
-          <nav class="build-subnav" aria-label="Build modes">
-            <a
-              class="build-subnav-item${workspaceMode === 'forge' ? ' is-active' : ''}"
-              href="${navHref('build', 'forge')}"
-              data-action="mode-forge"
-              aria-current="${workspaceMode === 'forge' ? 'page' : 'false'}"
-            >⚔ ${t('build.buildForge')}</a>
-            <a
-              class="build-subnav-item${workspaceMode === 'prepared' ? ' is-active' : ''}"
-              href="${navHref('build', 'prepared')}"
-              data-action="mode-prepared"
-              aria-current="${workspaceMode === 'prepared' ? 'page' : 'false'}"
-            >📜 ${t('build.preparedBuilds')}</a>
-          </nav>
-          <div class="guild-hero-strip">
-            ${heroPicker}
-            <span class="guild-status ${workspaceMode === 'prepared' ? 'is-prepared' : hasBaseline ? 'is-set' : ''}" role="status">
-              <span class="guild-status-dot" aria-hidden="true"></span>
-              ${workspaceMode === 'prepared'
-                ? selectedPreparedBuild?.name ?? t('build.preparedBuilds')
-                : hasBaseline
-                  ? t('build.baselineActive')
-                  : t('build.noBaseline')}
-            </span>
-          </div>
-          <div class="guild-actions">
-            ${workspaceMode === 'forge' ? `
-            <label class="rpg-btn rpg-btn--ghost">
-              <span class="rpg-btn-shine" aria-hidden="true"></span>
-              📥 ${t('build.loadSave')}
-              <input type="file" accept=".es3,.bak" data-action="load-save" hidden />
-            </label>
-            <button type="button" class="rpg-btn rpg-btn--ghost" data-action="new-build">✨ ${t('build.newBuild')}</button>
-            <button type="button" class="rpg-btn rpg-btn--gold" data-action="set-baseline">
-              <span class="rpg-btn-shine" aria-hidden="true"></span>
-              📌 ${t('build.setBaseline')}
-            </button>` : `
-            <span class="guild-prepared-badge text-ui" role="status">${t('build.viewOnly')}</span>`}
+          ${heroControl}
+          <div class="build-toolbar-workspace">
+            ${baselineStatus}
+            <div class="build-toolbar-actions guild-actions">
+              ${workspaceMode === 'forge' ? `
+              <label class="rpg-btn rpg-btn--ghost">
+                <span class="rpg-btn-shine" aria-hidden="true"></span>
+                📥 ${t('build.loadSave')}
+                <input type="file" accept=".es3,.bak" data-action="load-save" hidden />
+              </label>
+              <button type="button" class="rpg-btn rpg-btn--ghost" data-action="new-build">✨ ${t('build.newBuild')}</button>
+              <button type="button" class="rpg-btn rpg-btn--gold" data-action="set-baseline">
+                <span class="rpg-btn-shine" aria-hidden="true"></span>
+                📌 ${t('build.setBaseline')}
+              </button>` : `
+              <span class="guild-prepared-badge text-ui" role="status">${t('build.viewOnly')}</span>`}
+            </div>
           </div>
         </div>
       </header>`;
@@ -357,70 +419,115 @@ export function renderSimulatorPage(
       </div>`;
   }
 
-  function drawHeroShowcase(): string {
+  function computeDpsSummary(): {
+    dpsValue: string;
+    dpsDeltaHtml: string;
+    dpsBarPct: number;
+  } | null {
+    const hero = heroSave();
+    if (!hero) return null;
+
+    const current = computeAllStats(hero, state.working, state.refs);
+    const dps = computeBasicDps(current);
+    const baselineHero = state.baseline ? getSelectedHero(state.baseline, state.heroKey) : null;
+    const baselineStats = baselineHero ? computeAllStats(baselineHero, state.baseline!, state.refs) : current;
+    const baselineDps = computeBasicDps(baselineStats);
+    const dpsDelta = dps - baselineDps;
+    const dpsPct = baselineDps === 0 ? 0 : (dps / baselineDps - 1) * 100;
+
+    function deltaHtml(positive: boolean, text: string): string {
+      return `<span class="attr-delta ${positive ? 'positive' : 'negative'}">${text}</span>`;
+    }
+
+    const dpsValue = Math.round(dps).toLocaleString();
+    const dpsDeltaHtml = state.baseline
+      ? deltaHtml(
+          dpsDelta >= 0,
+          `${dpsDelta >= 0 ? '+' : ''}${Math.round(dpsDelta).toLocaleString()} (${dpsPct >= 0 ? '+' : ''}${dpsPct.toFixed(1)}%)`,
+        )
+      : '';
+
+    const dpsBarPct = state.baseline
+      ? Math.min(100, Math.max(8, 50 + dpsPct / 2))
+      : Math.min(100, Math.max(20, (dps / Math.max(baselineDps, dps, 1)) * 50));
+
+    return { dpsValue, dpsDeltaHtml, dpsBarPct };
+  }
+
+  function renderGearSlot(part: HeroPart): string {
+    const item = itemForPart(part);
+    return renderGearSlotHtml({
+      part,
+      item,
+      hasSockets: item ? itemHasSockets(item) : false,
+      readOnly: isPreparedReadOnly(),
+    });
+  }
+
+  function gearSide(rows: HeroPart[][], side: 'left' | 'right'): string {
+    return `
+      <div class="equip-side equip-side--${side}">
+        ${rows
+          .map(
+            (row) => `
+          <div class="equip-row">${row.map((part) => renderGearSlot(part)).join('')}</div>`,
+          )
+          .join('')}
+      </div>`;
+  }
+
+  function drawDpsBlock(): string {
+    const dps = computeDpsSummary();
+    if (!dps) return '';
+
+    return `
+      <aside class="char-sheet-dps char-sheet-dps--aside" aria-label="${t('build.basicAttackDps')}">
+        <div class="char-sheet-dps-icon" aria-hidden="true">${statIconHtml('Dps')}</div>
+        <div class="loadout-dps-copy">
+          <div class="char-sheet-dps-label">${t('build.basicAttackDps')}</div>
+          <div class="char-sheet-dps-value">${dps.dpsValue}</div>
+          ${dps.dpsDeltaHtml}
+          <div class="loadout-dps-track" aria-hidden="true">
+            <div class="loadout-dps-bar" style="width: ${dps.dpsBarPct}%"></div>
+          </div>
+        </div>
+      </aside>`;
+  }
+
+  function drawLoadoutHead(): string {
+    const runeBtn = drawRuneVaultButton();
+    if (!runeBtn) return '';
+
+    return `<header class="loadout-head">${runeBtn}</header>`;
+  }
+
+  function drawLoadoutStage(): string {
     const hero = heroDef();
     const save = heroSave();
     if (!hero || !save) return '';
+
     const displayName = heroNameLabel(hero.name);
     const displayClass = heroClassLabel(hero.class);
+    const showClass = displayClass && displayClass !== displayName;
 
     return `
-      <section class="hero-showcase" aria-label="Hero showcase">
-        <div class="hero-showcase-head">
-          <div class="hero-showcase-titles">
-            <h2 class="hero-showcase-name">${displayName}</h2>
-            ${displayClass && displayClass !== displayName ? `<p class="hero-showcase-class">${displayClass}</p>` : ''}
-          </div>
-          ${drawRuneVaultButton()}
-        </div>
-      </section>`;
-  }
-
-  function drawEquipmentStage(): string {
-    function gearSide(rows: HeroPart[][]): string {
-      return rows
-        .map(
-          (row) => `
-        <div class="equip-row">
-          ${row
-            .map((part) =>
-              renderGearSlotHtml({
-                part,
-                item: itemForPart(part),
-                hasSockets: (() => {
-                  const item = itemForPart(part);
-                  return item ? itemHasSockets(item) : false;
-                })(),
-                readOnly: isPreparedReadOnly(),
-              }),
-            )
-            .join('')}
-        </div>`,
-        )
-        .join('');
-    }
-
-    const hero = heroDef();
-    return `
-      <section class="equipment-stage" aria-label="Equipment">
-        <div class="equipment-stage-banners" aria-hidden="true">
-          <span class="equip-banner equip-banner--l"></span>
-          <span class="equip-banner equip-banner--r"></span>
-          <span class="equip-pedestal"></span>
-        </div>
-        <div class="equipment-layout">
-          <div class="equip-side equip-side--left">${gearSide(HERO_GEAR_LEFT)}</div>
-          <div class="equip-center">
+      <section class="loadout-stage" aria-label="Hero loadout">
+        ${drawLoadoutHead()}
+        <div class="loadout-grid">
+          ${gearSide(HERO_GEAR_LEFT, 'left')}
+          <div class="loadout-hero-center">
+            <h2 class="loadout-hero-name">${displayName}</h2>
+            ${showClass ? `<p class="loadout-hero-class">${displayClass}</p>` : ''}
             <div class="equip-portrait-frame">
               <img
                 class="hero-portrait pixel-art"
-                src="${heroIllustUrl(hero?.key ?? 101, 0)}"
-                alt="${t('build.heroPortrait', { name: hero ? heroNameLabel(hero.name) : t('build.heroFallback') })}"
-                loading="lazy"
+                src="${heroIllustUrl(hero.key, 0)}"
+                alt="${t('build.heroPortrait', { name: displayName })}"
+                decoding="async"
               />
             </div>
           </div>
-          <div class="equip-side equip-side--right">${gearSide(HERO_GEAR_RIGHT)}</div>
+          ${gearSide(HERO_GEAR_RIGHT, 'right')}
         </div>
       </section>`;
   }
@@ -429,13 +536,9 @@ export function renderSimulatorPage(
     const hero = heroSave();
     if (!hero) return '';
     const current = computeAllStats(hero, state.working, state.refs);
-    const dps = computeBasicDps(current);
     const baselineHero = state.baseline ? getSelectedHero(state.baseline, state.heroKey) : null;
     const baselineStats = baselineHero ? computeAllStats(baselineHero, state.baseline!, state.refs) : current;
-    const baselineDps = computeBasicDps(baselineStats);
     const deltas = new Map(compareStats(baselineStats, current).map((d) => [d.name, d]));
-    const dpsDelta = dps - baselineDps;
-    const dpsPct = baselineDps === 0 ? 0 : (dps / baselineDps - 1) * 100;
 
     function deltaHtml(positive: boolean, text: string): string {
       return `<span class="attr-delta ${positive ? 'positive' : 'negative'}">${text}</span>`;
@@ -447,11 +550,6 @@ export function renderSimulatorPage(
       if (!delta || delta.delta === 0) return '';
       return deltaHtml(delta.delta >= 0, formatDelta(delta));
     }
-
-    const dpsValue = Math.round(dps).toLocaleString();
-    const dpsDeltaHtml = state.baseline
-      ? deltaHtml(dpsDelta >= 0, `${dpsDelta >= 0 ? '+' : ''}${Math.round(dpsDelta).toLocaleString()} (${dpsPct >= 0 ? '+' : ''}${dpsPct.toFixed(1)}%)`)
-      : '';
 
     const tiles = STAT_ROW_KEYS.map((stat) => {
       const value = formatStatValue(stat.key, current[stat.key]);
@@ -478,16 +576,11 @@ export function renderSimulatorPage(
                   ${t('build.attributes')}
                 </h3>
               </div>
-              <div class="char-sheet-dps">
-                <div class="char-sheet-dps-icon" aria-hidden="true">${statIconHtml('Dps')}</div>
-                <div>
-                  <div class="char-sheet-dps-label">${t('build.basicAttackDps')}</div>
-                  <div class="char-sheet-dps-value">${dpsValue}</div>
-                  ${dpsDeltaHtml}
-                </div>
-              </div>
             </header>
-            <div class="attr-strip">${tiles}</div>
+            <div class="char-sheet-body">
+              <div class="attr-strip">${tiles}</div>
+              ${drawDpsBlock()}
+            </div>
           </div>
         </div>
       </section>`;
@@ -651,6 +744,17 @@ export function renderSimulatorPage(
       </aside>`;
   }
 
+  function maxSkillColsForTree(groups: { nodes: PassiveNode[] }[]): number {
+    return Math.max(
+      4,
+      ...groups.map((group) => {
+        const passives = group.nodes.filter((n) => n.kind === 'passive' && n.stat && n.stat !== 'NONE');
+        const actives = group.nodes.filter((n) => n.kind === 'active');
+        return passives.length + actives.length;
+      }),
+    );
+  }
+
   function buildChronicleTiersHtml(): string {
     const def = heroDef();
     const heroData = heroSave();
@@ -769,8 +873,8 @@ export function renderSimulatorPage(
     const tiersEl = root.querySelector('.chronicle-tiers');
     if (tiersEl) tiersEl.innerHTML = buildChronicleTiersHtml();
 
-    const equipment = root.querySelector('.equipment-stage');
-    if (equipment) equipment.outerHTML = drawEquipmentStage();
+    const loadout = root.querySelector('.loadout-stage');
+    if (loadout) loadout.outerHTML = drawLoadoutStage();
 
     const charSheet = root.querySelector('.char-sheet-bar');
     if (charSheet) charSheet.outerHTML = drawCharacterSheet();
@@ -796,6 +900,7 @@ export function renderSimulatorPage(
     const heroLevel = heroLevelFromSave(heroData);
     const groups = def.tree;
     const tiers = buildChronicleTiersHtml();
+    const skillCols = maxSkillColsForTree(groups);
 
     return `
       <div class="rpg-panel chronicle-panel" id="panel-chronicle" aria-label="Guild Chronicle">
@@ -815,11 +920,20 @@ export function renderSimulatorPage(
             <div class="chronicle-book">
               <div class="chronicle-spine" aria-hidden="true"></div>
               <div class="chronicle-path" aria-hidden="true"></div>
-              <div class="chronicle-tiers">${tiers}</div>
+              <div class="chronicle-tiers" style="--tier-skill-cols: ${skillCols}">${tiers}</div>
             </div>
           </div>
         </div>
       </div>`;
+  }
+
+  function runeBenefitDisplayText(rune: RuneNode, level: number): string {
+    const description = runeBenefitDescription(rune, level);
+    if (!rune.stat) return description;
+    const labelKey = RUNE_STAT_LABEL_KEYS[rune.stat];
+    if (!labelKey) return description;
+    const localizedLabel = t(labelKey);
+    return description.replace(runeBenefitLabel(rune), localizedLabel);
   }
 
   function drawRuneChamber(): string {
@@ -831,22 +945,25 @@ export function renderSimulatorPage(
         const max = rune.maxLevel ?? 1;
         const icon = runeIconUrl(rune.icon);
         const rarity = rarityClass(level, max);
-        const benefit = runeBenefitLabel(rune);
-        const effect = rune.effect ?? (rune.stat ? formatStatLabel(rune.stat) : benefit);
+        const benefit = runeBenefitDisplayText(rune, level);
+
+        const decBtn = `
+              <button type="button" class="node-btn rune-slot-btn" data-action="rune-dec" data-key="${rune.key}" aria-label="${t('build.decrease', { name: rune.name })}">−</button>`;
+        const incBtn = `
+              <button type="button" class="node-btn rune-slot-btn" data-action="rune-inc" data-key="${rune.key}" data-max="${max}" aria-label="${t('build.increase', { name: rune.name })}">+</button>`;
+        const readonly = isPreparedReadOnly();
 
         return `
-          <article class="rune-slot ${rarity}" title="${rune.name}: ${effect}" aria-label="${rune.name}, ${benefit}, level ${level} of ${max}">
-            <div class="rune-gem">
-              ${icon ? `<img class="rune-gem-icon pixel-art" src="${icon}" alt="" loading="lazy" />` : '<span aria-hidden="true">◆</span>'}
-              <span class="rune-gem-lv ${rarity}">${level}/${max}</span>
+          <article class="rune-slot ${rarity}" aria-label="${rune.name}, ${benefit}, level ${level} of ${max}">
+            <div class="rune-slot-row${readonly ? ' rune-slot-row--readonly' : ''}">
+              ${readonly ? '' : decBtn}
+              <div class="rune-gem" title="${rune.name}">
+                ${icon ? `<img class="rune-gem-icon pixel-art" src="${icon}" alt="" loading="lazy" />` : '<span aria-hidden="true">◆</span>'}
+                <span class="rune-gem-lv ${rarity}">${level}/${max}</span>
+              </div>
+              ${readonly ? '' : incBtn}
+              <span class="rune-slot-benefit${level > 0 ? ' is-active' : ''}">${benefit}</span>
             </div>
-            <span class="rune-slot-benefit${level > 0 ? ' is-active' : ''}">${benefit}</span>
-            ${isPreparedReadOnly() ? '' : `
-            <div class="rune-slot-controls">
-              <button type="button" class="node-btn" data-action="rune-dec" data-key="${rune.key}" aria-label="${t('build.decrease', { name: rune.name })}">−</button>
-              <button type="button" class="node-btn" data-action="rune-inc" data-key="${rune.key}" data-max="${max}" aria-label="${t('build.increase', { name: rune.name })}">+</button>
-            </div>`}
-            <div class="rpg-tooltip">${effect}</div>
           </article>`;
       })
       .join('');
@@ -858,10 +975,7 @@ export function renderSimulatorPage(
         <div class="rpg-panel rune-chamber-panel">
           <div class="rpg-panel-inner rune-chamber-inner">
             <header class="rune-chamber-head">
-              <div class="rpg-panel-head-copy">
-                <p class="text-kicker">${t('build.runeChamber')}</p>
-                <h3 class="rpg-panel-title">${t('build.arcaneRelics')}</h3>
-              </div>
+              <p class="text-kicker rune-chamber-kicker">${t('build.runeChamber')}</p>
               <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--icon rune-chamber-close" data-action="toggle-rune-chamber" aria-label="${t('build.closeRuneChamber')}">✕</button>
             </header>
             <div class="rune-inventory">${runeSlots}</div>
@@ -947,8 +1061,7 @@ export function renderSimulatorPage(
           <div class="prepared-side">
             <main class="hero-hall rpg-panel prepared-hero-hall">
               <div class="rpg-panel-inner prepared-hero-hall-inner">
-                ${drawHeroShowcase()}
-                ${drawEquipmentStage()}
+                ${drawLoadoutStage()}
                 ${drawCharacterSheet()}
               </div>
             </main>
@@ -958,8 +1071,7 @@ export function renderSimulatorPage(
           ${drawChronicleColumn()}
           <main class="hero-hall rpg-panel">
             <div class="rpg-panel-inner">
-              ${drawHeroShowcase()}
-              ${drawEquipmentStage()}
+              ${drawLoadoutStage()}
               ${drawCharacterSheet()}
             </div>
           </main>
@@ -1309,7 +1421,118 @@ export function renderSimulatorPage(
     draw();
   }
 
+  const HERO_MENU_MIN_WIDTH = 220;
+
+  function bindHeroPicker(): void {
+    const picker = root.querySelector<HTMLElement>('[data-hero-picker]');
+    if (!picker) return;
+
+    const triggerBtn = picker.querySelector<HTMLButtonElement>('[data-action="hero-toggle"]');
+    const menuList = picker.querySelector<HTMLUListElement>('.build-hero-menu');
+    if (!triggerBtn || !menuList) return;
+
+    let dismissListener: ((event: MouseEvent) => void) | null = null;
+    let escapeListener: ((event: KeyboardEvent) => void) | null = null;
+
+    const positionMenu = (): void => {
+      const rect = triggerBtn.getBoundingClientRect();
+      const width = Math.max(rect.width, HERO_MENU_MIN_WIDTH);
+      menuList.style.position = 'fixed';
+      menuList.style.top = `${rect.bottom + 6}px`;
+      menuList.style.left = `${rect.left}px`;
+      menuList.style.right = 'auto';
+      menuList.style.width = `${width}px`;
+      menuList.style.zIndex = '10000';
+    };
+
+    const resetMenuPosition = (): void => {
+      menuList.classList.remove('is-visible');
+      menuList.style.position = '';
+      menuList.style.top = '';
+      menuList.style.left = '';
+      menuList.style.right = '';
+      menuList.style.width = '';
+      menuList.style.zIndex = '';
+    };
+
+    const detachDismissListener = (): void => {
+      if (dismissListener) {
+        document.removeEventListener('mousedown', dismissListener);
+        dismissListener = null;
+      }
+      if (escapeListener) {
+        document.removeEventListener('keydown', escapeListener);
+        escapeListener = null;
+      }
+    };
+
+    const closeMenu = (): void => {
+      menuList.classList.remove('is-visible');
+      menuList.hidden = true;
+      triggerBtn.setAttribute('aria-expanded', 'false');
+      picker.classList.remove('is-open');
+      resetMenuPosition();
+      detachDismissListener();
+      if (menuList.parentElement === document.body) {
+        picker.appendChild(menuList);
+      }
+    };
+
+    const openMenu = (): void => {
+      if (menuList.parentElement !== document.body) {
+        document.body.appendChild(menuList);
+      }
+      menuList.hidden = false;
+      triggerBtn.setAttribute('aria-expanded', 'true');
+      picker.classList.add('is-open');
+      positionMenu();
+      requestAnimationFrame(() => {
+        positionMenu();
+        menuList.classList.add('is-visible');
+      });
+      dismissListener = (event: MouseEvent) => {
+        const target = event.target;
+        if (target instanceof Node && (picker.contains(target) || menuList.contains(target))) return;
+        closeMenu();
+      };
+      escapeListener = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') closeMenu();
+      };
+      document.addEventListener('mousedown', dismissListener);
+      document.addEventListener('keydown', escapeListener);
+    };
+
+    triggerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!menuList.hidden) {
+        closeMenu();
+        return;
+      }
+      openMenu();
+    });
+
+    picker.querySelectorAll<HTMLButtonElement>('[data-action="hero-pick"]').forEach((el) => {
+      el.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (el.disabled) return;
+        const key = Number(el.getAttribute('data-hero-key'));
+        if (!Number.isNaN(key)) selectHero(key);
+        closeMenu();
+      });
+    });
+
+    const repositionIfOpen = (): void => {
+      if (!menuList.hidden) positionMenu();
+    };
+
+    window.addEventListener('resize', repositionIfOpen);
+    window.addEventListener('scroll', repositionIfOpen, true);
+  }
+
   function bindEvents(): void {
+    bindHeroPicker();
+
     root.querySelector('[data-action="mode-forge"]')?.addEventListener('click', (e) => {
       e.preventDefault();
       enterForgeMode();
@@ -1358,11 +1581,6 @@ export function renderSimulatorPage(
     root.querySelector('[data-action="set-baseline"]')?.addEventListener('click', () => {
       state.baseline = clonePlayerSave(state.working);
       draw();
-    });
-
-    root.querySelector('[data-field="hero-key"]')?.addEventListener('change', (e) => {
-      const key = Number((e.target as HTMLSelectElement).value);
-      if (!Number.isNaN(key)) selectHero(key);
     });
 
     root.querySelectorAll('[data-action="pick-gear"]').forEach((el) => {
