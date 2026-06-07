@@ -6,6 +6,7 @@ import type {
   EnrichedItem,
   HeroPart,
   HeroSaveData,
+  HeroTreeGroup,
   ItemSaveData,
   PlayerSaveData,
   RuneSaveEntry,
@@ -55,6 +56,69 @@ export function normalizePlayerSave(save: PlayerSaveData): PlayerSaveData {
 export function getPassiveLevel(save: PlayerSaveData, passiveKey: number): number {
   const entry = save.attributeSaveDatas?.find((a) => Number(a.Key) === passiveKey);
   return Number(entry?.Level) || 0;
+}
+
+/** Total skill points invested in a tree group (passives + actives). */
+export function groupInvestedPoints(save: PlayerSaveData, group: HeroTreeGroup): number {
+  return group.nodes.reduce((sum, node) => sum + getPassiveLevel(save, node.key), 0);
+}
+
+/**
+ * Attribute group unlock rules (matches in-game progression):
+ * - Hero level reached the gate, OR
+ * - Group already saved as unlocked, OR
+ * - Any point invested in this group, OR
+ * - Any point invested in the previous group (chain unlock)
+ */
+export function isAttributeGroupUnlocked(
+  groupIndex: number,
+  groups: HeroTreeGroup[],
+  heroLevel: number,
+  save: PlayerSaveData,
+  hero: HeroSaveData,
+): boolean {
+  const group = groups[groupIndex];
+  if (!group) return false;
+  if (heroLevel >= group.levelGate) return true;
+  if ((hero.unlockedAttributeGroupKeys ?? []).includes(group.group)) return true;
+  if (groupInvestedPoints(save, group) > 0) return true;
+  if (groupIndex > 0 && groupInvestedPoints(save, groups[groupIndex - 1]) > 0) return true;
+  return groupIndex === 0 && heroLevel >= group.levelGate;
+}
+
+/** Persist unlocked groups on the hero save after point investment or import. */
+export function syncAttributeGroupUnlocks(
+  save: PlayerSaveData,
+  hero: HeroSaveData,
+  heroDef: EnrichedHero,
+): void {
+  const heroLevel = heroLevelFromSave(hero);
+  const keys = new Set(hero.unlockedAttributeGroupKeys ?? []);
+  for (let i = 0; i < heroDef.tree.length; i++) {
+    if (isAttributeGroupUnlocked(i, heroDef.tree, heroLevel, save, hero)) {
+      keys.add(heroDef.tree[i].group);
+    }
+  }
+  hero.unlockedAttributeGroupKeys = [...keys].sort((a, b) => a - b);
+}
+
+export function attributeGroupLockHint(
+  groupIndex: number,
+  groups: HeroTreeGroup[],
+  heroLevel: number,
+  save: PlayerSaveData,
+  unlocked: boolean,
+): string {
+  if (unlocked) return 'Use + / − to invest skill points';
+  const group = groups[groupIndex];
+  const reached = heroLevel >= group.levelGate;
+  const prevInvested =
+    groupIndex > 0 ? groupInvestedPoints(save, groups[groupIndex - 1]) : 0;
+  if (!reached && groupIndex > 0 && prevInvested === 0) {
+    return `Invest points in Chapter ${groupIndex} or reach Hero Level ${group.levelGate}`;
+  }
+  if (!reached) return `Sealed until Hero Level ${group.levelGate}`;
+  return 'Use + / − to invest skill points';
 }
 
 export function createEmptySave(heroKey: number): PlayerSaveData {

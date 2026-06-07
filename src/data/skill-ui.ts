@@ -1,3 +1,4 @@
+import { formatStatLabel } from '../engine/stats';
 import type { PassiveNode } from '../types';
 
 const GAME_UI = 'https://www.taskbarhero.wiki/game/ui';
@@ -24,7 +25,8 @@ export function skillIconUrl(icon?: string): string | null {
 }
 
 export function passiveNodeLabel(node: PassiveNode): string {
-  return node.stat ?? node.name ?? 'Passive';
+  if (node.stat && node.stat !== 'NONE') return formatStatLabel(node.stat);
+  return node.name ?? 'Passive';
 }
 
 export function skillSectionLockedIconUrl(): string {

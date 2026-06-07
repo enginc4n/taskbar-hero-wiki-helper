@@ -261,6 +261,34 @@ export function compareStats(baseline: ComputedStats, current: ComputedStats): S
   });
 }
 
+const STAT_DISPLAY_LABELS: Record<string, string> = {
+  AttackDamage: 'Attack Damage',
+  MaxHp: 'Vitality',
+  Armor: 'Armor',
+  AttackSpeed: 'Attack Speed',
+  CriticalChance: 'Critical Chance',
+  CriticalDamage: 'Critical Damage',
+  MovementSpeed: 'Movement Speed',
+  CooldownReduction: 'Cooldown Reduction',
+  CastSpeed: 'Cast Speed',
+  AllHeroAttackDamage: 'Attack Damage',
+  AllHeroAttackDamagePercent: 'Attack Damage',
+  AllHeroArmor: 'Armor',
+  AllHeroArmorPercent: 'Armor',
+  AllHeroAttackSpeed: 'Attack Speed',
+  AllHeroMoveSpeed: 'Movement Speed',
+};
+
+/** Human-readable label for camelCase stat keys (e.g. AttackDamage → Attack Damage). */
+export function formatStatLabel(stat: string): string {
+  const known = STAT_DISPLAY_LABELS[stat];
+  if (known) return known;
+  return stat
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .trim();
+}
+
 export function formatStatValue(stat: string, value: number): string {
   const fmt = STAT_FMT[stat]?.fmt ?? 'int';
   switch (fmt) {

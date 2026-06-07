@@ -16,12 +16,15 @@ Browser-based Taskbar Hero companion: **gear database** (same client-side filter
 
 ```bash
 npm install
+npm run sync-test-data   # once — downloads JSON into test/ (no CORS in dev)
 npm run dev
 ```
 
 Open http://localhost:5173
 
-**Note:** `taskbarhero.wiki` JSON (used by the stat engine) has no CORS headers. In dev, Vite proxies `/wiki-data/*` to that site. For production builds, `npm run sync-wiki-data` copies those files into `public/wiki-data/` so the app loads them from the same origin.
+**Local dev data:** `npm run dev` loads all game JSON from the `test/` folder (same-origin, no CORS). Run `npm run sync-test-data` to populate `test/enriched/` and `test/wiki/`, or copy your own `.json` files there (see [test/README.md](test/README.md)).
+
+**Production builds** use `npm run sync-wiki-data` → `public/wiki-data/` plus the live enriched API from taskbarherowiki.com.
 
 ## GitHub Pages
 

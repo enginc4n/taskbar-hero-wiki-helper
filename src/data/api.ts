@@ -6,16 +6,34 @@ import type {
   RuneGraph,
 } from '../types';
 
-const ENRICHED_BASE = 'https://www.taskbarherowiki.com/data';
+const ENRICHED_REMOTE = 'https://www.taskbarherowiki.com/data';
+const WIKI_REMOTE = 'https://www.taskbarhero.wiki/data';
 
 export function isObtainableItem(item: EnrichedItem): boolean {
   return item.obtainable !== false;
 }
 
-/** Browser: same-origin /wiki-data (bundled or dev proxy). Node/scripts: fetch wiki directly. */
+/** Same-origin /test/* JSON when running Vite dev server. */
+function getLocalTestBase(): string | null {
+  if (typeof window === 'undefined' || !import.meta.env.DEV) return null;
+  return new URL(`${import.meta.env.BASE_URL}test`, window.location.origin).pathname.replace(
+    /\/$/,
+    '',
+  );
+}
+
+function getEnrichedBase(): string {
+  const local = getLocalTestBase();
+  if (local) return `${local}/enriched`;
+  return ENRICHED_REMOTE;
+}
+
+/** Browser prod: bundled wiki-data. Browser dev: test/wiki. Node: remote wiki. */
 function getWikiBase(): string {
+  const local = getLocalTestBase();
+  if (local) return `${local}/wiki`;
   if (typeof window === 'undefined') {
-    return 'https://www.taskbarhero.wiki/data';
+    return WIKI_REMOTE;
   }
   return new URL(`${import.meta.env.BASE_URL}wiki-data`, window.location.origin).pathname.replace(
     /\/$/,
@@ -29,9 +47,15 @@ async function fetchJson<T>(url: string): Promise<T> {
   if (!cache.has(url)) {
     cache.set(
       url,
-      fetch(url).then((res) => {
-        if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
-        return res.json();
+      fetch(url).then(async (res) => {
+        if (!res.ok) {
+          const hint =
+            import.meta.env.DEV && url.includes('/test/')
+              ? ' Run `npm run sync-test-data` to populate test/enriched and test/wiki.'
+              : '';
+          throw new Error(`Failed to fetch ${url}: ${res.status}${hint}`);
+        }
+        return res.json() as Promise<T>;
       }),
     );
   }
@@ -39,12 +63,13 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 export async function loadEnrichedData() {
+  const base = getEnrichedBase();
   const [items, heroes, effects, runes, meta] = await Promise.all([
-    fetchJson<EnrichedItem[]>(`${ENRICHED_BASE}/items.json`),
-    fetchJson<EnrichedHero[]>(`${ENRICHED_BASE}/heroes.json`),
-    fetchJson<EffectMaterial[]>(`${ENRICHED_BASE}/effects.json`),
-    fetchJson<RuneGraph>(`${ENRICHED_BASE}/runes.json`),
-    fetchJson<MetaData>(`${ENRICHED_BASE}/meta.json`),
+    fetchJson<EnrichedItem[]>(`${base}/items.json`),
+    fetchJson<EnrichedHero[]>(`${base}/heroes.json`),
+    fetchJson<EffectMaterial[]>(`${base}/effects.json`),
+    fetchJson<RuneGraph>(`${base}/runes.json`),
+    fetchJson<MetaData>(`${base}/meta.json`),
   ]);
 
   return { items, heroes, effects, runes, meta };

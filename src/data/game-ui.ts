@@ -4,9 +4,9 @@ import { itemIconUrl } from './icons';
 
 export const GAME_UI_BASE = 'https://www.taskbarhero.wiki/game/ui';
 
-/** Bundled game UI assets served from /public (respects Vite BASE_URL). */
+/** Bundled game UI assets served from /public/assets/ui (respects Vite BASE_URL). */
 export function bundledGameUiUrl(relativePath: string): string {
-  return `${import.meta.env.BASE_URL}game-ui/${relativePath}`.replace(/\/{2,}/g, '/');
+  return `${import.meta.env.BASE_URL}assets/ui/${relativePath}`.replace(/\/{2,}/g, '/');
 }
 
 export function slotFrameUrl(file: string): string {
@@ -101,7 +101,7 @@ export function renderGearSlotHtml(options: {
       >
         <img class="slot-frame" src="${slotFrameUrl(GEAR_SLOT_FRAMES[part])}" alt="" />
         ${gradeBg ? `<img class="slot-grade" src="${gradeBg}" alt="" />` : ''}
-        ${iconUrl ? `<img class="slot-icon" src="${iconUrl}" alt="" />` : `<img class="slot-empty" src="${slotFrameUrl('ItemSlot_Icon_NoEquip.png')}" alt="" />`}
+        ${iconUrl ? `<img class="slot-icon" src="${iconUrl}" alt="" />` : ''}
       </button>
       ${
         item && hasSockets

@@ -1,6 +1,8 @@
 node_modules
 dist
 public/wiki-data
+test/enriched
+test/wiki
 .DS_Store
 *.local
 *.es3
