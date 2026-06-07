@@ -1,6 +1,15 @@
 import { loadAllData } from './data/api';
-import { renderBuildHelperPage } from './ui/build-helper-page';
-import { renderSimulatorPage } from './ui/simulator-page';
+import { parseRoute, type ParsedRoute } from './router';
+import { renderDashboardPage } from './ui/dashboard-page';
+import { renderGuidesPage } from './ui/guides-page';
+import {
+  mountAppShell,
+  renderShellError,
+  renderShellLoading,
+  updateShellNav,
+} from './ui/shell';
+import { renderSimulatorPage, type SimulatorContext } from './ui/simulator-page';
+import { renderUtilsPage } from './ui/utils-page';
 
 function publicAssetUrl(relativePath: string): string {
   return `${import.meta.env.BASE_URL}${relativePath}`.replace(/\/{2,}/g, '/');
@@ -15,60 +24,73 @@ function applyShellTheme(): void {
 
 applyShellTheme();
 
-function isHelperRoute(): boolean {
-  return window.location.hash === '#helper' || window.location.hash === '#/helper';
+let appContext: SimulatorContext | null = null;
+let pageRoot: HTMLElement | null = null;
+
+function renderRoute(route: ParsedRoute): void {
+  if (!pageRoot || !appContext) return;
+
+  updateShellNav(route);
+  pageRoot.innerHTML = '';
+
+  switch (route.section) {
+    case 'dashboard':
+      renderDashboardPage(pageRoot, appContext);
+      break;
+    case 'build':
+      renderSimulatorPage(pageRoot, appContext, {
+        initialMode: route.sub === 'prepared' ? 'prepared' : 'forge',
+        runesOpen: route.query.get('runes') === '1',
+      });
+      break;
+    case 'guides':
+      renderGuidesPage(pageRoot, appContext);
+      break;
+    case 'utils':
+      renderUtilsPage(pageRoot, appContext, route.sub);
+      break;
+    default:
+      renderDashboardPage(pageRoot, appContext);
+      break;
+  }
+}
+
+function onNavigate(): void {
+  renderRoute(parseRoute());
 }
 
 async function boot(): Promise<void> {
   const app = document.querySelector<HTMLDivElement>('#app');
   if (!app) return;
 
-  app.innerHTML = `
-    <a class="skip-link" href="#main-content">Skip to character menu</a>
-    <main id="main-content">
-      <div class="loading-state">
-        <div class="loading-state-inner">
-          <div class="loading-spinner" aria-hidden="true"></div>
-          <p class="loading-label text-title">Summoning guild records…</p>
-          <p class="loading-hint">Heroes · Gear · Runes · Chronicle</p>
-        </div>
-      </div>
-    </main>
-    <footer class="rpg-footer">
-      <p>Not affiliated with Tesseract Studio · Game assets &amp; data from community wikis</p>
-    </footer>
-  `;
-
-  const content = app.querySelector('#main-content') as HTMLElement;
-
-  try {
-    const data = await loadAllData();
-    const ctx = {
-      items: data.items,
-      allItems: data.allItems,
-      heroes: data.heroes,
-      effects: data.effects,
-      runes: data.runes,
-      meta: data.meta,
-      wiki: data.wiki,
-    };
-
-    if (isHelperRoute()) {
-      renderBuildHelperPage(content, ctx);
-    } else {
-      renderSimulatorPage(content, ctx);
-    }
-  } catch (err) {
-    content.innerHTML = `
-      <div class="error-state" role="alert">
-        <div class="error-state-inner">
-          <h2 class="text-title" style="color:var(--ruby)">Could not load game data</h2>
-          <p>${err instanceof Error ? err.message : String(err)}</p>
-          <p class="small">Check your connection and refresh the page.</p>
-        </div>
-      </div>`;
+  if (!pageRoot) {
+    pageRoot = mountAppShell(app);
+    renderShellLoading(pageRoot);
   }
+
+  if (!appContext) {
+    try {
+      const data = await loadAllData();
+      appContext = {
+        items: data.items,
+        allItems: data.allItems,
+        heroes: data.heroes,
+        effects: data.effects,
+        runes: data.runes,
+        meta: data.meta,
+        wiki: data.wiki,
+      };
+    } catch (err) {
+      renderShellError(
+        pageRoot,
+        err instanceof Error ? err.message : String(err),
+      );
+      return;
+    }
+  }
+
+  onNavigate();
 }
 
-window.addEventListener('hashchange', () => boot());
+window.addEventListener('hashchange', () => onNavigate());
 boot();

@@ -65,6 +65,7 @@ import type {
 } from '../types';
 import { PART_LABELS } from '../types';
 import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, itemMatchesHeroClass, type GearFilterState } from '../gear/filter';
+import { navHref, syncHash } from '../router';
 
 export interface SimulatorContext {
   items: EnrichedItem[];
@@ -98,7 +99,16 @@ const STAT_ROWS: { key: keyof ComputedStats; label: string; featured?: boolean }
   { key: 'CastSpeed', label: 'Cast Speed' },
 ];
 
-export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): void {
+export interface SimulatorPageOptions {
+  initialMode?: 'forge' | 'prepared';
+  runesOpen?: boolean;
+}
+
+export function renderSimulatorPage(
+  root: HTMLElement,
+  ctx: SimulatorContext,
+  options: SimulatorPageOptions = {},
+): void {
   const refs = mergeRefMaps(buildRefMaps(ctx.wiki), {
     items: ctx.items,
     heroes: ctx.heroes,
@@ -117,10 +127,10 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
 
   let portraitAnimTimer: ReturnType<typeof setInterval> | null = null;
   let chronicleHeightObs: ResizeObserver | null = null;
-  let runeChamberOpen = typeof window !== 'undefined' && window.location.hash === '#panel-runes';
+  let runeChamberOpen = options.runesOpen ?? false;
 
   type WorkspaceMode = 'forge' | 'prepared';
-  let workspaceMode: WorkspaceMode = 'forge';
+  let workspaceMode: WorkspaceMode = options.initialMode ?? 'forge';
   let forgeSnapshot: PlayerSaveData | null = null;
   let preparedManifest: PreparedBuildManifestEntry[] = [];
   let preparedBuildCache = new Map<string, PreparedBuild>();
@@ -202,22 +212,29 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     return getSelectedHero(state.working, state.heroKey);
   }
 
-  function drawGuildBanner(): string {
+  function drawBuildToolbar(): string {
     const hero = heroDef();
     const hasBaseline = !!state.baseline;
     const heroName = hero?.name ?? 'Unknown';
     const glyph = classGlyph(hero?.class ?? '');
 
     return `
-      <header class="guild-banner" aria-label="Guild Hall">
-        <div class="guild-banner-inner">
-          <div class="guild-brand">
-            <div class="guild-crest" aria-hidden="true">⚜</div>
-            <div class="guild-brand-text">
-              <p class="guild-logo text-display">TBH Build Forge</p>
-              <p class="guild-tagline">Plan your hero's path before committing gold</p>
-            </div>
-          </div>
+      <header class="build-toolbar" aria-label="Build workspace">
+        <div class="build-toolbar-inner">
+          <nav class="build-subnav" aria-label="Build modes">
+            <a
+              class="build-subnav-item${workspaceMode === 'forge' ? ' is-active' : ''}"
+              href="${navHref('build', 'forge')}"
+              data-action="mode-forge"
+              aria-current="${workspaceMode === 'forge' ? 'page' : 'false'}"
+            >⚔ Build Forge</a>
+            <a
+              class="build-subnav-item${workspaceMode === 'prepared' ? ' is-active' : ''}"
+              href="${navHref('build', 'prepared')}"
+              data-action="mode-prepared"
+              aria-current="${workspaceMode === 'prepared' ? 'page' : 'false'}"
+            >📜 Prepared Builds</a>
+          </nav>
           <div class="guild-hero-strip">
             <div class="guild-class-icon" aria-hidden="true" title="${hero?.class ?? ''}">${glyph}</div>
             <div class="guild-hero-info">
@@ -233,35 +250,18 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
             </span>
           </div>
           <div class="guild-actions">
-            <div class="guild-mode-tabs" role="tablist" aria-label="Workspace mode">
-              <button
-                type="button"
-                role="tab"
-                class="guild-mode-tab${workspaceMode === 'forge' ? ' is-active' : ''}"
-                data-action="mode-forge"
-                aria-selected="${workspaceMode === 'forge'}"
-              >Load Build</button>
-              <button
-                type="button"
-                role="tab"
-                class="guild-mode-tab${workspaceMode === 'prepared' ? ' is-active' : ''}"
-                data-action="mode-prepared"
-                aria-selected="${workspaceMode === 'prepared'}"
-              >Prepared Builds</button>
-            </div>
             ${workspaceMode === 'forge' ? `
             <label class="rpg-btn rpg-btn--ghost">
               <span class="rpg-btn-shine" aria-hidden="true"></span>
-              Load Build
+              📥 Load Save
               <input type="file" accept=".es3,.bak" data-action="load-save" hidden />
             </label>
-            <button type="button" class="rpg-btn rpg-btn--ghost" data-action="new-build">New Build</button>
+            <button type="button" class="rpg-btn rpg-btn--ghost" data-action="new-build">✨ New Build</button>
             <button type="button" class="rpg-btn rpg-btn--gold" data-action="set-baseline">
               <span class="rpg-btn-shine" aria-hidden="true"></span>
-              Save Build
+              📌 Set Baseline
             </button>` : `
             <span class="guild-prepared-badge text-ui" role="status">View only</span>`}
-            <a class="rpg-btn rpg-btn--ghost" href="#helper">Build Helper</a>
           </div>
         </div>
       </header>`;
@@ -792,6 +792,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     syncPreparedLevelPanelUi();
     schedulePreparedHeightAlign();
     restoreScrollState(scrollState);
+    startPortraitAnim();
   }
 
   function setPreparedLevel(index: number): void {
@@ -951,7 +952,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
 
     root.innerHTML = `
       <div class="rpg-screen${workspaceMode === 'prepared' ? ' is-prepared-mode' : ''}${showPreparedWorkspace ? ' is-prepared-active' : ''}${isPreparedReadOnly() ? ' is-readonly' : ''}">
-        ${drawGuildBanner()}
+        ${drawBuildToolbar()}
         ${drawPreparedBuildsRail()}
         ${drawPreparedLevelBar()}
         ${showPreparedWorkspace ? `
@@ -1307,6 +1308,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       state.itemsByKey = syncSaveItemKeys(state.working, ctx.allItems);
       forgeSnapshot = null;
     }
+    syncHash(navHref('build', 'forge').slice(1));
     draw();
   }
 
@@ -1318,12 +1320,19 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     selectedPreparedBuild = null;
     preparedLevelIndex = 0;
     runeChamberOpen = false;
+    syncHash(navHref('build', 'prepared').slice(1));
     draw();
   }
 
   function bindEvents(): void {
-    root.querySelector('[data-action="mode-forge"]')?.addEventListener('click', () => enterForgeMode());
-    root.querySelector('[data-action="mode-prepared"]')?.addEventListener('click', () => enterPreparedMode());
+    root.querySelector('[data-action="mode-forge"]')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      enterForgeMode();
+    });
+    root.querySelector('[data-action="mode-prepared"]')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      enterPreparedMode();
+    });
 
     root.querySelectorAll('[data-action="pick-prepared"]').forEach((el) => {
       el.addEventListener('click', () => {

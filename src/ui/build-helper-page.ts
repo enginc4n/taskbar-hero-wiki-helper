@@ -352,11 +352,8 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
           <div class="helper-header-inner">
             <div>
               <p class="text-kicker">Guild Workshop</p>
-              <h1 class="helper-title">Prepared Build Helper</h1>
+              <h1 class="helper-title page-title">Prepared Build Author</h1>
               <p class="helper-sub">Design milestone builds and export JSON for <code>public/prepared-builds/</code></p>
-            </div>
-            <div class="helper-header-actions">
-              <a class="rpg-btn rpg-btn--ghost" href="#/">← Build Forge</a>
             </div>
           </div>
         </header>

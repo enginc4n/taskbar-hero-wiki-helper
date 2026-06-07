@@ -38,9 +38,9 @@ export function classGlyph(className: string): string {
     Knight: '⚔',
     Ranger: '🏹',
     Sorcerer: '✦',
-    Priest: '✚',
+    Priest: '🕯',
     Abalist: '☽',
-    Slayer: '†',
+    Slayer: '🪓',
     Hunter: '🏹',
   };
   return map[className] ?? '◆';
