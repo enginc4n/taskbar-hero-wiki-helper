@@ -54,6 +54,7 @@
   --content-max: 1680px;
   --nav-width: 280px;
   --pixel: 2px;
+  --app-scale: 1;
 
   --shadow-pixel: 0 4px 0 #0a0604, 0 6px 12px rgba(0, 0, 0, 0.6);
   --shadow-inset: inset 0 2px 0 rgba(255, 220, 140, 0.06), inset 0 -3px 6px rgba(0, 0, 0, 0.45);
@@ -146,6 +147,17 @@ button { cursor: pointer; border: none; background: none; }
   position: relative;
   z-index: 1;
   width: 100%;
+}
+
+/* Full HD desktop — match ~85% browser zoom for better density */
+@media (min-width: 1900px) {
+  :root {
+    --app-scale: 0.85;
+  }
+
+  #app {
+    zoom: var(--app-scale);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
