@@ -213,7 +213,7 @@ export const tr: Record<TranslationKey, string> = {
   'buildHelper.milestoneLevel': 'Kilometre Taşı Kahraman Seviyesi',
   'buildHelper.skillBudget': 'Yetenek puanı {spent} / {budget}',
   'buildHelper.skillOrderHint':
-    'Bölüm sırası: önceki skiller dolmadan sonrakine yatırım yapılamaz; geri alma son puanı kaldırır.',
+    'Bölüm sırası: her skill\'e ilk puan serbest; sonraki skill\'lere ek puan için önceki skill önde veya dolu olmalı. Geri alma son puanı kaldırır.',
   'buildHelper.copyPrevious': 'Öncekini kopyala',
   'buildHelper.clearMilestone': 'Kilometre taşını temizle',
   'buildHelper.editingMilestone': 'Kilometre taşı düzenleniyor Sv.{level}',

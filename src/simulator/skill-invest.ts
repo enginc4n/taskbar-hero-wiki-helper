@@ -52,6 +52,8 @@ function canIncrementSlotAtCounts(
 ): boolean {
   const cur = counts.get(slot.key) ?? 0;
   if (cur >= slot.maxLevel) return false;
+  // Any skill can receive its first point once the chapter is unlocked.
+  if (cur === 0) return true;
   if (slot.nodeIndex === 0) return true;
   const prev = chapterNodes[slot.nodeIndex - 1];
   const prevLv = counts.get(prev.key) ?? 0;
@@ -60,8 +62,8 @@ function canIncrementSlotAtCounts(
 
 /**
  * Within-chapter investment order:
- * - First skill in a chapter can be raised freely (up to max / budget).
- * - Later skills only while the previous skill is ahead or already maxed.
+ * - First point on any skill in the chapter is allowed.
+ * - Further points on later skills require the previous skill to be ahead or maxed.
  */
 export function canIncrementSkillAtKey(
   key: number,

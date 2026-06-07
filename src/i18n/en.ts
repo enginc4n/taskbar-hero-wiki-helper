@@ -209,7 +209,7 @@ export const en = {
   'buildHelper.milestoneLevel': 'Milestone Hero Level',
   'buildHelper.skillBudget': 'Skill points {spent} / {budget}',
   'buildHelper.skillOrderHint':
-    'Chapter order: fill earlier skills before later ones; undo removes the last point only.',
+    'Chapter order: first point on any skill; extra points on later skills need the previous one ahead or maxed. Undo removes the last point only.',
   'buildHelper.copyPrevious': 'Copy previous',
   'buildHelper.clearMilestone': 'Clear milestone',
   'buildHelper.editingMilestone': 'Editing milestone Lv.{level}',
