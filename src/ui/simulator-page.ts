@@ -518,6 +518,11 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       </button>`;
   }
 
+  function skillNodeMutedClass(tierUnlocked: boolean, level: number, readOnly: boolean): string {
+    if (readOnly) return level > 0 ? '' : ' is-muted';
+    return tierUnlocked ? '' : ' is-muted';
+  }
+
   function drawSkillNode(node: PassiveNode, tierUnlocked: boolean, linkBefore: boolean, readOnly = false): string {
     const level = getPassiveLevel(state.working, node.key);
     const max = node.maxLevel ?? 1;
@@ -527,11 +532,12 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     const perPoint = node.perPoint ?? '';
     const atMax = level >= max;
     const atMin = level <= 0;
+    const muted = skillNodeMutedClass(tierUnlocked, level, readOnly);
 
     return `
       <div class="tree-node-link">
         ${linkBefore ? '<span class="tree-link-h" aria-hidden="true"></span>' : ''}
-        <div class="tree-skill skill-node-wrap ${lvClass}${tierUnlocked ? '' : ' is-muted'}" title="${label} · ${perPoint}/lvl">
+        <div class="tree-skill skill-node-wrap ${lvClass}${muted}" title="${label} · ${perPoint}/lvl">
           <div class="skill-node">
             <img class="node-frame pixel-art" src="${skillNodeFrameUrl('passive', level, max)}" alt="" />
             ${icon ? `<img class="node-icon pixel-art" src="${icon}" alt="" loading="lazy" />` : ''}
@@ -555,11 +561,12 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     const name = node.name ?? 'Active Skill';
     const atMax = level >= max;
     const atMin = level <= 0;
+    const muted = skillNodeMutedClass(tierUnlocked, level, readOnly);
 
     return `
       <div class="tree-node-link">
         ${linkBefore ? '<span class="tree-link-h" aria-hidden="true"></span>' : ''}
-        <div class="tree-skill tree-skill--active ${lvClass}${tierUnlocked ? '' : ' is-muted'}" title="${name}">
+        <div class="tree-skill tree-skill--active ${lvClass}${muted}" title="${name}">
           <div class="skill-node">
             <img class="node-frame pixel-art" src="${skillNodeFrameUrl('active', level, max)}" alt="" />
             ${icon ? `<img class="node-icon pixel-art" src="${icon}" alt="" loading="lazy" />` : ''}
@@ -673,18 +680,26 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         const reached = heroLevel >= group.levelGate;
         const passives = group.nodes.filter((n) => n.kind === 'passive' && n.stat && n.stat !== 'NONE');
         const actives = group.nodes.filter((n) => n.kind === 'active');
-        const nodesHtml = drawSkillNodesLayout(passives, actives, unlocked, readOnly);
+        const nodesHtml = drawSkillNodesLayout(passives, actives, readOnly || unlocked, readOnly);
         const lockHint = readOnly
-          ? 'Prepared build snapshot'
+          ? ''
           : attributeGroupLockHint(index, groups, heroLevel, state.working, unlocked);
-        const stateClass = [
-          unlocked ? 'is-unlocked' : 'is-locked',
-          reached ? 'is-reached' : '',
-          hasPoints ? 'is-invested' : '',
-          reached && unlocked && !hasPoints ? 'is-current' : '',
-        ]
-          .filter(Boolean)
-          .join(' ');
+        const stateClass = readOnly
+          ? [
+              'is-prepared-tier',
+              hasPoints ? 'is-invested' : '',
+              reached ? 'is-reached' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')
+          : [
+              unlocked ? 'is-unlocked' : 'is-locked',
+              reached ? 'is-reached' : '',
+              hasPoints ? 'is-invested' : '',
+              reached && unlocked && !hasPoints ? 'is-current' : '',
+            ]
+              .filter(Boolean)
+              .join(' ');
 
         return `
           <article class="tree-tier ${stateClass}" data-gate="${group.levelGate}">
@@ -697,12 +712,12 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
               <header class="tree-tier-head">
                 <span class="tree-chapter">Chapter ${index + 1}</span>
                 <h4 class="tree-tier-title">Level ${group.levelGate} — Guild Record</h4>
-                <p class="tree-tier-hint">${lockHint}</p>
+                ${lockHint ? `<p class="tree-tier-hint">${lockHint}</p>` : ''}
               </header>
               <div class="tree-branch">
                 ${nodesHtml}
               </div>
-              ${unlocked ? '' : `
+              ${readOnly || unlocked ? '' : `
                 <div class="tree-tier-seal" aria-hidden="true">
                   <img src="${skillSectionLockedIconUrl()}" alt="" class="pixel-art" />
                   <span class="text-ui">Sealed</span>

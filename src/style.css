@@ -1401,6 +1401,34 @@ button { cursor: pointer; border: none; background: none; }
   filter: saturate(0.6);
 }
 
+.rpg-screen.is-prepared-mode.is-readonly .tree-tier.is-prepared-tier .tree-tier-page {
+  opacity: 1;
+  filter: none;
+}
+
+.rpg-screen.is-prepared-mode.is-readonly .tree-tier.is-prepared-tier.is-invested .tree-gate-stone {
+  color: #f6e6c0;
+  border-color: var(--gold);
+  background: linear-gradient(145deg, #6b5420, #2a2018);
+  box-shadow: inset 0 0 0 1px var(--gold-bright), 0 0 12px rgba(201, 162, 39, 0.3), 0 3px 0 #0a0604;
+}
+
+.rpg-screen.is-prepared-mode.is-readonly .tree-tier.is-prepared-tier.is-invested .tree-tier-page {
+  border-color: var(--brass);
+  box-shadow: inset 0 0 0 1px rgba(240, 208, 96, 0.25), 0 0 16px rgba(201, 162, 39, 0.08), 0 4px 0 #0a0604;
+}
+
+.rpg-screen.is-prepared-mode.is-readonly .tree-skill.is-muted {
+  opacity: 0.35;
+  filter: grayscale(0.92) brightness(0.65);
+}
+
+.rpg-screen.is-prepared-mode.is-readonly .tree-skill.has,
+.rpg-screen.is-prepared-mode.is-readonly .tree-skill.max {
+  opacity: 1;
+  filter: none;
+}
+
 .tree-tier-head {
   margin-bottom: 0.85rem;
   padding-bottom: 0.65rem;
