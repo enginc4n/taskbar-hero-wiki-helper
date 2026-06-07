@@ -7,6 +7,14 @@
       "heroKey": 201,
       "heroClass": "Ranger",
       "description": "TBH Tr Ranger progression path."
+    },
+    {
+      "id": "56f97022-f3ed-4e57-b3b2-ab7b2918b8f8",
+      "file": "56f97022-f3ed-4e57-b3b2-ab7b2918b8f8.json",
+      "name": "TBH Tr Solo Ranger",
+      "heroKey": 201,
+      "heroClass": "Ranger",
+      "description": "TBH Tr Solo Ranger progression path."
     }
   ]
 }

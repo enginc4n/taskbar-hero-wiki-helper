@@ -1,0 +1,549 @@
+{
+  "id": "56f97022-f3ed-4e57-b3b2-ab7b2918b8f8",
+  "name": "SOLO RANGER",
+  "heroKey": 201,
+  "milestones": [
+    {
+      "level": 11,
+      "heroLevel": 1,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 6
+        },
+        {
+          "key": 20101,
+          "level": 5
+        }
+      ]
+    },
+    {
+      "level": 21,
+      "heroLevel": 21,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 7
+        },
+        {
+          "key": 20401,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "level": 31,
+      "heroLevel": 31,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 7
+        },
+        {
+          "key": 20401,
+          "level": 1
+        },
+        {
+          "key": 201022,
+          "level": 10
+        }
+      ]
+    },
+    {
+      "level": 41,
+      "heroLevel": 41,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 7
+        },
+        {
+          "key": 20401,
+          "level": 1
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 201032,
+          "level": 10
+        }
+      ]
+    },
+    {
+      "level": 51,
+      "heroLevel": 51,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201012,
+          "level": 3
+        },
+        {
+          "key": 201001,
+          "level": 1
+        },
+        {
+          "key": 201052,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "level": 61,
+      "heroLevel": 61,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201012,
+          "level": 3
+        },
+        {
+          "key": 201001,
+          "level": 1
+        },
+        {
+          "key": 201052,
+          "level": 10
+        },
+        {
+          "key": 201062,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "level": 71,
+      "heroLevel": 71,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201012,
+          "level": 3
+        },
+        {
+          "key": 201001,
+          "level": 1
+        },
+        {
+          "key": 201052,
+          "level": 10
+        },
+        {
+          "key": 201062,
+          "level": 10
+        },
+        {
+          "key": 201072,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "level": 81,
+      "heroLevel": 81,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201012,
+          "level": 3
+        },
+        {
+          "key": 201001,
+          "level": 2
+        },
+        {
+          "key": 201052,
+          "level": 10
+        },
+        {
+          "key": 201062,
+          "level": 10
+        },
+        {
+          "key": 201072,
+          "level": 10
+        }
+      ]
+    },
+    {
+      "level": 91,
+      "heroLevel": 91,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201012,
+          "level": 3
+        },
+        {
+          "key": 201001,
+          "level": 2
+        },
+        {
+          "key": 201052,
+          "level": 10
+        },
+        {
+          "key": 201062,
+          "level": 10
+        },
+        {
+          "key": 201072,
+          "level": 10
+        },
+        {
+          "key": 201042,
+          "level": 10
+        }
+      ]
+    },
+    {
+      "level": 101,
+      "heroLevel": 101,
+      "passives": [
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201012,
+          "level": 3
+        },
+        {
+          "key": 201001,
+          "level": 3
+        },
+        {
+          "key": 201052,
+          "level": 10
+        },
+        {
+          "key": 201062,
+          "level": 10
+        },
+        {
+          "key": 201072,
+          "level": 10
+        },
+        {
+          "key": 201042,
+          "level": 10
+        },
+        {
+          "key": 201061,
+          "level": 9
+        }
+      ],
+      "gear": [
+        {
+          "part": "MAIN_WEAPON",
+          "itemKey": 315141,
+          "enchants": [
+            {
+              "StatModKey": 0,
+              "StatType": 24,
+              "ModType": 0,
+              "Value": 1300
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 24,
+              "ModType": 0,
+              "Value": 1300
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 1,
+              "ModType": 0,
+              "Value": 50
+            }
+          ]
+        },
+        {
+          "part": "SUB_WEAPON",
+          "itemKey": 414171,
+          "enchants": [
+            {
+              "StatModKey": 0,
+              "StatType": 24,
+              "ModType": 0,
+              "Value": 1300
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 24,
+              "ModType": 0,
+              "Value": 1300
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 1,
+              "ModType": 0,
+              "Value": 50
+            }
+          ]
+        },
+        {
+          "part": "GLOVES",
+          "itemKey": 524171
+        },
+        {
+          "part": "AMULET",
+          "itemKey": 604171,
+          "enchants": [
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            }
+          ]
+        },
+        {
+          "part": "EARING",
+          "itemKey": 614171,
+          "enchants": [
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            }
+          ]
+        },
+        {
+          "part": "RING",
+          "itemKey": 624171,
+          "enchants": [
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            }
+          ]
+        },
+        {
+          "part": "BRACER",
+          "itemKey": 635171,
+          "enchants": [
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            },
+            {
+              "StatModKey": 0,
+              "StatType": 7,
+              "ModType": 1,
+              "Value": 350
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
