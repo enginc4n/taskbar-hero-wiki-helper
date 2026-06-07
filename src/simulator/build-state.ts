@@ -92,18 +92,26 @@ export function totalInvestedSkillPoints(save: PlayerSaveData): number {
  * - Total invested skill points reached the chapter gate (any chapters), OR
  * - Group already saved as unlocked, OR
  * - Any point invested in this group
+ *
+ * Build Author passes `ignoreHeroLevel` so milestone hero level (e.g. 101) does not
+ * bypass skill-point gates while editing.
  */
+export interface ChapterUnlockOptions {
+  ignoreHeroLevel?: boolean;
+}
+
 export function isAttributeGroupUnlocked(
   groupIndex: number,
   groups: HeroTreeGroup[],
   heroLevel: number,
   save: PlayerSaveData,
   hero: HeroSaveData,
+  options?: ChapterUnlockOptions,
 ): boolean {
   const group = groups[groupIndex];
   if (!group) return false;
   const gate = group.levelGate ?? chapterLevelGate(groupIndex);
-  if (heroLevel >= gate) return true;
+  if (!options?.ignoreHeroLevel && heroLevel >= gate) return true;
   if (totalInvestedSkillPoints(save) >= gate) return true;
   if ((hero.unlockedAttributeGroupKeys ?? []).includes(group.group)) return true;
   if (groupInvestedPoints(save, group) > 0) return true;
@@ -115,11 +123,14 @@ export function syncAttributeGroupUnlocks(
   save: PlayerSaveData,
   hero: HeroSaveData,
   heroDef: EnrichedHero,
+  options?: ChapterUnlockOptions,
 ): void {
   const heroLevel = heroLevelFromSave(hero);
-  const keys = new Set(hero.unlockedAttributeGroupKeys ?? []);
+  const keys = options?.ignoreHeroLevel
+    ? new Set<number>()
+    : new Set(hero.unlockedAttributeGroupKeys ?? []);
   for (let i = 0; i < heroDef.tree.length; i++) {
-    if (isAttributeGroupUnlocked(i, heroDef.tree, heroLevel, save, hero)) {
+    if (isAttributeGroupUnlocked(i, heroDef.tree, heroLevel, save, hero, options)) {
       keys.add(heroDef.tree[i].group);
     }
   }

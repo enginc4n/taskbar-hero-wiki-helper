@@ -105,5 +105,6 @@ export function canIncrementSkillAtKey(
     heroLevelFromSave(heroData),
     save,
     heroData,
+    { ignoreHeroLevel: true },
   );
 }

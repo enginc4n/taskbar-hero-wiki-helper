@@ -184,5 +184,5 @@ export function applyPreparedMilestone(
     }
   }
 
-  syncAttributeGroupUnlocks(save, hero, heroDef);
+  syncAttributeGroupUnlocks(save, hero, heroDef, { ignoreHeroLevel: true });
 }

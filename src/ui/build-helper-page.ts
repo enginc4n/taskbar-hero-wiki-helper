@@ -149,7 +149,7 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
   function syncHeroUnlocks(): void {
     const h = heroSave();
     const def = heroDef();
-    if (h && def) syncAttributeGroupUnlocks(working, h, def);
+    if (h && def) syncAttributeGroupUnlocks(working, h, def, { ignoreHeroLevel: true });
   }
 
   function switchHero(key: number): void {

@@ -245,13 +245,22 @@ export function buildSkillPathTiersHtml(ctx: SkillPathPanelContext): string {
   const groups = hero.tree;
   const readOnly = ctx.readOnly ?? false;
   const isAuthor = ctx.variant === 'author';
+  const authorUnlock = isAuthor ? { ignoreHeroLevel: true } as const : undefined;
+  const spent = totalInvestedSkillPoints(working);
 
   return groups
     .map((group, index) => {
-      const unlocked = isAttributeGroupUnlocked(index, groups, heroLevel, working, heroData);
+      const unlocked = isAttributeGroupUnlocked(
+        index,
+        groups,
+        heroLevel,
+        working,
+        heroData,
+        authorUnlock,
+      );
       const hasPoints = group.nodes.some((n) => getPassiveLevel(working, n.key) > 0);
       const gate = group.levelGate ?? chapterLevelGate(index);
-      const reached = heroLevel >= gate;
+      const reached = isAuthor ? spent >= gate : heroLevel >= gate;
       const passives = group.nodes.filter((n) => n.kind === 'passive' && n.stat && n.stat !== 'NONE');
       const actives = group.nodes.filter((n) => n.kind === 'active');
 
