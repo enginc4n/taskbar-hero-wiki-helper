@@ -19,6 +19,8 @@ import {
   slugifyBuildId,
 } from '../data/prepared-build-export';
 import { passiveNodeLabel, skillIconUrl, skillNodeFrameUrl } from '../data/skill-ui';
+import { heroNameLabel } from '../i18n/hero-class';
+import { t } from '../i18n';
 import { classGlyph } from '../data/rpg-ui';
 import {
   createEmptySave,
@@ -257,7 +259,7 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
         <div class="rpg-panel-inner">
           <header class="rpg-panel-head">
             <p class="text-kicker">Skill Path</p>
-            <h3 class="rpg-panel-title">Path of ${def.name}</h3>
+            <h3 class="rpg-panel-title">${t('build.pathOf', { name: heroNameLabel(def.name) })}</h3>
           </header>
           <div class="chronicle-scroll"><div class="chronicle-tiers">${buildChronicleTiersHtml()}</div></div>
         </div>
@@ -351,9 +353,9 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
         <header class="helper-header rpg-panel">
           <div class="helper-header-inner">
             <div>
-              <p class="text-kicker">Guild Workshop</p>
-              <h1 class="helper-title page-title">Prepared Build Author</h1>
-              <p class="helper-sub">Design milestone builds and export JSON for <code>public/prepared-builds/</code></p>
+              <p class="text-kicker">${t('buildHelper.kicker')}</p>
+              <h1 class="helper-title page-title">${t('buildHelper.title')}</h1>
+              <p class="helper-sub">${t('buildHelper.sub')}</p>
             </div>
           </div>
         </header>
@@ -361,25 +363,25 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
         <section class="helper-meta rpg-panel">
           <div class="rpg-panel-inner helper-meta-grid">
             <label class="helper-field">
-              <span class="field-label">Build ID</span>
+              <span class="field-label">${t('buildHelper.buildId')}</span>
               <input data-field="build-id" value="${buildId}" placeholder="my-prepared-build" />
             </label>
             <label class="helper-field">
-              <span class="field-label">Display Name</span>
+              <span class="field-label">${t('buildHelper.displayName')}</span>
               <input data-field="build-name" value="${buildName}" />
             </label>
             <label class="helper-field helper-field--wide">
-              <span class="field-label">Description</span>
-              <input data-field="build-desc" value="${buildDescription}" placeholder="Short summary for the build card" />
+              <span class="field-label">${t('buildHelper.description')}</span>
+              <input data-field="build-desc" value="${buildDescription}" placeholder="${t('buildHelper.descriptionPlaceholder')}" />
             </label>
             <label class="helper-field">
-              <span class="field-label">Hero</span>
+              <span class="field-label">${t('buildHelper.hero')}</span>
               <select data-field="hero-key">
-                ${ctx.heroes.map((h) => `<option value="${h.key}"${h.key === heroKey ? ' selected' : ''}>${h.name}</option>`).join('')}
+                ${ctx.heroes.map((h) => `<option value="${h.key}"${h.key === heroKey ? ' selected' : ''}>${heroNameLabel(h.name)}</option>`).join('')}
               </select>
             </label>
             <label class="helper-field">
-              <span class="field-label">Milestone Hero Level</span>
+              <span class="field-label">${t('buildHelper.milestoneLevel')}</span>
               <input type="number" min="1" max="70" data-field="hero-level" value="${heroLevelFromSave(heroSave() ?? { heroKey, equippedItemIds: [] })}" />
             </label>
           </div>
@@ -393,8 +395,8 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
             ).join('')}
           </div>
           <div class="helper-milestone-actions">
-            <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--sm" data-action="copy-prev-milestone"${milestoneIndex === 0 ? ' disabled' : ''}>Copy previous</button>
-            <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--sm" data-action="clear-milestone">Clear milestone</button>
+            <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--sm" data-action="copy-prev-milestone"${milestoneIndex === 0 ? ' disabled' : ''}>${t('buildHelper.copyPrevious')}</button>
+            <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--sm" data-action="clear-milestone">${t('buildHelper.clearMilestone')}</button>
           </div>
         </section>
 
@@ -404,8 +406,8 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
             <div class="rpg-panel helper-hero-card">
               <div class="rpg-panel-inner">
                 <span class="helper-hero-glyph">${classGlyph(def?.class ?? '')}</span>
-                <h3 class="rpg-panel-title">${def?.name ?? 'Hero'}</h3>
-                <p class="rpg-panel-sub">Editing milestone Lv.${PREPARED_LEVEL_STEPS[milestoneIndex]}</p>
+                <h3 class="rpg-panel-title">${def ? heroNameLabel(def.name) : t('build.heroFallback')}</h3>
+                <p class="rpg-panel-sub">${t('buildHelper.editingMilestone', { level: PREPARED_LEVEL_STEPS[milestoneIndex] })}</p>
               </div>
             </div>
             ${drawEquipment()}
@@ -416,14 +418,14 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
           <div class="rpg-panel-inner">
             <div class="helper-export-actions">
               <label class="rpg-btn rpg-btn--ghost">
-                Import JSON
+                ${t('buildHelper.importJson')}
                 <input type="file" accept=".json,application/json" data-action="import-json" hidden />
               </label>
-              <button type="button" class="rpg-btn rpg-btn--gold" data-action="export-build">Download build JSON</button>
-              <button type="button" class="rpg-btn rpg-btn--ghost" data-action="export-manifest">Download manifest entry</button>
+              <button type="button" class="rpg-btn rpg-btn--gold" data-action="export-build">${t('buildHelper.downloadBuild')}</button>
+              <button type="button" class="rpg-btn rpg-btn--ghost" data-action="export-manifest">${t('buildHelper.downloadManifest')}</button>
             </div>
             <details class="helper-json-preview">
-              <summary>Preview JSON</summary>
+              <summary>${t('buildHelper.previewJson')}</summary>
               <pre class="helper-json"></pre>
             </details>
           </div>

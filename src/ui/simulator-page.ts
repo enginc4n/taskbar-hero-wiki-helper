@@ -63,7 +63,8 @@ import type {
   RefMaps,
   RuneGraph,
 } from '../types';
-import { PART_LABELS } from '../types';
+import { heroClassLabel, heroNameLabel } from '../i18n/hero-class';
+import { partLabel, t, type TranslationKey } from '../i18n';
 import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, itemMatchesHeroClass, type GearFilterState } from '../gear/filter';
 import { navHref, syncHash } from '../router';
 
@@ -87,16 +88,16 @@ interface SimState {
   socketDraft: Map<string, SocketSlotState[]>;
 }
 
-const STAT_ROWS: { key: keyof ComputedStats; label: string; featured?: boolean }[] = [
-  { key: 'AttackDamage', label: 'Attack Damage', featured: true },
-  { key: 'MaxHp', label: 'Vitality' },
-  { key: 'Armor', label: 'Armor' },
-  { key: 'AttackSpeed', label: 'Attack Speed' },
-  { key: 'CriticalChance', label: 'Critical Chance' },
-  { key: 'CriticalDamage', label: 'Critical Damage' },
-  { key: 'MovementSpeed', label: 'Movement Speed' },
-  { key: 'CooldownReduction', label: 'Cooldown Reduction' },
-  { key: 'CastSpeed', label: 'Cast Speed' },
+const STAT_ROW_KEYS: { key: keyof ComputedStats; labelKey: TranslationKey; featured?: boolean }[] = [
+  { key: 'AttackDamage', labelKey: 'stat.attackDamage', featured: true },
+  { key: 'MaxHp', labelKey: 'stat.vitality' },
+  { key: 'Armor', labelKey: 'stat.armor' },
+  { key: 'AttackSpeed', labelKey: 'stat.attackSpeed' },
+  { key: 'CriticalChance', labelKey: 'stat.criticalChance' },
+  { key: 'CriticalDamage', labelKey: 'stat.criticalDamage' },
+  { key: 'MovementSpeed', labelKey: 'stat.movementSpeed' },
+  { key: 'CooldownReduction', labelKey: 'stat.cooldownReduction' },
+  { key: 'CastSpeed', labelKey: 'stat.castSpeed' },
 ];
 
 export interface SimulatorPageOptions {
@@ -220,7 +221,7 @@ export function renderSimulatorPage(
   function drawBuildToolbar(): string {
     const hero = heroDef();
     const hasBaseline = !!state.baseline;
-    const heroName = hero?.name ?? 'Unknown';
+    const heroName = hero ? heroNameLabel(hero.name) : t('build.unknown');
     const portrait = heroPortraitUrl(hero);
 
     const heroPicker =
@@ -232,12 +233,12 @@ export function renderSimulatorPage(
                 <img class="guild-hero-portrait-frame pixel-art" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
               </div>
               <div class="guild-hero-select-wrap">
-                <select class="guild-hero-select" data-field="hero-key" aria-label="Select hero">
+                <select class="guild-hero-select" data-field="hero-key" aria-label="${t('build.selectHero')}">
                   ${ctx.heroes
                     .map((h) => {
                       const saveHero = getSelectedHero(state.working, h.key);
                       const locked = saveHero ? !saveHero.IsUnLock : false;
-                      return `<option value="${h.key}"${h.key === state.heroKey ? ' selected' : ''}${locked ? ' disabled' : ''}>${h.name}</option>`;
+                      return `<option value="${h.key}"${h.key === state.heroKey ? ' selected' : ''}${locked ? ' disabled' : ''}>${heroNameLabel(h.name)}</option>`;
                     })
                     .join('')}
                 </select>
@@ -251,7 +252,7 @@ export function renderSimulatorPage(
               </div>
               <div class="guild-hero-info">
                 <h2 class="guild-hero-name">${heroName}</h2>
-                ${hero?.class ? `<p class="guild-hero-meta">${hero.class}</p>` : ''}
+                ${hero?.class && heroClassLabel(hero.class) !== heroName ? `<p class="guild-hero-meta">${heroClassLabel(hero.class)}</p>` : ''}
               </div>
             </div>`;
 
@@ -264,38 +265,38 @@ export function renderSimulatorPage(
               href="${navHref('build', 'forge')}"
               data-action="mode-forge"
               aria-current="${workspaceMode === 'forge' ? 'page' : 'false'}"
-            >⚔ Build Forge</a>
+            >⚔ ${t('build.buildForge')}</a>
             <a
               class="build-subnav-item${workspaceMode === 'prepared' ? ' is-active' : ''}"
               href="${navHref('build', 'prepared')}"
               data-action="mode-prepared"
               aria-current="${workspaceMode === 'prepared' ? 'page' : 'false'}"
-            >📜 Prepared Builds</a>
+            >📜 ${t('build.preparedBuilds')}</a>
           </nav>
           <div class="guild-hero-strip">
             ${heroPicker}
             <span class="guild-status ${workspaceMode === 'prepared' ? 'is-prepared' : hasBaseline ? 'is-set' : ''}" role="status">
               <span class="guild-status-dot" aria-hidden="true"></span>
               ${workspaceMode === 'prepared'
-                ? selectedPreparedBuild?.name ?? 'Prepared Builds'
+                ? selectedPreparedBuild?.name ?? t('build.preparedBuilds')
                 : hasBaseline
-                  ? 'Baseline active'
-                  : 'No baseline'}
+                  ? t('build.baselineActive')
+                  : t('build.noBaseline')}
             </span>
           </div>
           <div class="guild-actions">
             ${workspaceMode === 'forge' ? `
             <label class="rpg-btn rpg-btn--ghost">
               <span class="rpg-btn-shine" aria-hidden="true"></span>
-              📥 Load Save
+              📥 ${t('build.loadSave')}
               <input type="file" accept=".es3,.bak" data-action="load-save" hidden />
             </label>
-            <button type="button" class="rpg-btn rpg-btn--ghost" data-action="new-build">✨ New Build</button>
+            <button type="button" class="rpg-btn rpg-btn--ghost" data-action="new-build">✨ ${t('build.newBuild')}</button>
             <button type="button" class="rpg-btn rpg-btn--gold" data-action="set-baseline">
               <span class="rpg-btn-shine" aria-hidden="true"></span>
-              📌 Set Baseline
+              📌 ${t('build.setBaseline')}
             </button>` : `
-            <span class="guild-prepared-badge text-ui" role="status">View only</span>`}
+            <span class="guild-prepared-badge text-ui" role="status">${t('build.viewOnly')}</span>`}
           </div>
         </div>
       </header>`;
@@ -318,7 +319,7 @@ export function renderSimulatorPage(
           >
             <span class="prepared-build-glyph" aria-hidden="true">${glyph}</span>
             <span class="prepared-build-name">${entry.name}</span>
-            <span class="prepared-build-class">${entry.heroClass ?? ''}</span>
+            <span class="prepared-build-class">${heroClassLabel(entry.heroClass)}</span>
             ${entry.description ? `<span class="prepared-build-desc">${entry.description}</span>` : ''}
           </button>`;
       })
@@ -327,11 +328,11 @@ export function renderSimulatorPage(
     return `
       <section class="prepared-builds-rail" aria-label="Prepared builds">
         <div class="prepared-builds-rail-head">
-          <p class="text-kicker">Guild Archives</p>
-          <h3 class="rpg-panel-title">Prepared Builds</h3>
+          <p class="text-kicker">${t('build.guildArchives')}</p>
+          <h3 class="rpg-panel-title">${t('build.preparedBuilds')}</h3>
         </div>
         <div class="prepared-build-cards" role="list">
-          ${cards || '<p class="prepared-builds-empty">No prepared builds found in <code>public/prepared-builds/</code>.</p>'}
+          ${cards || `<p class="prepared-builds-empty">${t('build.noPreparedBuilds')}</p>`}
         </div>
       </section>`;
   }
@@ -351,8 +352,8 @@ export function renderSimulatorPage(
     return `
       <div class="prepared-empty-state rpg-panel">
         <div class="rpg-panel-inner">
-          <p class="prepared-empty-title">Select a Prepared Build</p>
-          <p class="prepared-empty-hint">Choose a guild-curated path above, then scroll hero level in the chronicle to preview each milestone.</p>
+          <p class="prepared-empty-title">${t('build.selectPreparedTitle')}</p>
+          <p class="prepared-empty-hint">${t('build.selectPreparedHint')}</p>
         </div>
       </div>`;
   }
@@ -361,14 +362,16 @@ export function renderSimulatorPage(
     const hero = heroDef();
     const save = heroSave();
     if (!hero || !save) return '';
-    const desc = hero.description ?? `A ${hero.class} forged in the fires of the guild hall.`;
+    const displayName = heroNameLabel(hero.name);
+    const displayClass = heroClassLabel(hero.class);
+    const desc = hero.description ?? t('build.heroDescFallback', { class: displayClass });
 
     return `
       <section class="hero-showcase" aria-label="Hero showcase">
         <div class="hero-showcase-head">
           <div class="hero-showcase-titles">
-            <h2 class="hero-showcase-name">${hero.name}</h2>
-            <p class="hero-showcase-class">${hero.class}</p>
+            <h2 class="hero-showcase-name">${displayName}</h2>
+            ${displayClass && displayClass !== displayName ? `<p class="hero-showcase-class">${displayClass}</p>` : ''}
           </div>
           ${drawRuneVaultButton()}
         </div>
@@ -415,7 +418,7 @@ export function renderSimulatorPage(
               <img
                 class="hero-portrait pixel-art"
                 src="${heroIllustUrl(hero?.key ?? 101, 0)}"
-                alt="${hero?.name ?? 'Hero'} portrait"
+                alt="${t('build.heroPortrait', { name: hero ? heroNameLabel(hero.name) : t('build.heroFallback') })}"
                 loading="lazy"
               />
             </div>
@@ -453,14 +456,14 @@ export function renderSimulatorPage(
       ? deltaHtml(dpsDelta >= 0, `${dpsDelta >= 0 ? '+' : ''}${Math.round(dpsDelta).toLocaleString()} (${dpsPct >= 0 ? '+' : ''}${dpsPct.toFixed(1)}%)`)
       : '';
 
-    const tiles = STAT_ROWS.map((stat) => {
+    const tiles = STAT_ROW_KEYS.map((stat) => {
       const value = formatStatValue(stat.key, current[stat.key]);
       return `
         <div class="attr-tile${stat.featured ? ' attr-tile--featured' : ''}">
           <div class="attr-icon">
             ${statIconHtml(stat.key)}
           </div>
-          <span class="attr-label">${stat.label}</span>
+          <span class="attr-label">${t(stat.labelKey)}</span>
           <span class="attr-value">${value}</span>
           ${statDelta(stat.key)}
         </div>`;
@@ -472,16 +475,16 @@ export function renderSimulatorPage(
           <div class="rpg-panel-inner char-sheet-inner">
             <header class="char-sheet-head">
               <div class="rpg-panel-head-copy">
-                <p class="text-kicker">Character Sheet</p>
+                <p class="text-kicker">${t('build.characterSheet')}</p>
                 <h3 class="rpg-panel-title">
                   <span class="char-sheet-title-icon" aria-hidden="true">${statIconHtml('Attributes', 'char-sheet-title-icon-svg pixel-art')}</span>
-                  Attributes
+                  ${t('build.attributes')}
                 </h3>
               </div>
               <div class="char-sheet-dps">
                 <div class="char-sheet-dps-icon" aria-hidden="true">${statIconHtml('Dps')}</div>
                 <div>
-                  <div class="char-sheet-dps-label">Basic Attack DPS</div>
+                  <div class="char-sheet-dps-label">${t('build.basicAttackDps')}</div>
                   <div class="char-sheet-dps-value">${dpsValue}</div>
                   ${dpsDeltaHtml}
                 </div>
@@ -502,11 +505,11 @@ export function renderSimulatorPage(
         class="rune-vault-btn${runeChamberOpen ? ' is-open' : ''}"
         data-action="toggle-rune-chamber"
         aria-pressed="${runeChamberOpen}"
-        aria-label="${runeChamberOpen ? 'Close rune vault' : 'Open rune vault'}"
-        title="${runeChamberOpen ? 'Close Rune Chamber' : 'Open Rune Chamber'}"
+        aria-label="${runeChamberOpen ? t('build.closeRuneVault') : t('build.openRuneVault')}"
+        title="${runeChamberOpen ? t('build.closeRuneChamber') : t('build.openRuneChamber')}"
       >
         <img class="rune-vault-btn-icon pixel-art" src="${RUNE_VAULT_ICON}" alt="" />
-        <span class="rune-vault-btn-label text-ui">Runes</span>
+        <span class="rune-vault-btn-label text-ui">${t('build.runes')}</span>
       </button>`;
   }
 
@@ -538,8 +541,8 @@ export function renderSimulatorPage(
           <span class="tree-skill-name">${label}</span>
           ${tierUnlocked && !readOnly ? `
             <div class="tree-skill-controls" role="group" aria-label="${label} level">
-              <button type="button" class="node-btn" data-action="passive-dec" data-key="${node.key}" aria-label="Decrease ${label}"${atMin ? ' disabled' : ''}>−</button>
-              <button type="button" class="node-btn" data-action="passive-inc" data-key="${node.key}" data-max="${max}" aria-label="Increase ${label}"${atMax ? ' disabled' : ''}>+</button>
+              <button type="button" class="node-btn" data-action="passive-dec" data-key="${node.key}" aria-label="${t('build.decrease', { name: label })}"${atMin ? ' disabled' : ''}>−</button>
+              <button type="button" class="node-btn" data-action="passive-inc" data-key="${node.key}" data-max="${max}" aria-label="${t('build.increase', { name: label })}"${atMax ? ' disabled' : ''}>+</button>
             </div>` : ''}
         </div>
       </div>`;
@@ -550,7 +553,7 @@ export function renderSimulatorPage(
     const max = node.maxLevel ?? 1;
     const icon = skillIconUrl(node.icon);
     const lvClass = level >= max ? 'max' : level > 0 ? 'has' : '';
-    const name = node.name ?? 'Active Skill';
+    const name = node.name ?? t('build.activeSkill');
     const atMax = level >= max;
     const atMin = level <= 0;
     const muted = skillNodeMutedClass(tierUnlocked, level, readOnly);
@@ -568,8 +571,8 @@ export function renderSimulatorPage(
           <span class="tree-skill-name">${name}</span>
           ${tierUnlocked && !readOnly ? `
             <div class="tree-skill-controls" role="group" aria-label="${name} level">
-              <button type="button" class="node-btn" data-action="passive-dec" data-key="${node.key}" aria-label="Decrease ${name}"${atMin ? ' disabled' : ''}>−</button>
-              <button type="button" class="node-btn" data-action="passive-inc" data-key="${node.key}" data-max="${max}" aria-label="Increase ${name}"${atMax ? ' disabled' : ''}>+</button>
+              <button type="button" class="node-btn" data-action="passive-dec" data-key="${node.key}" aria-label="${t('build.decrease', { name })}"${atMin ? ' disabled' : ''}>−</button>
+              <button type="button" class="node-btn" data-action="passive-inc" data-key="${node.key}" data-max="${max}" aria-label="${t('build.increase', { name })}"${atMax ? ' disabled' : ''}>+</button>
             </div>` : ''}
         </div>
       </div>`;
@@ -618,15 +621,15 @@ export function renderSimulatorPage(
           data-action="prepared-level-pick"
           data-index="${i}"
           style="left: ${pct}%"
-          aria-label="Level ${step}"
+          aria-label="${t('build.level', { level: step })}"
           aria-pressed="${i === preparedLevelIndex}"
         >${step}</button>`;
     }).join('');
 
     return `
-      <div class="chronicle-level-scrubber" role="group" aria-label="Preview hero level">
+      <div class="chronicle-level-scrubber" role="group" aria-label="${t('build.previewHeroLevel')}">
         <div class="chronicle-level-scrubber-head">
-          <span class="chronicle-level-label">Hero Level</span>
+          <span class="chronicle-level-label">${t('build.heroLevel')}</span>
           <output class="chronicle-level-readout" for="chronicle-level-range">Lv.${level}</output>
         </div>
         <div class="chronicle-level-track-wrap">
@@ -642,7 +645,7 @@ export function renderSimulatorPage(
             aria-valuemin="${PREPARED_LEVEL_STEPS[0]}"
             aria-valuemax="${PREPARED_LEVEL_STEPS[maxIndex]}"
             aria-valuenow="${level}"
-            aria-valuetext="Level ${level}"
+            aria-valuetext="${t('build.level', { level })}"
           />
           <div class="chronicle-level-ticks">${ticks}</div>
         </div>
@@ -703,7 +706,7 @@ export function renderSimulatorPage(
             <div class="tree-tier-page">
               <header class="tree-tier-head">
                 <span class="tree-chapter">Chapter ${index + 1}</span>
-                <h4 class="tree-tier-title">Level ${group.levelGate} — Guild Record</h4>
+                <h4 class="tree-tier-title">${t('build.guildRecord', { level: group.levelGate })}</h4>
                 ${lockHint ? `<p class="tree-tier-hint">${lockHint}</p>` : ''}
               </header>
               <div class="tree-branch">
@@ -739,7 +742,7 @@ export function renderSimulatorPage(
     if (range && document.activeElement !== range) {
       range.value = String(preparedLevelIndex);
       range.setAttribute('aria-valuenow', String(level));
-      range.setAttribute('aria-valuetext', `Level ${level}`);
+      range.setAttribute('aria-valuetext', t('build.level', { level }));
     }
   }
 
@@ -808,12 +811,12 @@ export function renderSimulatorPage(
         <div class="rpg-panel-inner">
           <header class="rpg-panel-head">
             <div class="rpg-panel-head-copy">
-              <p class="text-kicker">Guild Chronicle</p>
-              <h3 class="rpg-panel-title">Path of ${def.name}</h3>
+              <p class="text-kicker">${t('build.guildChronicle')}</p>
+              <h3 class="rpg-panel-title">${t('build.pathOf', { name: heroNameLabel(def.name) })}</h3>
               <p class="rpg-panel-sub">${
                 readOnly
-                  ? `Prepared path · ${groups.length} chapters`
-                  : `Lv.${heroLevel} · ${groups.length} chapters on the road`
+                  ? t('build.preparedPathChapters', { count: groups.length })
+                  : t('build.levelChaptersRoad', { level: heroLevel, count: groups.length })
               }</p>
             </div>
           </header>
@@ -849,8 +852,8 @@ export function renderSimulatorPage(
             <span class="rune-slot-benefit${level > 0 ? ' is-active' : ''}">${benefit}</span>
             ${isPreparedReadOnly() ? '' : `
             <div class="rune-slot-controls">
-              <button type="button" class="node-btn" data-action="rune-dec" data-key="${rune.key}" aria-label="Decrease ${rune.name}">−</button>
-              <button type="button" class="node-btn" data-action="rune-inc" data-key="${rune.key}" data-max="${max}" aria-label="Increase ${rune.name}">+</button>
+              <button type="button" class="node-btn" data-action="rune-dec" data-key="${rune.key}" aria-label="${t('build.decrease', { name: rune.name })}">−</button>
+              <button type="button" class="node-btn" data-action="rune-inc" data-key="${rune.key}" data-max="${max}" aria-label="${t('build.increase', { name: rune.name })}">+</button>
             </div>`}
             <div class="rpg-tooltip">${effect}</div>
           </article>`;
@@ -865,10 +868,10 @@ export function renderSimulatorPage(
           <div class="rpg-panel-inner rune-chamber-inner">
             <header class="rune-chamber-head">
               <div class="rpg-panel-head-copy">
-                <p class="text-kicker">Rune Chamber</p>
-                <h3 class="rpg-panel-title">Arcane Relics</h3>
+                <p class="text-kicker">${t('build.runeChamber')}</p>
+                <h3 class="rpg-panel-title">${t('build.arcaneRelics')}</h3>
               </div>
-              <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--icon rune-chamber-close" data-action="toggle-rune-chamber" aria-label="Close rune chamber">✕</button>
+              <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--icon rune-chamber-close" data-action="toggle-rune-chamber" aria-label="${t('build.closeRuneChamber')}">✕</button>
             </header>
             <div class="rune-inventory">${runeSlots}</div>
           </div>
@@ -1019,22 +1022,22 @@ export function renderSimulatorPage(
             <div class="modal-frame">
               <div class="modal-header">
                 <div>
-                  <p class="text-kicker">Equipment</p>
-                  <h3 id="gear-modal-title">Select ${PART_LABELS[part]}</h3>
+                  <p class="text-kicker">${t('gearModal.equipment')}</p>
+                  <h3 id="gear-modal-title">${t('gearModal.selectPart', { part: partLabel(part) })}</h3>
                 </div>
-                <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--icon" data-action="close-modal" aria-label="Close">✕</button>
+                <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--icon" data-action="close-modal" aria-label="${t('build.close')}">✕</button>
               </div>
               <div class="gear-modal-body">
                 <aside class="gear-modal-filters">
                   <label class="field">
-                    <span class="field-label">Grade</span>
-                    <select data-field="grade"><option value="ALL">All grades</option>${ctx.meta.grades.map((g) => `<option value="${g}">${g}</option>`).join('')}</select>
+                    <span class="field-label">${t('gearModal.grade')}</span>
+                    <select data-field="grade"><option value="ALL">${t('gearModal.allGrades')}</option>${ctx.meta.grades.map((g) => `<option value="${g}">${g}</option>`).join('')}</select>
                   </label>
                   <label class="field">
-                    <span class="field-label">Search</span>
-                    <input data-field="search" value="${filter.search}" placeholder="Item name…" />
+                    <span class="field-label">${t('gearModal.search')}</span>
+                    <input data-field="search" value="${filter.search}" placeholder="${t('gearModal.searchPlaceholder')}" />
                   </label>
-                  <p class="small">${filtered.length} items match</p>
+                  <p class="small">${t('gearModal.itemsMatch', { count: filtered.length })}</p>
                 </aside>
                 <div class="gear-modal-results">
                   ${equipped ? `
@@ -1042,11 +1045,11 @@ export function renderSimulatorPage(
                     <div class="gear-equipped-current">
                       ${itemIconHtml(equipped.icon, equipped.name, 'gear-equipped-icon')}
                       <div class="gear-equipped-meta">
-                        <span class="gear-equipped-label">Equipped</span>
+                        <span class="gear-equipped-label">${t('gearModal.equipped')}</span>
                         <span class="gear-equipped-name">${equipped.name}${equipped.variant ? ` (${equipped.variant})` : ''}</span>
                       </div>
                     </div>
-                    <button type="button" class="rpg-btn rpg-btn--ghost" data-action="unequip">Remove</button>
+                    <button type="button" class="rpg-btn rpg-btn--ghost" data-action="unequip">${t('gearModal.remove')}</button>
                   </div>` : ''}
                   <div class="gear-grid">
                     ${visible
@@ -1058,7 +1061,7 @@ export function renderSimulatorPage(
                           <h4>${item.name}${item.variant ? ` (${item.variant})` : ''}</h4>
                           <p class="meta">${item.grade} · Lv${item.level ?? '?'}</p>
                         </div>
-                        <button type="button" class="rpg-btn rpg-btn--gold rpg-btn--sm" data-action="equip" data-key="${item.key}">Equip</button>
+                        <button type="button" class="rpg-btn rpg-btn--gold rpg-btn--sm" data-action="equip" data-key="${item.key}">${t('gearModal.equip')}</button>
                       </article>`,
                       )
                       .join('')}
@@ -1150,7 +1153,7 @@ export function renderSimulatorPage(
                   <p class="text-kicker">Socket Chamber</p>
                   <h3 id="socket-modal-title">${item!.name}</h3>
                 </div>
-                <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--icon" data-action="close-modal" aria-label="Close">✕</button>
+                <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--icon" data-action="close-modal" aria-label="${t('build.close')}">✕</button>
               </div>
               <div class="socket-modal-body">
               ${draft
@@ -1168,7 +1171,7 @@ export function renderSimulatorPage(
                         <div class="socket-selected">
                           ${mat ? itemIconHtml(mat.icon, mat.name, 'socket-mat-icon') : '<span class="socket-mat-empty" aria-hidden="true">—</span>'}
                           <div class="socket-mat-meta">
-                            <span class="socket-mat-name">${mat?.name ?? 'Empty'}</span>
+                            <span class="socket-mat-name">${mat?.name ?? t('build.empty')}</span>
                             ${group ? `<span class="socket-roll-hint">${rollHint}</span>` : ''}
                           </div>
                         </div>

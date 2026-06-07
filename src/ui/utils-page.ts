@@ -1,38 +1,45 @@
+import { t, type TranslationKey } from '../i18n';
 import { navHref } from '../router';
 import type { SimulatorContext } from './simulator-page';
 import { renderGearPage } from './gear-page';
 import { renderBuildHelperPage } from './build-helper-page';
 
-const UTIL_TILES = [
+const UTIL_TILES: {
+  id: string;
+  href: string;
+  icon: string;
+  titleKey: TranslationKey;
+  descKey: TranslationKey;
+}[] = [
   {
     id: 'gear',
     href: navHref('utils', 'gear'),
     icon: '🗡',
-    title: 'Gear Database',
-    desc: 'Browse and filter all equipment from the wiki data.',
+    titleKey: 'utils.gearDb.title',
+    descKey: 'utils.gearDb.desc',
   },
   {
     id: 'build-author',
     href: navHref('utils', 'build-author'),
     icon: '✎',
-    title: 'Build Author',
-    desc: 'Design milestone builds and export JSON for prepared-builds.',
+    titleKey: 'utils.buildAuthor.title',
+    descKey: 'utils.buildAuthor.desc',
   },
   {
     id: 'rune-ref',
     href: navHref('build', 'forge', { runes: '1' }),
     icon: '🎲',
-    title: 'Rune Chamber',
-    desc: 'Open the rune panel inside Build Forge.',
+    titleKey: 'utils.runeChamber.title',
+    descKey: 'utils.runeChamber.desc',
   },
   {
     id: 'forge',
     href: navHref('build', 'forge'),
     icon: '⚔',
-    title: 'Build Forge',
-    desc: 'Load a save and experiment with full build planning.',
+    titleKey: 'utils.forge.title',
+    descKey: 'utils.forge.desc',
   },
-] as const;
+];
 
 export function renderUtilsHub(root: HTMLElement, _ctx: SimulatorContext): void {
   root.innerHTML = `
@@ -40,9 +47,9 @@ export function renderUtilsHub(root: HTMLElement, _ctx: SimulatorContext): void 
       <header class="page-hero rpg-panel">
         <div class="rpg-panel-inner page-hero-inner">
           <div class="page-hero-copy">
-            <p class="text-kicker">Workshop</p>
-            <h1 class="page-title">Utilities</h1>
-            <p class="page-lead">Tools for browsing data, authoring builds, and planning loadouts.</p>
+            <p class="text-kicker">${t('utils.kicker')}</p>
+            <h1 class="page-title">${t('utils.title')}</h1>
+            <p class="page-lead">${t('utils.lead')}</p>
           </div>
         </div>
       </header>
@@ -53,8 +60,8 @@ export function renderUtilsHub(root: HTMLElement, _ctx: SimulatorContext): void 
           <a class="util-tile rpg-panel" href="${tile.href}">
             <div class="rpg-panel-inner util-tile-inner">
               <span class="util-tile-icon" aria-hidden="true">${tile.icon}</span>
-              <h2 class="util-tile-title">${tile.title}</h2>
-              <p class="util-tile-desc">${tile.desc}</p>
+              <h2 class="util-tile-title">${t(tile.titleKey)}</h2>
+              <p class="util-tile-desc">${t(tile.descKey)}</p>
             </div>
           </a>`,
         ).join('')}

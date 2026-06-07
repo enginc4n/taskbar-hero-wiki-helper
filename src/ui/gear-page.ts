@@ -1,5 +1,6 @@
 import type { EnrichedItem, MetaData } from '../types';
 import { itemIconHtml } from '../data/icons';
+import { t } from '../i18n';
 import {
   DEFAULT_GEAR_FILTER,
   filterGear,
@@ -34,9 +35,9 @@ export function renderGearPage(root: HTMLElement, ctx: GearPageContext): void {
         <header class="page-hero rpg-panel">
           <div class="rpg-panel-inner page-hero-inner">
             <div class="page-hero-copy">
-              <p class="text-kicker">Armory</p>
-              <h1 class="page-title">Gear Database</h1>
-              <p class="page-lead">Browse and filter all equipment — same data as taskbarhero.wiki/gear.</p>
+              <p class="text-kicker">${t('gear.kicker')}</p>
+              <h1 class="page-title">${t('gear.title')}</h1>
+              <p class="page-lead">${t('gear.lead')}</p>
             </div>
           </div>
         </header>
@@ -44,37 +45,37 @@ export function renderGearPage(root: HTMLElement, ctx: GearPageContext): void {
         <div class="gear-db-layout">
           <aside class="gear-db-filters rpg-panel">
             <div class="rpg-panel-inner">
-              <p class="text-kicker">Filters</p>
-              <h2 class="rpg-panel-title">Refine Search</h2>
+              <p class="text-kicker">${t('gear.filters')}</p>
+              <h2 class="rpg-panel-title">${t('gear.refineSearch')}</h2>
               <div class="gear-db-filter-fields">
                 <label class="field">
-                  <span class="field-label">Rarity</span>
+                  <span class="field-label">${t('gear.rarity')}</span>
                   <select data-field="grade">
-                    <option value="ALL">All</option>
+                    <option value="ALL">${t('gear.all')}</option>
                     ${ctx.meta.grades.map((g) => `<option value="${g}" ${filter.grade === g ? 'selected' : ''}>${g[0] + g.slice(1).toLowerCase()}</option>`).join('')}
                   </select>
                 </label>
                 <label class="field">
-                  <span class="field-label">Type</span>
+                  <span class="field-label">${t('gear.type')}</span>
                   <select data-field="category">
-                    <option value="all">All</option>
-                    <option value="weapon" ${filter.category === 'weapon' ? 'selected' : ''}>Weapon</option>
-                    <option value="off_hand" ${filter.category === 'off_hand' ? 'selected' : ''}>Off-hand</option>
-                    <option value="armor" ${filter.category === 'armor' ? 'selected' : ''}>Armor</option>
-                    <option value="accessory" ${filter.category === 'accessory' ? 'selected' : ''}>Accessory</option>
+                    <option value="all">${t('gear.all')}</option>
+                    <option value="weapon" ${filter.category === 'weapon' ? 'selected' : ''}>${t('gear.weapon')}</option>
+                    <option value="off_hand" ${filter.category === 'off_hand' ? 'selected' : ''}>${t('gear.offHand')}</option>
+                    <option value="armor" ${filter.category === 'armor' ? 'selected' : ''}>${t('gear.armor')}</option>
+                    <option value="accessory" ${filter.category === 'accessory' ? 'selected' : ''}>${t('gear.accessory')}</option>
                   </select>
                 </label>
                 <label class="field">
-                  <span class="field-label">Level min</span>
+                  <span class="field-label">${t('gear.levelMin')}</span>
                   <input type="number" data-field="levelMin" value="${filter.levelMin}" min="1" max="100" />
                 </label>
                 <label class="field">
-                  <span class="field-label">Level max</span>
+                  <span class="field-label">${t('gear.levelMax')}</span>
                   <input type="number" data-field="levelMax" value="${filter.levelMax}" min="1" max="100" />
                 </label>
                 <label class="field">
-                  <span class="field-label">Search</span>
-                  <input type="search" data-field="search" value="${filter.search}" placeholder="Item name…" />
+                  <span class="field-label">${t('gear.search')}</span>
+                  <input type="search" data-field="search" value="${filter.search}" placeholder="${t('gear.searchPlaceholder')}" />
                 </label>
               </div>
             </div>
@@ -82,7 +83,7 @@ export function renderGearPage(root: HTMLElement, ctx: GearPageContext): void {
 
           <div class="gear-db-results rpg-panel">
             <div class="rpg-panel-inner">
-              <p class="gear-db-count text-muted">${filtered.length.toLocaleString()} results · showing ${visible.length.toLocaleString()}</p>
+              <p class="gear-db-count text-muted">${t('gear.results', { total: filtered.length.toLocaleString(), visible: visible.length.toLocaleString() })}</p>
               <div class="gear-grid">
                 ${visible
                   .map((item) => {
@@ -102,7 +103,7 @@ export function renderGearPage(root: HTMLElement, ctx: GearPageContext): void {
               </div>
               ${
                 visible.length < filtered.length
-                  ? `<button type="button" class="rpg-btn rpg-btn--gold gear-db-load-more" data-action="load-more">Load more (${(filtered.length - visible.length).toLocaleString()} left)</button>`
+                  ? `<button type="button" class="rpg-btn rpg-btn--gold gear-db-load-more" data-action="load-more">${t('gear.loadMore', { left: (filtered.length - visible.length).toLocaleString() })}</button>`
                   : ''
               }
             </div>

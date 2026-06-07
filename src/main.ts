@@ -1,9 +1,11 @@
 import { loadAllData } from './data/api';
+import { initLocale, onLocaleChange } from './i18n';
 import { parseRoute, type ParsedRoute } from './router';
 import { renderDashboardPage } from './ui/dashboard-page';
 import { renderGuidesPage } from './ui/guides-page';
 import {
   mountAppShell,
+  refreshShellTranslations,
   renderShellError,
   renderShellLoading,
   updateShellNav,
@@ -23,6 +25,7 @@ function applyShellTheme(): void {
 }
 
 applyShellTheme();
+initLocale();
 
 let appContext: SimulatorContext | null = null;
 let pageRoot: HTMLElement | null = null;
@@ -93,4 +96,9 @@ async function boot(): Promise<void> {
 }
 
 window.addEventListener('hashchange', () => onNavigate());
+onLocaleChange(() => {
+  if (!pageRoot || !appContext) return;
+  refreshShellTranslations(parseRoute());
+  renderRoute(parseRoute());
+});
 boot();

@@ -374,7 +374,7 @@ button { cursor: pointer; border: none; background: none; }
 .page-hero-inner {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
@@ -383,7 +383,125 @@ button { cursor: pointer; border: none; background: none; }
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+  align-items: stretch;
+}
+
+.page-hero-locale-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+.page-hero-locale-trigger {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  gap: 0.45rem;
+  padding-inline: 0.75rem;
+}
+
+.page-hero-locale-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.page-hero-locale-label {
+  white-space: nowrap;
+}
+
+.page-hero-locale-flag {
+  display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.page-hero-locale-flag svg {
+  display: block;
+  width: 1.35rem;
+  height: 0.9rem;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.page-hero-locale-caret {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.page-hero-locale-menu {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: auto;
+  z-index: 60;
+  width: 100%;
+  min-width: 100%;
+  margin: 0;
+  padding: 0.2rem;
+  list-style: none;
+  border: 2px solid var(--border-wood);
+  background: #120c08;
+  box-shadow: var(--shadow-pixel);
+  box-sizing: border-box;
+}
+
+.page-hero-locale-menu li {
+  margin: 0;
+  padding: 0;
+}
+
+.page-hero-locale-option {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.65rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-ui);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--parchment);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.page-hero-locale-option-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.page-hero-locale-option:hover,
+.page-hero-locale-option:focus-visible {
+  background: rgba(201, 162, 39, 0.12);
+  outline: none;
+}
+
+.page-hero-locale-option.is-selected {
+  color: var(--gold-bright);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .page-dashboard {
