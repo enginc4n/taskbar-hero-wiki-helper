@@ -16,6 +16,16 @@
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      (function () {
+        var segments = location.pathname.split('/').filter(Boolean);
+        var base = segments.length && segments[0] === 'taskbar-hero-wiki-helper' ? '/taskbar-hero-wiki-helper/' : '/';
+        document.documentElement.style.setProperty(
+          '--rpg-bg-image',
+          'url("' + base + 'assets/ui/background.png")'
+        );
+      })();
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

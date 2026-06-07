@@ -2,6 +2,19 @@ import { loadAllData } from './data/api';
 import { renderBuildHelperPage } from './ui/build-helper-page';
 import { renderSimulatorPage } from './ui/simulator-page';
 
+function publicAssetUrl(relativePath: string): string {
+  return `${import.meta.env.BASE_URL}${relativePath}`.replace(/\/{2,}/g, '/');
+}
+
+function applyShellTheme(): void {
+  document.documentElement.style.setProperty(
+    '--rpg-bg-image',
+    `url("${publicAssetUrl('assets/ui/background.png')}")`,
+  );
+}
+
+applyShellTheme();
+
 function isHelperRoute(): boolean {
   return window.location.hash === '#helper' || window.location.hash === '#/helper';
 }
@@ -12,7 +25,6 @@ async function boot(): Promise<void> {
 
   app.innerHTML = `
     <a class="skip-link" href="#main-content">Skip to character menu</a>
-    <div class="rpg-backdrop" aria-hidden="true"></div>
     <main id="main-content">
       <div class="loading-state">
         <div class="loading-state-inner">
