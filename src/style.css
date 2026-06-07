@@ -55,6 +55,7 @@
   --nav-width: 280px;
   --pixel: 2px;
   --app-scale: 1;
+  --viewport-min-h: 100vh;
 
   --shadow-pixel: 0 4px 0 #0a0604, 0 6px 12px rgba(0, 0, 0, 0.6);
   --shadow-inset: inset 0 2px 0 rgba(255, 220, 140, 0.06), inset 0 -3px 6px rgba(0, 0, 0, 0.45);
@@ -143,7 +144,7 @@ button { cursor: pointer; border: none; background: none; }
 .skip-link:focus { top: 1rem; }
 
 #app {
-  min-height: 100vh;
+  min-height: var(--viewport-min-h);
   position: relative;
   z-index: 1;
   width: 100%;
@@ -153,6 +154,8 @@ button { cursor: pointer; border: none; background: none; }
 @media (min-width: 1900px) {
   :root {
     --app-scale: 0.85;
+    /* Compensate layout height so zoomed shell still fills the viewport */
+    --viewport-min-h: calc(100vh / var(--app-scale));
   }
 
   #app {
@@ -166,7 +169,8 @@ button { cursor: pointer; border: none; background: none; }
 
 .rpg-shell {
   display: flex;
-  min-height: 100vh;
+  align-items: stretch;
+  min-height: var(--viewport-min-h);
   width: 100%;
 }
 
@@ -176,7 +180,7 @@ button { cursor: pointer; border: none; background: none; }
   z-index: 200;
   flex: 0 0 var(--nav-width);
   width: var(--nav-width);
-  min-height: 100vh;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
   border-right: 4px solid var(--border-wood);
@@ -301,9 +305,10 @@ button { cursor: pointer; border: none; background: none; }
 .rpg-main {
   flex: 1;
   min-width: 0;
+  align-self: stretch;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: var(--viewport-min-h);
 }
 
 .rpg-topbar {
@@ -381,14 +386,20 @@ button { cursor: pointer; border: none; background: none; }
   align-items: center;
 }
 
-.page-dashboard,
+.page-dashboard {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 1rem 1.25rem 1.5rem;
+}
+
 .page-guides,
 .page-utils,
 .page-gear,
 .helper-page {
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: 1rem 1.25rem 1.5rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0.65rem 0.75rem 1.25rem;
 }
 
 .dash-section {
@@ -684,7 +695,7 @@ button { cursor: pointer; border: none; background: none; }
   position: sticky;
   top: 0;
   z-index: 50;
-  margin: 0 -1rem 0.85rem;
+  margin: 0 0 0.65rem;
   border-bottom: 3px solid var(--border-wood);
   background:
     linear-gradient(180deg, rgba(26, 18, 14, 0.98), rgba(12, 8, 6, 0.96));
@@ -696,9 +707,10 @@ button { cursor: pointer; border: none; background: none; }
   flex-wrap: wrap;
   align-items: stretch;
   gap: 0.75rem 1rem;
-  padding: 0.75rem 1rem;
-  max-width: var(--content-max);
-  margin: 0 auto;
+  padding: 0.75rem 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
 }
 
 .build-subnav {
@@ -1074,9 +1086,9 @@ button { cursor: pointer; border: none; background: none; }
   flex-direction: column;
   gap: 0;
   width: 100%;
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: 0 1rem 1.5rem;
+  max-width: none;
+  margin: 0;
+  padding: 0 0.75rem 0.85rem;
 }
 
 .rpg-screen.is-prepared-mode {
@@ -1163,6 +1175,70 @@ button { cursor: pointer; border: none; background: none; }
   background: #1a1008;
   font-size: 1.1rem;
   flex-shrink: 0;
+}
+
+.guild-hero-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+.guild-hero-picker--readonly .guild-hero-info {
+  min-width: 0;
+}
+
+.guild-hero-portrait {
+  position: relative;
+  width: 2.75rem;
+  aspect-ratio: 30 / 45;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(#f0e8d4, #d8c8a8);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(107, 84, 32, 0.35);
+}
+
+.guild-hero-portrait-img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  z-index: 0;
+}
+
+.guild-hero-portrait-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.guild-hero-select-wrap {
+  min-width: 0;
+  flex: 1 1 120px;
+}
+
+.build-toolbar .guild-hero-select {
+  width: 100%;
+  min-width: 7rem;
+  max-width: 14rem;
+  padding: 0.4rem 0.55rem;
+  font-family: var(--font-title);
+  font-size: var(--text-title);
+  color: var(--parchment);
+  background: #0a0806;
+  border: 2px solid var(--border-wood);
+  cursor: pointer;
+}
+
+.build-toolbar .guild-hero-select:focus {
+  border-color: var(--brass);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(240, 208, 96, 0.25);
 }
 
 .guild-hero-info { min-width: 0; flex: 1 1 140px; }
@@ -3378,12 +3454,6 @@ input:focus, select:focus {
 /* Prepared Build Helper                                                      */
 /* -------------------------------------------------------------------------- */
 
-.helper-page {
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: 0 1rem 2rem;
-}
-
 .helper-header {
   margin-top: 0.85rem;
 }
@@ -3556,6 +3626,192 @@ input:focus, select:focus {
   color: var(--parchment-dim);
   background: #0a0806;
   border: 2px solid var(--border-wood);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Desktop — lock document scroll; panels scroll internally                    */
+/* -------------------------------------------------------------------------- */
+
+@media (min-width: 901px) {
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  #app {
+    height: var(--viewport-min-h);
+    max-height: var(--viewport-min-h);
+    overflow: hidden;
+  }
+
+  .rpg-shell {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .rpg-main {
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .rpg-page {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Build forge — fill viewport; no document scroll */
+  .rpg-screen {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: 0.65rem;
+  }
+
+  .build-toolbar {
+    position: static;
+    flex-shrink: 0;
+    margin-bottom: 0.65rem;
+  }
+
+  .prepared-builds-rail,
+  .prepared-level-top {
+    flex-shrink: 0;
+  }
+
+  .prepared-empty-state {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .rpg-workspace {
+    flex: 1;
+    min-height: 0;
+    margin-top: 0;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  .char-sheet-bar {
+    flex-shrink: 0;
+    margin-top: 0.65rem;
+  }
+
+  .chronicle-col {
+    min-height: 0;
+    align-self: stretch;
+  }
+
+  .chronicle-panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chronicle-panel > .rpg-panel-inner {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chronicle-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .hero-hall {
+    min-height: 0;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .hero-hall > .rpg-panel-inner {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .rune-sidebar {
+    min-height: 0;
+    align-self: stretch;
+    overflow: hidden;
+  }
+
+  .rune-chamber-panel {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Guides & Utils — exempt from locked panel layout; page may scroll vertically */
+  .rpg-page:has(.page-guides),
+  .rpg-page:has(.page-utils) {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .page-guides,
+  .page-utils {
+    flex: none;
+    min-height: auto;
+    overflow: visible;
+  }
+
+  /* Other content pages — scroll inside content area, not the document */
+  .page-dashboard,
+  .page-gear,
+  .helper-page {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .page-gear {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gear-db-layout {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .gear-db-results {
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gear-db-results > .rpg-panel-inner {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }
 
 @media (max-width: 1280px) {

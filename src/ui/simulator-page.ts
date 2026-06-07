@@ -212,11 +212,48 @@ export function renderSimulatorPage(
     return getSelectedHero(state.working, state.heroKey);
   }
 
+  function heroPortraitUrl(hero: EnrichedHero | undefined): string | null {
+    if (!hero) return null;
+    return itemIconUrl(hero.icon ?? hero.art);
+  }
+
   function drawBuildToolbar(): string {
     const hero = heroDef();
     const hasBaseline = !!state.baseline;
     const heroName = hero?.name ?? 'Unknown';
-    const glyph = classGlyph(hero?.class ?? '');
+    const portrait = heroPortraitUrl(hero);
+
+    const heroPicker =
+      workspaceMode === 'forge'
+        ? `
+            <div class="guild-hero-picker">
+              <div class="guild-hero-portrait" aria-hidden="true">
+                ${portrait ? `<img class="guild-hero-portrait-img pixel-art" src="${portrait}" alt="" loading="lazy" />` : heroName[0]}
+                <img class="guild-hero-portrait-frame pixel-art" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
+              </div>
+              <div class="guild-hero-select-wrap">
+                <select class="guild-hero-select" data-field="hero-key" aria-label="Select hero">
+                  ${ctx.heroes
+                    .map((h) => {
+                      const saveHero = getSelectedHero(state.working, h.key);
+                      const locked = saveHero ? !saveHero.IsUnLock : false;
+                      return `<option value="${h.key}"${h.key === state.heroKey ? ' selected' : ''}${locked ? ' disabled' : ''}>${h.name}</option>`;
+                    })
+                    .join('')}
+                </select>
+              </div>
+            </div>`
+        : `
+            <div class="guild-hero-picker guild-hero-picker--readonly">
+              <div class="guild-hero-portrait" aria-hidden="true">
+                ${portrait ? `<img class="guild-hero-portrait-img pixel-art" src="${portrait}" alt="" loading="lazy" />` : heroName[0]}
+                <img class="guild-hero-portrait-frame pixel-art" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
+              </div>
+              <div class="guild-hero-info">
+                <h2 class="guild-hero-name">${heroName}</h2>
+                ${hero?.class ? `<p class="guild-hero-meta">${hero.class}</p>` : ''}
+              </div>
+            </div>`;
 
     return `
       <header class="build-toolbar" aria-label="Build workspace">
@@ -236,10 +273,7 @@ export function renderSimulatorPage(
             >📜 Prepared Builds</a>
           </nav>
           <div class="guild-hero-strip">
-            <div class="guild-class-icon" aria-hidden="true" title="${hero?.class ?? ''}">${glyph}</div>
-            <div class="guild-hero-info">
-              <h2 class="guild-hero-name">${heroName}</h2>
-            </div>
+            ${heroPicker}
             <span class="guild-status ${workspaceMode === 'prepared' ? 'is-prepared' : hasBaseline ? 'is-set' : ''}" role="status">
               <span class="guild-status-dot" aria-hidden="true"></span>
               ${workspaceMode === 'prepared'
@@ -387,48 +421,6 @@ export function renderSimulatorPage(
             </div>
           </div>
           <div class="equip-side equip-side--right">${gearSide(HERO_GEAR_RIGHT)}</div>
-        </div>
-      </section>`;
-  }
-
-  function drawHeroCodex(): string {
-    if (workspaceMode === 'prepared') return '';
-
-    return `
-      <section class="hero-codex" aria-label="Hero Codex — Hall of Champions">
-        <div class="rpg-panel-head" style="margin-bottom:0.5rem;padding-bottom:0.5rem;">
-          <div class="rpg-panel-head-copy">
-            <p class="text-kicker">Hall of Champions</p>
-            <h3 class="rpg-panel-title">Hero Codex</h3>
-          </div>
-        </div>
-        <div class="codex-roster" role="group" aria-label="Hero roster">
-          ${ctx.heroes
-            .map((h) => {
-              const selected = h.key === state.heroKey;
-              const saveHero = getSelectedHero(state.working, h.key);
-              const locked = saveHero ? !saveHero.IsUnLock : false;
-              const icon = itemIconUrl(h.icon ?? h.art);
-              return `
-            <button
-              type="button"
-              class="hslot${selected ? ' on' : ''}${locked ? ' is-locked' : ''}"
-              data-action="hero-pick"
-              data-key="${h.key}"
-              title="${locked ? `${h.name} — Locked` : h.name}"
-              aria-label="${h.name}${selected ? ' (selected)' : ''}${locked ? ' (locked)' : ''}"
-              aria-pressed="${selected}"
-              ${locked || isPreparedReadOnly() ? 'disabled' : ''}
-            >
-              <span class="hslot-inner">
-                ${icon ? `<img class="hslot-portrait pixel-art" src="${icon}" alt="" loading="lazy" />` : h.name[0]}
-              </span>
-              <img class="hslot-frame pixel-art" src="${gameUiUrl('HeroSlot_OuterBoader_Arranged.png')}" alt="" />
-              <img class="hslot-hover pixel-art" src="${gameUiUrl('HeroSlot_InnerBoader_Hover.png')}" alt="" />
-              ${selected ? `<img class="hslot-active pixel-art" src="${gameUiUrl('HeroSlot_InnerBoader_Active.png')}" alt="" />` : ''}
-            </button>`;
-            })
-            .join('')}
         </div>
       </section>`;
   }
@@ -974,7 +966,6 @@ export function renderSimulatorPage(
             <div class="rpg-panel-inner">
               ${drawHeroShowcase()}
               ${drawEquipmentStage()}
-              ${drawHeroCodex()}
             </div>
           </main>
           ${drawRuneChamber()}
@@ -1375,8 +1366,9 @@ export function renderSimulatorPage(
       draw();
     });
 
-    root.querySelectorAll('[data-action="hero-pick"]').forEach((el) => {
-      el.addEventListener('click', () => selectHero(Number(el.getAttribute('data-key'))));
+    root.querySelector('[data-field="hero-key"]')?.addEventListener('change', (e) => {
+      const key = Number((e.target as HTMLSelectElement).value);
+      if (!Number.isNaN(key)) selectHero(key);
     });
 
     root.querySelectorAll('[data-action="pick-gear"]').forEach((el) => {
