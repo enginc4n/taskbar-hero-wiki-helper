@@ -1,4 +1,13 @@
 import { mergeRefMaps, buildRefMaps, enrichedItemToDetail } from '../data/adapters';
+import {
+  PREPARED_LEVEL_STEPS,
+  applyPreparedMilestone,
+  loadPreparedBuild,
+  loadPreparedBuildIndex,
+  milestoneForStep,
+  type PreparedBuild,
+  type PreparedBuildManifestEntry,
+} from '../data/prepared-builds';
 import { heroCombatRunesForPanel, runeBenefitLabel } from '../data/runes';
 import {
   HERO_GEAR_LEFT,
@@ -110,6 +119,43 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   let chronicleHeightObs: ResizeObserver | null = null;
   let runeChamberOpen = typeof window !== 'undefined' && window.location.hash === '#panel-runes';
 
+  type WorkspaceMode = 'forge' | 'prepared';
+  let workspaceMode: WorkspaceMode = 'forge';
+  let forgeSnapshot: PlayerSaveData | null = null;
+  let preparedManifest: PreparedBuildManifestEntry[] = [];
+  let preparedBuildCache = new Map<string, PreparedBuild>();
+  let selectedPreparedBuild: PreparedBuild | null = null;
+  let preparedLevelIndex = 0;
+
+  function isPreparedReadOnly(): boolean {
+    return workspaceMode === 'prepared' && selectedPreparedBuild !== null;
+  }
+
+  function applyPreparedView(): void {
+    const build = selectedPreparedBuild;
+    if (!build) return;
+    const def = ctx.heroes.find((h) => h.key === build.heroKey);
+    const milestone = milestoneForStep(build, preparedLevelIndex);
+    if (!def || !milestone) return;
+
+    state.heroKey = build.heroKey;
+    applyPreparedMilestone(state.working, def, milestone, ctx.allItems, state.itemsByKey);
+    for (const inst of state.working.itemSaveDatas) {
+      const enriched = state.itemsByKey.get(inst.ItemKey);
+      const detail = enriched ? enrichedItemToDetail(enriched) : null;
+      if (detail) state.refs.itemDetailById.set(String(inst.ItemKey), detail);
+    }
+  }
+
+  loadPreparedBuildIndex()
+    .then((builds) => {
+      preparedManifest = builds;
+      if (workspaceMode === 'prepared') draw();
+    })
+    .catch(() => {
+      preparedManifest = [];
+    });
+
   function stopPortraitAnim(): void {
     if (portraitAnimTimer !== null) {
       clearInterval(portraitAnimTimer);
@@ -177,12 +223,33 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
             <div class="guild-hero-info">
               <h2 class="guild-hero-name">${heroName}</h2>
             </div>
-            <span class="guild-status ${hasBaseline ? 'is-set' : ''}" role="status">
+            <span class="guild-status ${workspaceMode === 'prepared' ? 'is-prepared' : hasBaseline ? 'is-set' : ''}" role="status">
               <span class="guild-status-dot" aria-hidden="true"></span>
-              ${hasBaseline ? 'Baseline active' : 'No baseline'}
+              ${workspaceMode === 'prepared'
+                ? selectedPreparedBuild?.name ?? 'Prepared Builds'
+                : hasBaseline
+                  ? 'Baseline active'
+                  : 'No baseline'}
             </span>
           </div>
           <div class="guild-actions">
+            <div class="guild-mode-tabs" role="tablist" aria-label="Workspace mode">
+              <button
+                type="button"
+                role="tab"
+                class="guild-mode-tab${workspaceMode === 'forge' ? ' is-active' : ''}"
+                data-action="mode-forge"
+                aria-selected="${workspaceMode === 'forge'}"
+              >Load Build</button>
+              <button
+                type="button"
+                role="tab"
+                class="guild-mode-tab${workspaceMode === 'prepared' ? ' is-active' : ''}"
+                data-action="mode-prepared"
+                aria-selected="${workspaceMode === 'prepared'}"
+              >Prepared Builds</button>
+            </div>
+            ${workspaceMode === 'forge' ? `
             <label class="rpg-btn rpg-btn--ghost">
               <span class="rpg-btn-shine" aria-hidden="true"></span>
               Load Build
@@ -192,10 +259,57 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
             <button type="button" class="rpg-btn rpg-btn--gold" data-action="set-baseline">
               <span class="rpg-btn-shine" aria-hidden="true"></span>
               Save Build
-            </button>
+            </button>` : `
+            <span class="guild-prepared-badge text-ui" role="status">View only</span>`}
+            <a class="rpg-btn rpg-btn--ghost" href="#helper">Build Helper</a>
           </div>
         </div>
       </header>`;
+  }
+
+  function drawPreparedBuildsRail(): string {
+    if (workspaceMode !== 'prepared') return '';
+
+    const cards = preparedManifest
+      .map((entry) => {
+        const selected = selectedPreparedBuild?.id === entry.id;
+        const glyph = classGlyph(entry.heroClass ?? '');
+        return `
+          <button
+            type="button"
+            class="prepared-build-card${selected ? ' is-selected' : ''}"
+            data-action="pick-prepared"
+            data-id="${entry.id}"
+            aria-pressed="${selected}"
+          >
+            <span class="prepared-build-glyph" aria-hidden="true">${glyph}</span>
+            <span class="prepared-build-name">${entry.name}</span>
+            <span class="prepared-build-class">${entry.heroClass ?? ''}</span>
+            ${entry.description ? `<span class="prepared-build-desc">${entry.description}</span>` : ''}
+          </button>`;
+      })
+      .join('');
+
+    return `
+      <section class="prepared-builds-rail" aria-label="Prepared builds">
+        <div class="prepared-builds-rail-head">
+          <p class="text-kicker">Guild Archives</p>
+          <h3 class="rpg-panel-title">Prepared Builds</h3>
+        </div>
+        <div class="prepared-build-cards" role="list">
+          ${cards || '<p class="prepared-builds-empty">No prepared builds found in <code>public/prepared-builds/</code>.</p>'}
+        </div>
+      </section>`;
+  }
+
+  function drawPreparedEmptyState(): string {
+    return `
+      <div class="prepared-empty-state rpg-panel">
+        <div class="rpg-panel-inner">
+          <p class="prepared-empty-title">Select a Prepared Build</p>
+          <p class="prepared-empty-hint">Choose a guild-curated path above, then scroll hero level in the chronicle to preview each milestone.</p>
+        </div>
+      </div>`;
   }
 
   function drawHeroShowcase(): string {
@@ -232,6 +346,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
                   const item = itemForPart(part);
                   return item ? itemHasSockets(item) : false;
                 })(),
+                readOnly: isPreparedReadOnly(),
               }),
             )
             .join('')}
@@ -266,6 +381,8 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   }
 
   function drawHeroCodex(): string {
+    if (workspaceMode === 'prepared') return '';
+
     return `
       <section class="hero-codex" aria-label="Hero Codex — Hall of Champions">
         <div class="rpg-panel-head" style="margin-bottom:0.5rem;padding-bottom:0.5rem;">
@@ -290,7 +407,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
               title="${locked ? `${h.name} — Locked` : h.name}"
               aria-label="${h.name}${selected ? ' (selected)' : ''}${locked ? ' (locked)' : ''}"
               aria-pressed="${selected}"
-              ${locked ? 'disabled' : ''}
+              ${locked || isPreparedReadOnly() ? 'disabled' : ''}
             >
               <span class="hslot-inner">
                 ${icon ? `<img class="hslot-portrait pixel-art" src="${icon}" alt="" loading="lazy" />` : h.name[0]}
@@ -374,6 +491,8 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   }
 
   function drawRuneVaultButton(): string {
+    if (workspaceMode === 'prepared') return '';
+
     return `
       <button
         type="button"
@@ -388,7 +507,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       </button>`;
   }
 
-  function drawSkillNode(node: PassiveNode, tierUnlocked: boolean, linkBefore: boolean): string {
+  function drawSkillNode(node: PassiveNode, tierUnlocked: boolean, linkBefore: boolean, readOnly = false): string {
     const level = getPassiveLevel(state.working, node.key);
     const max = node.maxLevel ?? 1;
     const icon = skillIconUrl(node.icon);
@@ -408,7 +527,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
             <span class="node-lv ${lvClass}">${level}<span class="node-lv-max">/${max}</span></span>
           </div>
           <span class="tree-skill-name">${label}</span>
-          ${tierUnlocked ? `
+          ${tierUnlocked && !readOnly ? `
             <div class="tree-skill-controls" role="group" aria-label="${label} level">
               <button type="button" class="node-btn" data-action="passive-dec" data-key="${node.key}" aria-label="Decrease ${label}"${atMin ? ' disabled' : ''}>−</button>
               <button type="button" class="node-btn" data-action="passive-inc" data-key="${node.key}" data-max="${max}" aria-label="Increase ${label}"${atMax ? ' disabled' : ''}>+</button>
@@ -417,7 +536,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       </div>`;
   }
 
-  function drawActiveNode(node: PassiveNode, tierUnlocked: boolean, linkBefore: boolean): string {
+  function drawActiveNode(node: PassiveNode, tierUnlocked: boolean, linkBefore: boolean, readOnly = false): string {
     const level = getPassiveLevel(state.working, node.key);
     const max = node.maxLevel ?? 1;
     const icon = skillIconUrl(node.icon);
@@ -437,7 +556,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
             <span class="tree-skill-tag text-ui">Active</span>
           </div>
           <span class="tree-skill-name">${name}</span>
-          ${tierUnlocked ? `
+          ${tierUnlocked && !readOnly ? `
             <div class="tree-skill-controls" role="group" aria-label="${name} level">
               <button type="button" class="node-btn" data-action="passive-dec" data-key="${node.key}" aria-label="Decrease ${name}"${atMin ? ' disabled' : ''}>−</button>
               <button type="button" class="node-btn" data-action="passive-inc" data-key="${node.key}" data-max="${max}" aria-label="Increase ${name}"${atMax ? ' disabled' : ''}>+</button>
@@ -450,6 +569,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     passives: PassiveNode[],
     actives: PassiveNode[],
     unlocked: boolean,
+    readOnly = false,
   ): string {
     type SkillEntry = { node: PassiveNode; kind: 'passive' | 'active' };
     const all: SkillEntry[] = [
@@ -466,8 +586,8 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
         const items = row
           .map((item, i) =>
             item.kind === 'passive'
-              ? drawSkillNode(item.node, unlocked, i > 0)
-              : drawActiveNode(item.node, unlocked, i > 0),
+              ? drawSkillNode(item.node, unlocked, i > 0, readOnly)
+              : drawActiveNode(item.node, unlocked, i > 0, readOnly),
           )
           .join('');
         return `<div class="tree-nodes-row">${items}</div>`;
@@ -477,23 +597,75 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     return `<div class="tree-nodes-layout ${layoutClass}">${rowsHtml}</div>`;
   }
 
-  function drawGuildChronicle(): string {
+  function drawChronicleLevelScrubber(): string {
+    const level = PREPARED_LEVEL_STEPS[preparedLevelIndex] ?? 1;
+    const maxIndex = PREPARED_LEVEL_STEPS.length - 1;
+    const ticks = PREPARED_LEVEL_STEPS.map((step, i) => {
+      const pct = maxIndex === 0 ? 0 : (i / maxIndex) * 100;
+      return `<button
+          type="button"
+          class="chronicle-level-tick${i === preparedLevelIndex ? ' is-active' : ''}"
+          data-action="prepared-level-pick"
+          data-index="${i}"
+          style="left: ${pct}%"
+          aria-label="Level ${step}"
+          aria-pressed="${i === preparedLevelIndex}"
+        >${step}</button>`;
+    }).join('');
+
+    return `
+      <div class="chronicle-level-scrubber" role="group" aria-label="Preview hero level">
+        <div class="chronicle-level-scrubber-head">
+          <span class="chronicle-level-label">Hero Level</span>
+          <output class="chronicle-level-readout" for="chronicle-level-range">Lv.${level}</output>
+        </div>
+        <div class="chronicle-level-track-wrap">
+          <input
+            id="chronicle-level-range"
+            type="range"
+            class="chronicle-level-range"
+            min="0"
+            max="${maxIndex}"
+            step="1"
+            value="${preparedLevelIndex}"
+            data-action="prepared-level-scrub"
+            aria-valuemin="${PREPARED_LEVEL_STEPS[0]}"
+            aria-valuemax="${PREPARED_LEVEL_STEPS[maxIndex]}"
+            aria-valuenow="${level}"
+            aria-valuetext="Level ${level}"
+          />
+          <div class="chronicle-level-ticks">${ticks}</div>
+        </div>
+      </div>`;
+  }
+
+  function drawChronicleColumn(): string {
+    return `
+      <aside class="chronicle-col">
+        ${drawGuildChronicle()}
+      </aside>`;
+  }
+
+  function buildChronicleTiersHtml(): string {
     const def = heroDef();
     const heroData = heroSave();
     if (!def || !heroData) return '';
 
+    const readOnly = isPreparedReadOnly();
     const heroLevel = heroLevelFromSave(heroData);
     const groups = def.tree;
 
-    const tiers = groups
+    return groups
       .map((group, index) => {
         const unlocked = isAttributeGroupUnlocked(index, groups, heroLevel, state.working, heroData);
         const hasPoints = group.nodes.some((n) => getPassiveLevel(state.working, n.key) > 0);
         const reached = heroLevel >= group.levelGate;
         const passives = group.nodes.filter((n) => n.kind === 'passive' && n.stat && n.stat !== 'NONE');
         const actives = group.nodes.filter((n) => n.kind === 'active');
-        const nodesHtml = drawSkillNodesLayout(passives, actives, unlocked);
-        const lockHint = attributeGroupLockHint(index, groups, heroLevel, state.working, unlocked);
+        const nodesHtml = drawSkillNodesLayout(passives, actives, unlocked, readOnly);
+        const lockHint = readOnly
+          ? 'Prepared build snapshot'
+          : attributeGroupLockHint(index, groups, heroLevel, state.working, unlocked);
         const stateClass = [
           unlocked ? 'is-unlocked' : 'is-locked',
           reached ? 'is-reached' : '',
@@ -528,6 +700,77 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
           </article>`;
       })
       .join('');
+  }
+
+  function syncPreparedLevelPanelUi(): void {
+    const panel = root.querySelector('.prepared-level-panel');
+    if (!panel) return;
+
+    const level = PREPARED_LEVEL_STEPS[preparedLevelIndex] ?? 1;
+    const readout = panel.querySelector('.chronicle-level-readout');
+    if (readout) readout.textContent = `Lv.${level}`;
+
+    panel.querySelectorAll<HTMLElement>('.chronicle-level-tick').forEach((el) => {
+      const i = Number(el.getAttribute('data-index'));
+      const active = i === preparedLevelIndex;
+      el.classList.toggle('is-active', active);
+      el.setAttribute('aria-pressed', String(active));
+    });
+
+    const range = panel.querySelector<HTMLInputElement>('[data-action="prepared-level-scrub"]');
+    if (range && document.activeElement !== range) {
+      range.value = String(preparedLevelIndex);
+      range.setAttribute('aria-valuenow', String(level));
+      range.setAttribute('aria-valuetext', `Level ${level}`);
+    }
+  }
+
+  function mountPreparedLevelPanel(): void {
+    root.querySelector('.prepared-level-panel')?.remove();
+    if (!isPreparedReadOnly()) return;
+
+    const col = root.querySelector('.chronicle-col');
+    if (!col) return;
+
+    const panel = document.createElement('div');
+    panel.className = 'prepared-level-panel rpg-panel';
+    panel.setAttribute('aria-label', 'Hero level preview');
+    panel.innerHTML = `<div class="rpg-panel-inner prepared-level-panel-inner">${drawChronicleLevelScrubber()}</div>`;
+    col.insertBefore(panel, col.firstChild);
+    syncPreparedLevelPanelUi();
+  }
+
+  function refreshPreparedPreview(): void {
+    const scrollState = captureScrollState();
+
+    const tiersEl = root.querySelector('.chronicle-tiers');
+    if (tiersEl) tiersEl.innerHTML = buildChronicleTiersHtml();
+
+    const equipment = root.querySelector('.equipment-stage');
+    if (equipment) equipment.outerHTML = drawEquipmentStage();
+
+    const charSheet = root.querySelector('.char-sheet-bar');
+    if (charSheet) charSheet.outerHTML = drawCharacterSheet();
+
+    syncPreparedLevelPanelUi();
+    restoreScrollState(scrollState);
+  }
+
+  function setPreparedLevel(index: number): void {
+    preparedLevelIndex = Math.max(0, Math.min(PREPARED_LEVEL_STEPS.length - 1, index));
+    applyPreparedView();
+    refreshPreparedPreview();
+  }
+
+  function drawGuildChronicle(): string {
+    const def = heroDef();
+    const heroData = heroSave();
+    if (!def || !heroData) return '';
+
+    const readOnly = isPreparedReadOnly();
+    const heroLevel = heroLevelFromSave(heroData);
+    const groups = def.tree;
+    const tiers = buildChronicleTiersHtml();
 
     return `
       <div class="rpg-panel chronicle-panel" id="panel-chronicle" aria-label="Guild Chronicle">
@@ -536,7 +779,11 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
             <div class="rpg-panel-head-copy">
               <p class="text-kicker">Guild Chronicle</p>
               <h3 class="rpg-panel-title">Path of ${def.name}</h3>
-              <p class="rpg-panel-sub">Lv.${heroLevel} · ${groups.length} chapters on the road</p>
+              <p class="rpg-panel-sub">${
+                readOnly
+                  ? `Prepared path · ${groups.length} chapters`
+                  : `Lv.${heroLevel} · ${groups.length} chapters on the road`
+              }</p>
             </div>
           </header>
           <div class="chronicle-scroll">
@@ -551,6 +798,8 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   }
 
   function drawRuneChamber(): string {
+    if (workspaceMode === 'prepared') return '';
+
     const runeSlots = heroCombatRunesForPanel(ctx.runes.runes)
       .map((rune) => {
         const level = getRuneLevel(state.working, rune.key);
@@ -567,10 +816,11 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
               <span class="rune-gem-lv ${rarity}">${level}/${max}</span>
             </div>
             <span class="rune-slot-benefit${level > 0 ? ' is-active' : ''}">${benefit}</span>
+            ${isPreparedReadOnly() ? '' : `
             <div class="rune-slot-controls">
               <button type="button" class="node-btn" data-action="rune-dec" data-key="${rune.key}" aria-label="Decrease ${rune.name}">−</button>
               <button type="button" class="node-btn" data-action="rune-inc" data-key="${rune.key}" data-max="${max}" aria-label="Increase ${rune.name}">+</button>
-            </div>
+            </div>`}
             <div class="rpg-tooltip">${effect}</div>
           </article>`;
       })
@@ -615,7 +865,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
 
   function syncSidePanelHeights(): void {
     const heroHall = root.querySelector<HTMLElement>('.hero-hall');
-    const chroniclePanel = root.querySelector<HTMLElement>('.chronicle-panel');
+    const chronicleCol = root.querySelector<HTMLElement>('.chronicle-col');
     const runeSidebar = root.querySelector<HTMLElement>('.rune-sidebar');
     if (!heroHall) return;
 
@@ -623,7 +873,7 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     if (height <= 0) return;
 
     const px = `${height}px`;
-    for (const panel of [chroniclePanel, runeSidebar]) {
+    for (const panel of [chronicleCol, runeSidebar]) {
       if (!panel) continue;
       if (panel.style.height === px && panel.style.maxHeight === px) continue;
       panel.style.height = px;
@@ -644,11 +894,15 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
   function draw(): void {
     stopPortraitAnim();
     const scrollState = captureScrollState();
+    const showPreparedWorkspace = workspaceMode === 'prepared' && selectedPreparedBuild !== null;
+
     root.innerHTML = `
-      <div class="rpg-screen">
+      <div class="rpg-screen${workspaceMode === 'prepared' ? ' is-prepared-mode' : ''}${isPreparedReadOnly() ? ' is-readonly' : ''}">
         ${drawGuildBanner()}
+        ${drawPreparedBuildsRail()}
+        ${showPreparedWorkspace ? `
         <div class="rpg-workspace${runeChamberOpen ? ' rune-open' : ''}">
-          <aside class="chronicle-col">${drawGuildChronicle()}</aside>
+          ${drawChronicleColumn()}
           <main class="hero-hall rpg-panel">
             <div class="rpg-panel-inner">
               ${drawHeroShowcase()}
@@ -658,11 +912,24 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
           </main>
           ${drawRuneChamber()}
         </div>
-        ${drawCharacterSheet()}
+        ${drawCharacterSheet()}` : workspaceMode === 'prepared' ? drawPreparedEmptyState() : `
+        <div class="rpg-workspace${runeChamberOpen ? ' rune-open' : ''}">
+          ${drawChronicleColumn()}
+          <main class="hero-hall rpg-panel">
+            <div class="rpg-panel-inner">
+              ${drawHeroShowcase()}
+              ${drawEquipmentStage()}
+              ${drawHeroCodex()}
+            </div>
+          </main>
+          ${drawRuneChamber()}
+        </div>
+        ${drawCharacterSheet()}`}
       </div>
       <div id="sim-modal" class="modal-root"></div>
     `;
     bindEvents();
+    mountPreparedLevelPanel();
     startPortraitAnim();
     requestAnimationFrame(() => {
       syncSidePanelHeights();
@@ -953,7 +1220,63 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
     if (saveHero && def) syncAttributeGroupUnlocks(state.working, saveHero, def);
   }
 
+  async function selectPreparedBuildById(id: string): Promise<void> {
+    const entry = preparedManifest.find((b) => b.id === id);
+    if (!entry) return;
+
+    let build = preparedBuildCache.get(entry.id);
+    if (!build) {
+      try {
+        build = await loadPreparedBuild(entry);
+        preparedBuildCache.set(entry.id, build);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : String(err));
+        return;
+      }
+    }
+
+    selectedPreparedBuild = build;
+    preparedLevelIndex = 0;
+    applyPreparedView();
+    draw();
+  }
+
+  function enterForgeMode(): void {
+    if (workspaceMode === 'forge') return;
+    workspaceMode = 'forge';
+    selectedPreparedBuild = null;
+    preparedLevelIndex = 0;
+    if (forgeSnapshot) {
+      state.working = clonePlayerSave(forgeSnapshot);
+      state.heroKey = state.working.heroSaveDatas.find((h) => h.IsUnLock)?.heroKey ?? state.heroKey;
+      state.itemsByKey = syncSaveItemKeys(state.working, ctx.allItems);
+      forgeSnapshot = null;
+    }
+    draw();
+  }
+
+  function enterPreparedMode(): void {
+    if (workspaceMode === 'prepared') return;
+    forgeSnapshot = clonePlayerSave(state.working);
+    workspaceMode = 'prepared';
+    state.baseline = null;
+    selectedPreparedBuild = null;
+    preparedLevelIndex = 0;
+    runeChamberOpen = false;
+    draw();
+  }
+
   function bindEvents(): void {
+    root.querySelector('[data-action="mode-forge"]')?.addEventListener('click', () => enterForgeMode());
+    root.querySelector('[data-action="mode-prepared"]')?.addEventListener('click', () => enterPreparedMode());
+
+    root.querySelectorAll('[data-action="pick-prepared"]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const id = el.getAttribute('data-id');
+        if (id) void selectPreparedBuildById(id);
+      });
+    });
+
     root.querySelector('[data-action="load-save"]')?.addEventListener('change', async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
@@ -1043,6 +1366,24 @@ export function renderSimulatorPage(root: HTMLElement, ctx: SimulatorContext): v
       });
     });
   }
+
+  root.addEventListener('input', (e) => {
+    if (!isPreparedReadOnly()) return;
+    const target = e.target as HTMLElement;
+    if (target.getAttribute('data-action') !== 'prepared-level-scrub') return;
+    setPreparedLevel(Number((target as HTMLInputElement).value));
+  });
+
+  root.addEventListener('click', (e) => {
+    if (!isPreparedReadOnly()) return;
+    const tick = (e.target as HTMLElement).closest('[data-action="prepared-level-pick"]');
+    if (!tick) return;
+    const index = Number(tick.getAttribute('data-index'));
+    if (!Number.isFinite(index)) return;
+    setPreparedLevel(index);
+    const range = root.querySelector<HTMLInputElement>('[data-action="prepared-level-scrub"]');
+    if (range) range.value = String(preparedLevelIndex);
+  });
 
   draw();
 }

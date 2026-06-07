@@ -1,0 +1,287 @@
+{
+  "id": "my-prepared-build",
+  "name": "My Prepared Build",
+  "heroKey": 201,
+  "milestones": [
+    {
+      "level": 1,
+      "heroLevel": 1,
+      "passives": [
+        {
+          "key": 201001,
+          "level": 3
+        },
+        {
+          "key": 201002,
+          "level": 2
+        },
+        {
+          "key": 20101,
+          "level": 5
+        }
+      ]
+    },
+    {
+      "level": 10,
+      "heroLevel": 10,
+      "passives": [
+        {
+          "key": 201001,
+          "level": 3
+        },
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 4
+        }
+      ]
+    },
+    {
+      "level": 20,
+      "heroLevel": 20,
+      "passives": [
+        {
+          "key": 201001,
+          "level": 3
+        },
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 4
+        },
+        {
+          "key": 20401,
+          "level": 1
+        },
+        {
+          "key": 201022,
+          "level": 9
+        }
+      ]
+    },
+    {
+      "level": 30,
+      "heroLevel": 30,
+      "passives": [
+        {
+          "key": 201001,
+          "level": 3
+        },
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 4
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201032,
+          "level": 5
+        }
+      ]
+    },
+    {
+      "level": 40,
+      "heroLevel": 40,
+      "passives": [
+        {
+          "key": 201001,
+          "level": 3
+        },
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 201012,
+          "level": 1
+        }
+      ]
+    },
+    {
+      "level": 50,
+      "heroLevel": 50,
+      "passives": [
+        {
+          "key": 201001,
+          "level": 3
+        },
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 201012,
+          "level": 1
+        },
+        {
+          "key": 201052,
+          "level": 10
+        }
+      ]
+    },
+    {
+      "level": 60,
+      "heroLevel": 60,
+      "passives": [
+        {
+          "key": 201001,
+          "level": 3
+        },
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 201012,
+          "level": 1
+        },
+        {
+          "key": 201052,
+          "level": 10
+        },
+        {
+          "key": 201062,
+          "level": 10
+        }
+      ]
+    },
+    {
+      "level": 70,
+      "heroLevel": 70,
+      "passives": [
+        {
+          "key": 201001,
+          "level": 3
+        },
+        {
+          "key": 201002,
+          "level": 8
+        },
+        {
+          "key": 20101,
+          "level": 5
+        },
+        {
+          "key": 201011,
+          "level": 8
+        },
+        {
+          "key": 201022,
+          "level": 10
+        },
+        {
+          "key": 20501,
+          "level": 5
+        },
+        {
+          "key": 201032,
+          "level": 10
+        },
+        {
+          "key": 201012,
+          "level": 1
+        },
+        {
+          "key": 201052,
+          "level": 10
+        },
+        {
+          "key": 201062,
+          "level": 10
+        },
+        {
+          "key": 201072,
+          "level": 10
+        }
+      ]
+    }
+  ]
+}

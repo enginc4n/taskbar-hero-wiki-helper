@@ -1,7 +1,12 @@
 import { loadAllData } from './data/api';
+import { renderBuildHelperPage } from './ui/build-helper-page';
 import { renderSimulatorPage } from './ui/simulator-page';
 
-async function main(): Promise<void> {
+function isHelperRoute(): boolean {
+  return window.location.hash === '#helper' || window.location.hash === '#/helper';
+}
+
+async function boot(): Promise<void> {
   const app = document.querySelector<HTMLDivElement>('#app');
   if (!app) return;
 
@@ -26,7 +31,7 @@ async function main(): Promise<void> {
 
   try {
     const data = await loadAllData();
-    renderSimulatorPage(content, {
+    const ctx = {
       items: data.items,
       allItems: data.allItems,
       heroes: data.heroes,
@@ -34,7 +39,13 @@ async function main(): Promise<void> {
       runes: data.runes,
       meta: data.meta,
       wiki: data.wiki,
-    });
+    };
+
+    if (isHelperRoute()) {
+      renderBuildHelperPage(content, ctx);
+    } else {
+      renderSimulatorPage(content, ctx);
+    }
   } catch (err) {
     content.innerHTML = `
       <div class="error-state" role="alert">
@@ -47,4 +58,5 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+window.addEventListener('hashchange', () => boot());
+boot();

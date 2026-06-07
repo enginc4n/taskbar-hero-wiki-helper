@@ -63,12 +63,20 @@ export function groupInvestedPoints(save: PlayerSaveData, group: HeroTreeGroup):
   return group.nodes.reduce((sum, node) => sum + getPassiveLevel(save, node.key), 0);
 }
 
+/** Total skill points spent anywhere on the hero skill tree. */
+export function totalInvestedSkillPoints(save: PlayerSaveData): number {
+  return (save.attributeSaveDatas ?? []).reduce(
+    (sum, row) => sum + (Number(row.Level) || 0),
+    0,
+  );
+}
+
 /**
- * Attribute group unlock rules (matches in-game progression):
- * - Hero level reached the gate, OR
+ * Attribute group unlock rules:
+ * - Hero level reached the chapter gate, OR
+ * - Total invested skill points reached the chapter gate (any chapters), OR
  * - Group already saved as unlocked, OR
- * - Any point invested in this group, OR
- * - Any point invested in the previous group (chain unlock)
+ * - Any point invested in this group
  */
 export function isAttributeGroupUnlocked(
   groupIndex: number,
@@ -80,10 +88,10 @@ export function isAttributeGroupUnlocked(
   const group = groups[groupIndex];
   if (!group) return false;
   if (heroLevel >= group.levelGate) return true;
+  if (totalInvestedSkillPoints(save) >= group.levelGate) return true;
   if ((hero.unlockedAttributeGroupKeys ?? []).includes(group.group)) return true;
   if (groupInvestedPoints(save, group) > 0) return true;
-  if (groupIndex > 0 && groupInvestedPoints(save, groups[groupIndex - 1]) > 0) return true;
-  return groupIndex === 0 && heroLevel >= group.levelGate;
+  return false;
 }
 
 /** Persist unlocked groups on the hero save after point investment or import. */
@@ -103,21 +111,24 @@ export function syncAttributeGroupUnlocks(
 }
 
 export function attributeGroupLockHint(
-  groupIndex: number,
+  _groupIndex: number,
   groups: HeroTreeGroup[],
   heroLevel: number,
   save: PlayerSaveData,
   unlocked: boolean,
 ): string {
   if (unlocked) return 'Use + / − to invest skill points';
-  const group = groups[groupIndex];
-  const reached = heroLevel >= group.levelGate;
-  const prevInvested =
-    groupIndex > 0 ? groupInvestedPoints(save, groups[groupIndex - 1]) : 0;
-  if (!reached && groupIndex > 0 && prevInvested === 0) {
-    return `Invest points in Chapter ${groupIndex} or reach Hero Level ${group.levelGate}`;
+  const group = groups[_groupIndex];
+  const gate = group.levelGate;
+  const spent = totalInvestedSkillPoints(save);
+  const needPoints = Math.max(0, gate - spent);
+  if (heroLevel < gate && needPoints > 0) {
+    return `Invest ${needPoints} more skill point${needPoints === 1 ? '' : 's'} (any chapter) or reach Hero Level ${gate}`;
   }
-  if (!reached) return `Sealed until Hero Level ${group.levelGate}`;
+  if (heroLevel < gate) return `Sealed until Hero Level ${gate}`;
+  if (needPoints > 0) {
+    return `Invest ${needPoints} more skill point${needPoints === 1 ? '' : 's'} anywhere on the tree`;
+  }
   return 'Use + / − to invest skill points';
 }
 

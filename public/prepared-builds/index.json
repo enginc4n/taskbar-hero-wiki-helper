@@ -1,0 +1,12 @@
+{
+  "builds": [
+    {
+      "id": "my-prepared-build",
+      "file": "my-prepared-build.json",
+      "name": "My Prepared Build",
+      "heroKey": 201,
+      "heroClass": "Ranger",
+      "description": "Sample prepared build exported from Build Helper."
+    }
+  ]
+}

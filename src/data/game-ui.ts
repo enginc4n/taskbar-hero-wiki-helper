@@ -85,26 +85,26 @@ export function renderGearSlotHtml(options: {
   part: HeroPart;
   item?: EnrichedItem | null;
   hasSockets?: boolean;
+  readOnly?: boolean;
 }): string {
-  const { part, item, hasSockets } = options;
+  const { part, item, hasSockets, readOnly } = options;
   const iconUrl = item?.icon ? itemIconUrl(item.icon) : null;
   const gradeBg = item ? gradeBgUrl(item.grade) : null;
 
+  const slotTag = readOnly ? 'div' : 'button';
+  const slotAttrs = readOnly
+    ? `class="game-slot game-slot--readonly${item ? ' filled' : ''}" title="${item?.name ?? part.replace('_', ' ')}"`
+    : `type="button" class="game-slot${item ? ' filled' : ''}" data-action="pick-gear" data-part="${part}" title="${item?.name ?? part.replace('_', ' ')}"`;
+
   return `
-    <div class="game-slot-wrap">
-      <button
-        type="button"
-        class="game-slot${item ? ' filled' : ''}"
-        data-action="pick-gear"
-        data-part="${part}"
-        title="${item?.name ?? part.replace('_', ' ')}"
-      >
+    <div class="game-slot-wrap${readOnly ? ' is-readonly' : ''}">
+      <${slotTag} ${slotAttrs}>
         <img class="slot-frame" src="${slotFrameUrl(GEAR_SLOT_FRAMES[part])}" alt="" />
         ${gradeBg ? `<img class="slot-grade" src="${gradeBg}" alt="" />` : ''}
         ${iconUrl ? `<img class="slot-icon" src="${iconUrl}" alt="" />` : ''}
-      </button>
+      </${slotTag}>
       ${
-        item && hasSockets
+        item && hasSockets && !readOnly
           ? `<button type="button" class="game-socket-btn" data-action="edit-sockets" data-part="${part}" title="Sockets">◆</button>`
           : ''
       }
