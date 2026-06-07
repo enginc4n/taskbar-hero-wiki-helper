@@ -76,6 +76,7 @@ export const en = {
   'build.previewHeroLevel': 'Preview hero level',
   'build.heroLevel': 'Hero Level',
   'build.guildRecord': 'Level {level} — Guild Record',
+  'build.chapter': 'Chapter {chapter}',
   'build.activeSkill': 'Active Skill',
   'build.close': 'Close',
   'build.empty': 'Empty',

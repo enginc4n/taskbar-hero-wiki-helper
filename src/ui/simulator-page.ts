@@ -48,7 +48,6 @@ import {
   setRuneLevel,
   syncAttributeGroupUnlocks,
   isAttributeGroupUnlocked,
-  attributeGroupLockHint,
   syncSaveItemKeys,
   type SocketSlotState,
 } from '../simulator/build-state';
@@ -364,7 +363,6 @@ export function renderSimulatorPage(
     if (!hero || !save) return '';
     const displayName = heroNameLabel(hero.name);
     const displayClass = heroClassLabel(hero.class);
-    const desc = hero.description ?? t('build.heroDescFallback', { class: displayClass });
 
     return `
       <section class="hero-showcase" aria-label="Hero showcase">
@@ -375,7 +373,6 @@ export function renderSimulatorPage(
           </div>
           ${drawRuneVaultButton()}
         </div>
-        ${workspaceMode !== 'prepared' ? `<p class="hero-desc">${desc}</p>` : ''}
       </section>`;
   }
 
@@ -591,23 +588,18 @@ export function renderSimulatorPage(
     ];
     if (!all.length) return '';
 
-    const rows: SkillEntry[][] = all.length === 4 ? [all.slice(0, 2), all.slice(2, 4)] : [all];
-    const layoutClass = all.length === 4 ? 'tree-nodes-layout--quad' : 'tree-nodes-layout--line';
-
-    const rowsHtml = rows
-      .map((row) => {
-        const items = row
-          .map((item, i) =>
-            item.kind === 'passive'
-              ? drawSkillNode(item.node, unlocked, i > 0, readOnly)
-              : drawActiveNode(item.node, unlocked, i > 0, readOnly),
-          )
-          .join('');
-        return `<div class="tree-nodes-row">${items}</div>`;
-      })
+    const items = all
+      .map((item, i) =>
+        item.kind === 'passive'
+          ? drawSkillNode(item.node, unlocked, i > 0, readOnly)
+          : drawActiveNode(item.node, unlocked, i > 0, readOnly),
+      )
       .join('');
 
-    return `<div class="tree-nodes-layout ${layoutClass}">${rowsHtml}</div>`;
+    return `
+      <div class="tree-nodes-layout tree-nodes-layout--line">
+        <div class="tree-nodes-row">${items}</div>
+      </div>`;
   }
 
   function drawChronicleLevelScrubber(): string {
@@ -676,9 +668,6 @@ export function renderSimulatorPage(
         const passives = group.nodes.filter((n) => n.kind === 'passive' && n.stat && n.stat !== 'NONE');
         const actives = group.nodes.filter((n) => n.kind === 'active');
         const nodesHtml = drawSkillNodesLayout(passives, actives, readOnly || unlocked, readOnly);
-        const lockHint = readOnly
-          ? ''
-          : attributeGroupLockHint(index, groups, heroLevel, state.working, unlocked);
         const stateClass = readOnly
           ? [
               'is-prepared-tier',
@@ -705,9 +694,11 @@ export function renderSimulatorPage(
             </div>
             <div class="tree-tier-page">
               <header class="tree-tier-head">
-                <span class="tree-chapter">Chapter ${index + 1}</span>
-                <h4 class="tree-tier-title">${t('build.guildRecord', { level: group.levelGate })}</h4>
-                ${lockHint ? `<p class="tree-tier-hint">${lockHint}</p>` : ''}
+                <h4 class="tree-tier-title">
+                  <span class="tree-chapter">${t('build.chapter', { chapter: index + 1 })}</span>
+                  <span class="tree-tier-sep" aria-hidden="true">*</span>
+                  <span class="tree-tier-level">${t('build.level', { level: group.levelGate })}</span>
+                </h4>
               </header>
               <div class="tree-branch">
                 ${nodesHtml}
@@ -969,11 +960,11 @@ export function renderSimulatorPage(
             <div class="rpg-panel-inner">
               ${drawHeroShowcase()}
               ${drawEquipmentStage()}
+              ${drawCharacterSheet()}
             </div>
           </main>
           ${drawRuneChamber()}
-        </div>
-        ${drawCharacterSheet()}`}
+        </div>`}
       </div>
       <div id="sim-modal" class="modal-root"></div>
     `;

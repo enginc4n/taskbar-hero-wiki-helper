@@ -240,10 +240,17 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
           <article class="tree-tier ${unlocked ? 'is-unlocked' : 'is-locked'}">
             <div class="tree-tier-page">
               <header class="tree-tier-head">
-                <span class="tree-chapter">Chapter ${index + 1}</span>
-                <h4 class="tree-tier-title">Level ${group.levelGate}</h4>
+                <h4 class="tree-tier-title">
+                  <span class="tree-chapter">${t('build.chapter', { chapter: index + 1 })}</span>
+                  <span class="tree-tier-sep" aria-hidden="true">*</span>
+                  <span class="tree-tier-level">${t('build.level', { level: group.levelGate })}</span>
+                </h4>
               </header>
-              <div class="tree-branch helper-skill-row">${nodes}</div>
+              <div class="tree-branch helper-skill-row">
+                <div class="tree-nodes-layout tree-nodes-layout--line">
+                  <div class="tree-nodes-row">${nodes}</div>
+                </div>
+              </div>
             </div>
           </article>`;
       })

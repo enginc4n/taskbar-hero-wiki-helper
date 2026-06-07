@@ -372,44 +372,72 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 .page-hero-inner {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 1rem 1.25rem;
+}
+
+.page-hero-copy {
+  min-width: 0;
 }
 
 .page-hero-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   align-items: stretch;
+  flex-shrink: 0;
+  justify-content: flex-end;
 }
 
 .page-hero-locale-picker {
   position: relative;
+  z-index: 20;
   display: inline-flex;
   align-items: stretch;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 14.5rem;
+}
+
+.page-hero-locale-picker.is-open {
+  z-index: 80;
 }
 
 .page-hero-locale-trigger {
   text-transform: none;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   font-weight: 600;
-  gap: 0.45rem;
-  padding-inline: 0.75rem;
+  font-size: 0.72rem;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  width: 100%;
+  min-width: 14.5rem;
+  justify-content: flex-start;
+  white-space: nowrap;
 }
 
 .page-hero-locale-icon {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   line-height: 1;
   color: var(--gold);
   flex-shrink: 0;
 }
 
 .page-hero-locale-label {
+  flex: 1 1 auto;
+  min-width: 4.5rem;
   white-space: nowrap;
+  text-align: left;
+}
+
+.page-hero-locale-suffix {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .page-hero-locale-flag {
@@ -428,26 +456,36 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 .page-hero-locale-caret {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-muted);
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .page-hero-locale-menu {
-  position: absolute;
-  top: calc(100% + 0.25rem);
-  left: 0;
-  right: auto;
-  z-index: 60;
-  width: 100%;
-  min-width: 100%;
+  position: fixed;
+  z-index: 10000;
   margin: 0;
-  padding: 0.2rem;
+  padding: 0.3rem;
   list-style: none;
   border: 2px solid var(--border-wood);
   background: #120c08;
   box-shadow: var(--shadow-pixel);
   box-sizing: border-box;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.14s ease, transform 0.14s ease;
+  pointer-events: none;
+}
+
+.page-hero-locale-menu.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.page-hero-locale-menu[hidden] {
+  display: none !important;
 }
 
 .page-hero-locale-menu li {
@@ -508,6 +546,123 @@ button { cursor: pointer; border: none; background: none; }
   max-width: var(--content-max);
   margin: 0 auto;
   padding: 1rem 1.25rem 1.5rem;
+}
+
+/* Guild Hall banner */
+.dash-hall {
+  margin-bottom: 1.25rem;
+}
+
+.dash-hall-inner {
+  position: relative;
+  padding: 1.1rem 1.15rem !important;
+  overflow: visible;
+}
+
+.dash-hall-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(201, 162, 39, 0.1) 0%, transparent 42%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.22), transparent 55%);
+  pointer-events: none;
+}
+
+.dash-hall-crest {
+  position: absolute;
+  right: 0.85rem;
+  bottom: 0.35rem;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--gold);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.dash-hall-top {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.7rem;
+}
+
+.dash-hall-kicker {
+  display: block;
+  min-height: 1.35rem;
+  margin: 0;
+  line-height: 1.35rem;
+}
+
+.dash-hall-top .page-hero-locale-picker {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 14.5rem;
+}
+
+.dash-hall-main {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem 1.25rem;
+  align-items: end;
+}
+
+.dash-hall-copy {
+  min-width: 0;
+}
+
+.dash-hall-title {
+  margin: 0;
+  min-height: 1.35em;
+  font-family: var(--font-title);
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--parchment);
+}
+
+.dash-hall-lead {
+  margin: 0.45rem 0 0;
+  min-height: 2.9em;
+  max-width: 36rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.dash-hall-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.dash-hall-cta {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .dash-hall-main {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .dash-hall-actions {
+    justify-content: stretch;
+  }
+
+  .dash-hall-actions .dash-hall-cta {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
 }
 
 .page-guides,
@@ -586,34 +741,98 @@ button { cursor: pointer; border: none; background: none; }
 
 .dash-hero-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.65rem;
 }
 
+.dash-hero-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  min-height: 9.75rem;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.dash-hero-card:hover,
+.dash-hero-card:focus-visible {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  outline: none;
+}
+
 .dash-hero-card-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  min-height: 9.75rem;
+  padding: 0.8rem 0.45rem 0.65rem !important;
   text-align: center;
-  padding: 0.75rem !important;
+  box-sizing: border-box;
+}
+
+.dash-hero-portrait {
+  position: relative;
+  width: 3.25rem;
+  aspect-ratio: 30 / 45;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(#f0e8d4, #d8c8a8);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(107, 84, 32, 0.35);
+}
+
+.dash-hero-portrait-img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  z-index: 0;
+}
+
+.dash-hero-portrait-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .dash-hero-glyph {
   font-size: 1.75rem;
   line-height: 1;
+  z-index: 0;
 }
 
 .dash-hero-name {
-  margin: 0.35rem 0 0;
+  width: 100%;
+  min-height: 2.5rem;
+  margin: 0.45rem 0 0;
+  padding: 0 0.15rem;
   font-family: var(--font-title);
-  font-size: var(--text-heading);
+  font-size: 0.92rem;
   font-weight: 700;
+  line-height: 1.25;
   color: var(--parchment);
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
-.dash-hero-class {
-  margin: 0.15rem 0 0;
-  font-family: var(--font-ui);
-  font-size: var(--text-label);
-  color: var(--amber);
-  letter-spacing: 0.06em;
+@media (max-width: 900px) {
+  .dash-hero-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .dash-hero-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .dash-builds-rail {
@@ -813,19 +1032,19 @@ button { cursor: pointer; border: none; background: none; }
   position: sticky;
   top: 0;
   z-index: 50;
-  margin: 0 0 0.65rem;
-  border-bottom: 3px solid var(--border-wood);
+  margin: 0 0 0.45rem;
+  border-bottom: 2px solid var(--border-wood);
   background:
     linear-gradient(180deg, rgba(26, 18, 14, 0.98), rgba(12, 8, 6, 0.96));
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
 }
 
 .build-toolbar-inner {
   display: flex;
   flex-wrap: wrap;
-  align-items: stretch;
-  gap: 0.75rem 1rem;
-  padding: 0.75rem 0;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  padding: 0.4rem 0;
   max-width: none;
   width: 100%;
   margin: 0;
@@ -833,9 +1052,9 @@ button { cursor: pointer; border: none; background: none; }
 
 .build-subnav {
   display: inline-flex;
-  align-self: stretch;
+  align-self: center;
   align-items: stretch;
-  border: 3px solid var(--border-wood);
+  border: 2px solid var(--border-wood);
   background: rgba(0, 0, 0, 0.35);
   box-shadow: inset 0 0 0 1px rgba(201, 162, 39, 0.2);
 }
@@ -843,10 +1062,10 @@ button { cursor: pointer; border: none; background: none; }
 .build-subnav-item {
   display: flex;
   align-items: center;
-  padding: 0 0.85rem;
-  min-height: 100%;
+  padding: 0.35rem 0.6rem;
+  min-height: 1.85rem;
   font-family: var(--font-ui);
-  font-size: var(--text-label);
+  font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-decoration: none;
@@ -869,16 +1088,48 @@ button { cursor: pointer; border: none; background: none; }
 
 .build-toolbar .guild-hero-strip {
   flex: 1 1 180px;
-  align-self: stretch;
+  align-self: center;
+  padding: 0.3rem 0.55rem;
+  gap: 0.45rem 0.6rem;
+  border-width: 2px;
+}
+
+.build-toolbar .guild-hero-portrait {
+  width: 2.15rem;
+}
+
+.build-toolbar .guild-hero-name {
+  font-size: 0.82rem;
+}
+
+.build-toolbar .guild-hero-meta {
+  font-size: 0.58rem;
+}
+
+.build-toolbar .guild-hero-select {
+  padding: 0.28rem 0.45rem;
+  font-size: 0.78rem;
 }
 
 .build-toolbar .guild-actions {
   margin-left: auto;
-  align-self: stretch;
+  align-self: center;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.3rem;
+}
+
+.build-toolbar .rpg-btn {
+  padding: 0.35rem 0.6rem;
+  min-height: 1.85rem;
+  font-size: 0.58rem;
+  gap: 0.3rem;
+}
+
+.build-toolbar .guild-status {
+  padding: 0.18rem 0.4rem;
+  font-size: 0.62rem;
 }
 
 /* Loading / error */
@@ -1464,17 +1715,18 @@ button { cursor: pointer; border: none; background: none; }
   box-shadow: 0 0 6px var(--success);
 }
 
-/* Main workspace — 3 column RPG menu */
+/* Main workspace — chronicle fits content (skills row), hero hall takes rest */
 .rpg-workspace {
+  container-type: inline-size;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 0.85rem;
-  margin-top: 0.85rem;
-  align-items: start;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-top: 0.45rem;
+  align-items: stretch;
 }
 
 .rpg-workspace.rune-open {
-  grid-template-columns: minmax(0, 1.05fr) minmax(280px, 1.1fr) minmax(0, 0.95fr);
+  grid-template-columns: auto minmax(0, 1fr) minmax(200px, auto);
 }
 
 .rpg-workspace > * { min-width: 0; }
@@ -1483,6 +1735,8 @@ button { cursor: pointer; border: none; background: none; }
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  width: max-content;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
 }
@@ -1490,6 +1744,8 @@ button { cursor: pointer; border: none; background: none; }
 .chronicle-col .chronicle-panel {
   flex: 1;
   min-height: 0;
+  width: max-content;
+  max-width: 100%;
 }
 
 .prepared-level-panel {
@@ -1780,7 +2036,7 @@ button { cursor: pointer; border: none; background: none; }
 
 /* Prepared Builds — chronicle left, hero/gear/stats right */
 .rpg-screen.is-prepared-mode .prepared-workspace {
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0.85rem;
   width: 100%;
   max-width: 100%;
@@ -2157,8 +2413,11 @@ button { cursor: pointer; border: none; background: none; }
 
 .tree-tier-page {
   position: relative;
+  width: fit-content;
+  max-width: 100%;
   padding: 1rem 1.15rem;
   border: 3px solid var(--border-wood);
+  box-sizing: border-box;
   background:
     linear-gradient(180deg, rgba(255, 248, 230, 0.03) 0%, transparent 15%),
     linear-gradient(180deg, #221c14 0%, #12100c 100%);
@@ -2204,26 +2463,43 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 .tree-tier-head {
-  margin-bottom: 0.85rem;
-  padding-bottom: 0.65rem;
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.5rem;
   border-bottom: 1px dashed rgba(201, 162, 39, 0.2);
 }
 
-.tree-chapter {
-  display: block;
-  font-family: var(--font-ui);
-  font-size: 0.65rem;
-  font-weight: 600;
-  color: var(--gold);
-  letter-spacing: 0.1em;
-  margin-bottom: 0.25rem;
+.tree-tier-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.45rem;
+  margin: 0;
+  line-height: 1.2;
 }
 
-.tree-tier-title {
-  margin: 0;
-  font-family: var(--font-title);
-  font-size: var(--text-heading);
-  font-weight: 700;
+.tree-chapter,
+.tree-tier-level {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+}
+
+.tree-chapter {
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.tree-tier-sep {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.tree-tier-level {
   color: var(--parchment);
 }
 
@@ -2235,18 +2511,29 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 .tree-branch {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem 0;
+  display: block;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--brass) #14100c;
+}
+
+.tree-branch::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tree-branch::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--brass), #3a3020);
+  border: 1px solid #1a1008;
 }
 
 .tree-nodes-layout {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 100%;
-  gap: 0.75rem;
+  align-items: flex-start;
+  width: max-content;
+  max-width: 100%;
+  gap: 0;
 }
 
 .tree-nodes-layout--line {
@@ -2257,17 +2544,14 @@ button { cursor: pointer; border: none; background: none; }
   flex-wrap: nowrap;
 }
 
-.tree-nodes-layout--quad {
-  gap: 0.85rem;
-}
-
 .tree-nodes-row {
   display: flex;
   flex-wrap: nowrap;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
   gap: 0;
-  width: 100%;
+  width: max-content;
+  max-width: 100%;
 }
 
 .tree-node-link {
@@ -2453,7 +2737,9 @@ button { cursor: pointer; border: none; background: none; }
 /* Equipment doll */
 .equipment-stage {
   position: relative;
-  padding: 1rem 0.5rem;
+  padding: 0.75rem 0.55rem 0.85rem;
+  overflow: hidden;
+  box-sizing: border-box;
   border: 3px solid var(--border-wood);
   background:
     radial-gradient(ellipse 70% 50% at 50% 80%, rgba(201, 162, 39, 0.06), transparent),
@@ -2496,26 +2782,90 @@ button { cursor: pointer; border: none; background: none; }
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.35rem 0.45rem;
   align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+  box-sizing: border-box;
 }
 
 .equip-side {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.3rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.equip-side--left {
+  align-items: flex-end;
+}
+
+.equip-side--right {
+  align-items: flex-start;
 }
 
 .equip-row {
   display: flex;
-  gap: 0.35rem;
+  gap: 0.3rem;
+  max-width: 100%;
+}
+
+.equip-side--left .equip-row {
+  justify-content: flex-end;
+}
+
+.equip-side--right .equip-row {
+  justify-content: flex-start;
+}
+
+/* Hero hall — keep gear grid inside narrow column */
+.rpg-screen .hero-hall .equipment-stage {
+  padding: 0.65rem 0.5rem 0.75rem;
+}
+
+.rpg-screen .hero-hall .equipment-layout {
+  gap: 0.25rem 0.35rem;
+}
+
+.rpg-screen .hero-hall .game-slot-wrap {
+  width: 46px;
+  height: 46px;
+}
+
+.rpg-screen .hero-hall .equip-center .hero-portrait {
+  width: 100%;
+  max-width: 168px;
+  min-width: 0;
+  max-height: 210px;
+}
+
+.rpg-screen .hero-hall .equip-portrait-frame {
+  padding: 0.6rem 0.5rem 0.75rem;
+  max-width: 100%;
+}
+
+.rpg-workspace.rune-open .hero-hall .game-slot-wrap {
+  width: 42px;
+  height: 42px;
+}
+
+.rpg-workspace.rune-open .hero-hall .equip-center .hero-portrait {
+  max-width: 140px;
+  max-height: 180px;
+}
+
+.rpg-workspace.rune-open .hero-hall .equip-row {
+  gap: 0.22rem;
 }
 
 .equip-center {
   display: flex;
   justify-content: center;
-  min-width: 0;
+  flex-shrink: 0;
 }
 
 .equip-portrait-frame {
@@ -2701,17 +3051,21 @@ button { cursor: pointer; border: none; background: none; }
 
 .char-sheet-bar {
   width: 100%;
-  margin-top: 0.85rem;
+  margin-top: 0.45rem;
 }
 
 .char-sheet-panel {
   width: 100%;
 }
 
+.rpg-screen .char-sheet-panel > .rpg-panel-inner {
+  padding: 0.5rem 0.7rem;
+}
+
 .char-sheet-inner {
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.45rem;
 }
 
 .char-sheet-head {
@@ -2719,22 +3073,36 @@ button { cursor: pointer; border: none; background: none; }
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 0.65rem 1rem;
-  padding-bottom: 0.5rem;
+  gap: 0.4rem 0.75rem;
+  padding-bottom: 0.35rem;
   border-bottom: 2px dashed rgba(201, 162, 39, 0.22);
+}
+
+.rpg-screen .char-sheet-head .text-kicker {
+  font-size: 0.55rem;
+  margin-bottom: 0.1rem;
+}
+
+.rpg-screen .char-sheet-head .rpg-panel-title {
+  font-size: 0.82rem;
 }
 
 .char-sheet-dps {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 0.55rem 0.75rem;
-  border: 3px solid var(--brass);
+  gap: 0.5rem;
+  padding: 0.38rem 0.55rem;
+  border: 2px solid var(--brass);
   background:
     linear-gradient(135deg, rgba(201, 162, 39, 0.12) 0%, transparent 55%),
     linear-gradient(180deg, #1a1612, #0c0a08);
   box-shadow: var(--glow-gold);
   flex-shrink: 0;
+}
+
+.rpg-screen .char-sheet-dps-icon {
+  width: 2.1rem;
+  height: 2.1rem;
 }
 
 .char-sheet-dps-icon {
@@ -2747,6 +3115,15 @@ button { cursor: pointer; border: none; background: none; }
   place-items: center;
 }
 
+.rpg-screen .char-sheet-dps-icon .attr-icon-svg {
+  width: 1.65rem;
+  height: 1.65rem;
+}
+
+.rpg-screen .char-sheet-dps-value {
+  font-size: 1.05rem;
+}
+
 .char-sheet-dps-value {
   font-family: var(--font-stat);
   font-size: var(--text-stat-lg);
@@ -2755,12 +3132,109 @@ button { cursor: pointer; border: none; background: none; }
   font-variant-numeric: tabular-nums;
 }
 
+.rpg-screen .char-sheet-dps-label {
+  font-size: 0.52rem;
+}
+
 .char-sheet-dps-label {
   font-family: var(--font-ui);
   font-size: 0.58rem;
   font-weight: 600;
   color: var(--text-muted);
   letter-spacing: 0.06em;
+}
+
+.rpg-screen .attr-strip {
+  gap: 0.32rem;
+  padding-bottom: 0.15rem;
+}
+
+/* Hero hall — stack stats vertically, no horizontal scroll */
+.rpg-screen .hero-hall .char-sheet-bar {
+  flex: 1 0 auto;
+  min-height: 0;
+}
+
+.rpg-screen .hero-hall .char-sheet-inner {
+  gap: 0.5rem;
+}
+
+.rpg-screen .hero-hall .char-sheet-head {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.rpg-screen .hero-hall .char-sheet-dps {
+  width: 100%;
+  justify-content: center;
+}
+
+.rpg-screen .hero-hall .attr-strip {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 0.38rem;
+  width: 100%;
+  overflow: visible;
+  overflow-x: hidden;
+  padding-bottom: 0;
+}
+
+.rpg-screen .hero-hall .attr-tile {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.06rem;
+  width: 100%;
+  min-width: 0;
+  flex: 0 0 auto;
+  padding: 0.42rem 0.5rem;
+  text-align: left;
+}
+
+.rpg-screen .hero-hall .attr-tile .attr-icon {
+  grid-row: 1 / span 2;
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.rpg-screen .hero-hall .attr-tile .attr-icon-svg,
+.rpg-screen .hero-hall .attr-tile .attr-icon-img {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.rpg-screen .hero-hall .attr-tile .attr-label {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 0.52rem;
+  text-align: left;
+  align-self: end;
+  min-width: 0;
+}
+
+.rpg-screen .hero-hall .attr-tile .attr-value {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 0.82rem;
+  text-align: left;
+  align-self: start;
+  min-width: 0;
+}
+
+.rpg-screen .hero-hall .attr-tile .attr-delta {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  align-self: center;
+  text-align: right;
+  flex-shrink: 0;
+  max-width: 4.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .attr-strip {
@@ -2779,6 +3253,35 @@ button { cursor: pointer; border: none; background: none; }
 .attr-strip::-webkit-scrollbar-thumb {
   background: linear-gradient(90deg, var(--brass), #3a3020);
   border: 2px solid #1a1008;
+}
+
+.rpg-screen .attr-tile {
+  gap: 0.18rem;
+  padding: 0.32rem 0.38rem;
+  min-width: 4.6rem;
+}
+
+.rpg-screen .attr-icon {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.rpg-screen .attr-icon-svg,
+.rpg-screen .attr-icon-img {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.rpg-screen .attr-label {
+  font-size: 0.52rem;
+}
+
+.rpg-screen .attr-value {
+  font-size: 0.78rem;
+}
+
+.rpg-screen .attr-delta {
+  font-size: 0.5rem;
 }
 
 .attr-tile {
@@ -3676,10 +4179,7 @@ input:focus, select:focus {
 }
 
 .helper-skill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
+  display: block;
 }
 
 .helper-side {
@@ -3794,13 +4294,13 @@ input:focus, select:focus {
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    padding-bottom: 0.65rem;
+    padding-bottom: 0.4rem;
   }
 
   .build-toolbar {
     position: static;
     flex-shrink: 0;
-    margin-bottom: 0.65rem;
+    margin-bottom: 0.4rem;
   }
 
   .prepared-builds-rail,
@@ -3821,9 +4321,11 @@ input:focus, select:focus {
     overflow: hidden;
   }
 
-  .char-sheet-bar {
-    flex-shrink: 0;
-    margin-top: 0.65rem;
+  .rpg-screen .hero-hall .char-sheet-bar {
+    flex: 1 0 auto;
+    margin-top: 0.45rem;
+    width: 100%;
+    min-height: 0;
   }
 
   .chronicle-col {
@@ -3865,8 +4367,23 @@ input:focus, select:focus {
   .hero-hall > .rpg-panel-inner {
     flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
     overflow-x: hidden;
+  }
+
+  .rpg-screen .hero-showcase {
+    flex-shrink: 0;
+  }
+
+  .rpg-screen .equipment-stage {
+    flex: 0 0 auto;
+    min-height: 0;
+  }
+
+  .rpg-screen .hero-hall > .rpg-panel-inner {
+    justify-content: flex-start;
   }
 
   .rune-sidebar {
@@ -3947,15 +4464,15 @@ input:focus, select:focus {
   .guild-actions { justify-content: center; }
 
   .rpg-workspace {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .rpg-screen.is-prepared-mode .prepared-workspace {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .rpg-workspace.rune-open {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .rpg-workspace.rune-open .rune-sidebar {

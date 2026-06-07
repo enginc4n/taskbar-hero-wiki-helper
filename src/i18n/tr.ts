@@ -80,6 +80,7 @@ export const tr: Record<TranslationKey, string> = {
   'build.previewHeroLevel': 'Kahraman seviyesini önizle',
   'build.heroLevel': 'Kahraman Seviyesi',
   'build.guildRecord': 'Seviye {level} — Lonca Kaydı',
+  'build.chapter': 'Chapter {chapter}',
   'build.activeSkill': 'Aktif Beceri',
   'build.close': 'Kapat',
   'build.empty': 'Boş',
