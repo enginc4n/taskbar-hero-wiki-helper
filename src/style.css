@@ -2032,15 +2032,12 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 .prepared-level-panel {
-  flex: 0 0 5.5rem;
-  height: 5.5rem;
-  min-height: 5.5rem;
-  max-height: 5.5rem;
+  flex: 0 0 auto;
+  width: 100%;
   overflow: hidden;
 }
 
 .prepared-level-panel-inner {
-  height: 100%;
   padding: 0.55rem 0.75rem;
   display: flex;
   align-items: stretch;
@@ -2204,25 +2201,12 @@ button { cursor: pointer; border: none; background: none; }
   color: var(--gold-bright);
 }
 
-.prepared-builds-rail,
-.prepared-level-top {
+.prepared-builds-rail {
   margin-top: 0.85rem;
   padding: 0.75rem 0.85rem;
   border: 3px solid var(--border-wood);
   background: linear-gradient(180deg, rgba(20, 16, 12, 0.95), rgba(8, 6, 4, 0.98));
   box-shadow: var(--shadow-inset);
-}
-
-.prepared-level-top {
-  flex-shrink: 0;
-}
-
-.prepared-level-top .prepared-level-panel-inner {
-  height: auto;
-  min-height: 5.5rem;
-  padding: 0.55rem 0.75rem;
-  display: flex;
-  align-items: stretch;
 }
 
 .prepared-builds-rail-head {
@@ -2331,250 +2315,15 @@ button { cursor: pointer; border: none; background: none; }
   color: var(--text-muted);
 }
 
-/* Prepared Builds — chronicle left, hero/gear/stats right */
-.rpg-screen.is-prepared-mode .prepared-workspace {
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.85rem;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
+/* Prepared preview — readonly interactions; layout matches forge workspace */
+.rpg-screen.is-prepared-mode.is-readonly .tree-branch {
+  overflow: visible;
 }
 
-.rpg-screen.is-prepared-mode .prepared-side {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-/* Build selected — right column sets height; chronicle scrolls inside */
-.rpg-screen.is-prepared-mode.is-prepared-active .prepared-workspace {
-  margin-top: 0.85rem;
-  align-items: start;
-}
-
-.rpg-screen.is-prepared-mode.is-prepared-active .prepared-side {
-  min-height: 0;
-  height: auto;
-  align-self: start;
-}
-
-.rpg-screen.is-prepared-mode.is-prepared-active .chronicle-col {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-  gap: 0;
-  overflow: hidden;
-  align-self: start;
-}
-
-.rpg-screen.is-prepared-mode.is-prepared-active .chronicle-col .chronicle-panel {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 100%;
-  max-height: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.rpg-screen.is-prepared-mode.is-prepared-active .chronicle-col .chronicle-panel > .rpg-panel-inner {
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-  overflow: hidden;
-}
-
-.rpg-screen.is-prepared-mode.is-prepared-active .chronicle-scroll {
-  flex: 1 1 0;
-  min-height: 0;
-  max-height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall {
-  flex: 0 0 auto;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .loadout-stage {
-  flex: 0 0 auto;
-  padding: 1rem 0.65rem 0.75rem;
-  min-height: 0;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .loadout-grid {
-  grid-template-columns: minmax(11rem, 1fr) auto minmax(11rem, 1fr);
-  gap: 0.65rem 0.9rem;
-  max-width: 100%;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .loadout-hero-center .equip-portrait-frame {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  padding: 0.85rem 0.75rem 1rem;
-  box-sizing: border-box;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .loadout-hero-center .hero-portrait {
-  display: block;
-  width: 100%;
-  max-width: 24rem;
-  min-width: 0;
-  height: auto;
-  max-height: min(26rem, 50vh);
-  object-fit: contain;
-  margin: 0 auto;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .game-slot-wrap {
-  width: min(84px, 17vw);
-  height: min(84px, 17vw);
-  flex-shrink: 0;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-bar {
-  flex: 0 0 auto;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  margin-top: 0;
-  overflow: hidden;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-panel,
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-inner {
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-head {
-  min-width: 0;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-inner {
-  gap: 0.8rem;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-body {
-  gap: 0.75rem;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-dps--aside {
-  padding: 0.7rem 0.65rem;
-  min-width: 7.5rem;
-  max-width: 9.5rem;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-dps {
-  padding: 0.7rem 0.65rem;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-dps-icon {
-  width: 3.35rem;
-  height: 3.35rem;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .char-sheet-dps-value {
-  font-size: 1.35rem;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .attr-strip {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: nowrap;
-  gap: 0.45rem;
-  overflow: hidden;
-  padding-bottom: 0;
-  width: 100%;
-  max-width: 100%;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .attr-tile {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: auto auto;
-  align-items: center;
-  column-gap: 0.65rem;
-  row-gap: 0.1rem;
-  width: 100%;
-  min-width: 0;
-  flex: 0 0 auto;
-  padding: 0.55rem 0.7rem;
-  text-align: left;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .attr-tile .attr-icon {
-  grid-row: 1 / span 2;
-  width: 2.65rem;
-  height: 2.65rem;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .attr-tile .attr-icon-svg,
-.rpg-screen.is-prepared-mode .prepared-hero-hall .attr-tile .attr-icon-img {
-  width: 2rem;
-  height: 2rem;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .attr-tile .attr-label {
-  grid-column: 2;
-  grid-row: 1;
-  font-size: 0.58rem;
-  text-align: left;
-  align-self: end;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .attr-tile .attr-value {
-  grid-column: 2;
-  grid-row: 2;
-  font-size: 1rem;
-  text-align: left;
-  align-self: start;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rpg-screen.is-prepared-mode .prepared-hero-hall .attr-tile .attr-delta {
-  grid-column: 3;
-  grid-row: 1 / span 2;
-  align-self: center;
-  text-align: right;
-  flex-shrink: 0;
-  max-width: 5rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.rpg-screen.is-prepared-mode.is-readonly .tree-nodes-layout,
+.rpg-screen.is-prepared-mode.is-readonly .tree-nodes-row {
+  overflow: visible;
+  max-width: none;
 }
 
 .rpg-screen.is-readonly .game-slot-wrap.is-readonly {
@@ -2655,6 +2404,7 @@ button { cursor: pointer; border: none; background: none; }
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+  padding-bottom: 0.5rem;
 }
 
 /* Tree tier */
@@ -5119,8 +4869,7 @@ input:focus, select:focus, textarea:focus {
     margin-bottom: 0.4rem;
   }
 
-  .prepared-builds-rail,
-  .prepared-level-top {
+  .prepared-builds-rail {
     flex-shrink: 0;
   }
 
@@ -5306,10 +5055,6 @@ input:focus, select:focus, textarea:focus {
     grid-template-columns: auto minmax(0, 1fr);
   }
 
-  .rpg-screen.is-prepared-mode .prepared-workspace {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
   .rpg-workspace.rune-open {
     grid-template-columns: auto minmax(0, 1fr);
   }
@@ -5422,10 +5167,6 @@ input:focus, select:focus, textarea:focus {
   }
 
   .rpg-workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .rpg-screen.is-prepared-mode .prepared-workspace {
     grid-template-columns: minmax(0, 1fr);
   }
 

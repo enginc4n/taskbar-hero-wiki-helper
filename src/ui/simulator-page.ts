@@ -5,6 +5,7 @@ import {
   loadPreparedBuild,
   loadPreparedBuildIndex,
   milestoneForStep,
+  normalizePreparedBuild,
   type PreparedBuild,
   type PreparedBuildManifestEntry,
 } from '../data/prepared-builds';
@@ -166,8 +167,18 @@ export function renderSimulatorPage(
     const milestone = milestoneForStep(build, preparedLevelIndex);
     if (!def || !milestone) return;
 
+    const previewLevel = PREPARED_LEVEL_STEPS[preparedLevelIndex] ?? milestone.heroLevel;
+
     state.heroKey = build.heroKey;
-    applyPreparedMilestone(state.working, def, milestone, ctx.allItems, state.itemsByKey);
+    applyPreparedMilestone(
+      state.working,
+      def,
+      milestone,
+      ctx.allItems,
+      state.itemsByKey,
+      previewLevel,
+    );
+    state.itemsByKey = syncSaveItemKeys(state.working, ctx.allItems);
     for (const inst of state.working.itemSaveDatas) {
       const enriched = state.itemsByKey.get(inst.ItemKey);
       const detail = enriched ? enrichedItemToDetail(enriched) : null;
@@ -505,17 +516,6 @@ export function renderSimulatorPage(
       </section>`;
   }
 
-  function drawPreparedLevelBar(): string {
-    if (!isPreparedReadOnly()) return '';
-
-    return `
-      <section class="prepared-level-top rpg-panel" aria-label="Hero level preview">
-        <div class="rpg-panel-inner prepared-level-panel-inner">
-          ${drawChronicleLevelScrubber()}
-        </div>
-      </section>`;
-  }
-
   function computeDpsSummary(): {
     dpsValue: string;
     dpsDeltaHtml: string;
@@ -758,14 +758,23 @@ export function renderSimulatorPage(
   }
 
   function drawChronicleColumn(): string {
+    const levelPanel = isPreparedReadOnly()
+      ? `<section class="prepared-level-panel rpg-panel" aria-label="${t('build.previewHeroLevel')}">
+          <div class="rpg-panel-inner prepared-level-panel-inner">
+            ${drawChronicleLevelScrubber()}
+          </div>
+        </section>`
+      : '';
+
     return `
       <aside class="chronicle-col">
+        ${levelPanel}
         ${drawGuildChronicle()}
       </aside>`;
   }
 
   function syncPreparedLevelPanelUi(): void {
-    const panel = root.querySelector('.prepared-level-top');
+    const panel = root.querySelector('.prepared-level-panel');
     if (!panel) return;
 
     const level = PREPARED_LEVEL_STEPS[preparedLevelIndex] ?? PREPARED_LEVEL_STEPS[0];
@@ -787,29 +796,67 @@ export function renderSimulatorPage(
     }
   }
 
-  function syncPreparedHeightAlign(): void {
-    if (!isPreparedReadOnly()) return;
+  function syncSidePanelHeights(): void {
+    const heroHall = root.querySelector<HTMLElement>('.hero-hall');
+    const chronicleCol = root.querySelector<HTMLElement>('.chronicle-col');
+    const runeSidebar = root.querySelector<HTMLElement>('.rune-sidebar');
+    if (!heroHall) return;
 
-    const side = root.querySelector<HTMLElement>('.prepared-hero-hall');
-    const col = root.querySelector<HTMLElement>('.chronicle-col');
-    if (!side || !col) return;
-
-    col.style.removeProperty('height');
-    col.style.removeProperty('max-height');
-
-    const height = side.offsetHeight;
+    const height = heroHall.offsetHeight;
     if (height <= 0) return;
 
     const px = `${height}px`;
-    col.style.height = px;
-    col.style.maxHeight = px;
+    for (const panel of [chronicleCol, runeSidebar]) {
+      if (!panel) continue;
+      if (panel.style.height === px && panel.style.maxHeight === px) continue;
+      panel.style.height = px;
+      panel.style.maxHeight = px;
+    }
   }
 
-  function schedulePreparedHeightAlign(): void {
-    syncPreparedHeightAlign();
+  function setupChronicleHeightSync(): void {
+    chronicleHeightObs?.disconnect();
+
+    const heroHall = root.querySelector<HTMLElement>('.hero-hall');
+    if (!heroHall) return;
+
+    syncSidePanelHeights();
+    chronicleHeightObs = new ResizeObserver(() => syncSidePanelHeights());
+    chronicleHeightObs.observe(heroHall);
+  }
+
+  function draw(): void {
+    stopPortraitAnim();
+    const scrollState = captureScrollState();
+    const showPreparedWorkspace = workspaceMode === 'prepared' && selectedPreparedBuild !== null;
+    const showForgeWorkspace = workspaceMode === 'forge';
+    const showWorkspace = showPreparedWorkspace || showForgeWorkspace;
+
+    root.innerHTML = `
+      <div class="rpg-screen${workspaceMode === 'prepared' ? ' is-prepared-mode' : ''}${showPreparedWorkspace ? ' is-prepared-active' : ''}${isPreparedReadOnly() ? ' is-readonly' : ''}">
+        ${drawBuildToolbar()}
+        ${drawPreparedBuildsRail()}
+        ${showWorkspace ? `
+        <div class="rpg-workspace${showForgeWorkspace && runeChamberOpen ? ' rune-open' : ''}">
+          ${drawChronicleColumn()}
+          <main class="hero-hall rpg-panel">
+            <div class="rpg-panel-inner">
+              ${drawLoadoutStage()}
+              ${drawCharacterSheet()}
+            </div>
+          </main>
+          ${drawRuneChamber()}
+        </div>` : ''}
+      </div>
+      <div id="sim-modal" class="modal-root"></div>
+    `;
+    bindEvents();
+    syncPreparedLevelPanelUi();
+    startPortraitAnim();
     requestAnimationFrame(() => {
-      syncPreparedHeightAlign();
-      requestAnimationFrame(syncPreparedHeightAlign);
+      syncSidePanelHeights();
+      setupChronicleHeightSync();
+      restoreScrollState(scrollState);
     });
   }
 
@@ -825,7 +872,7 @@ export function renderSimulatorPage(
     if (charSheet) charSheet.outerHTML = drawCharacterSheet();
 
     syncPreparedLevelPanelUi();
-    schedulePreparedHeightAlign();
+    syncSidePanelHeights();
     restoreScrollState(scrollState);
     startPortraitAnim();
   }
@@ -917,95 +964,6 @@ export function renderSimulatorPage(
       const runeInv = root.querySelector<HTMLElement>('.rune-inventory');
       if (runeInv) runeInv.scrollTop = saved.runeScrollTop;
       if (window.scrollY !== saved.windowScrollY) window.scrollTo(0, saved.windowScrollY);
-    });
-  }
-
-  function syncSidePanelHeights(): void {
-    if (workspaceMode === 'prepared') {
-      schedulePreparedHeightAlign();
-      return;
-    }
-
-    const heroHall = root.querySelector<HTMLElement>('.hero-hall');
-    const chronicleCol = root.querySelector<HTMLElement>('.chronicle-col');
-    const runeSidebar = root.querySelector<HTMLElement>('.rune-sidebar');
-    if (!heroHall) return;
-
-    const height = heroHall.offsetHeight;
-    if (height <= 0) return;
-
-    const px = `${height}px`;
-    for (const panel of [chronicleCol, runeSidebar]) {
-      if (!panel) continue;
-      if (panel.style.height === px && panel.style.maxHeight === px) continue;
-      panel.style.height = px;
-      panel.style.maxHeight = px;
-    }
-  }
-
-  function setupChronicleHeightSync(): void {
-    chronicleHeightObs?.disconnect();
-
-    if (workspaceMode === 'prepared' && isPreparedReadOnly()) {
-      const side = root.querySelector<HTMLElement>('.prepared-hero-hall');
-      if (!side) return;
-      schedulePreparedHeightAlign();
-      chronicleHeightObs = new ResizeObserver(() => schedulePreparedHeightAlign());
-      chronicleHeightObs.observe(side);
-      return;
-    }
-
-    const heroHall = root.querySelector<HTMLElement>('.hero-hall');
-    if (!heroHall) return;
-
-    syncSidePanelHeights();
-    chronicleHeightObs = new ResizeObserver(() => syncSidePanelHeights());
-    chronicleHeightObs.observe(heroHall);
-  }
-
-  function draw(): void {
-    stopPortraitAnim();
-    const scrollState = captureScrollState();
-    const showPreparedWorkspace = workspaceMode === 'prepared' && selectedPreparedBuild !== null;
-
-    root.innerHTML = `
-      <div class="rpg-screen${workspaceMode === 'prepared' ? ' is-prepared-mode' : ''}${showPreparedWorkspace ? ' is-prepared-active' : ''}${isPreparedReadOnly() ? ' is-readonly' : ''}">
-        ${drawBuildToolbar()}
-        ${drawPreparedBuildsRail()}
-        ${drawPreparedLevelBar()}
-        ${showPreparedWorkspace ? `
-        <div class="rpg-workspace prepared-workspace">
-          ${drawChronicleColumn()}
-          <div class="prepared-side">
-            <main class="hero-hall rpg-panel prepared-hero-hall">
-              <div class="rpg-panel-inner prepared-hero-hall-inner">
-                ${drawLoadoutStage()}
-                ${drawCharacterSheet()}
-              </div>
-            </main>
-          </div>
-        </div>` : workspaceMode === 'prepared' ? '' : `
-        <div class="rpg-workspace${runeChamberOpen ? ' rune-open' : ''}">
-          ${drawChronicleColumn()}
-          <main class="hero-hall rpg-panel">
-            <div class="rpg-panel-inner">
-              ${drawLoadoutStage()}
-              ${drawCharacterSheet()}
-            </div>
-          </main>
-          ${drawRuneChamber()}
-        </div>`}
-      </div>
-      <div id="sim-modal" class="modal-root"></div>
-    `;
-    bindEvents();
-    syncPreparedLevelPanelUi();
-    startPortraitAnim();
-    requestAnimationFrame(() => {
-      syncSidePanelHeights();
-      setupChronicleHeightSync();
-      if (isPreparedReadOnly()) schedulePreparedHeightAlign();
-      restoreScrollState(scrollState);
     });
   }
 
@@ -1179,7 +1137,7 @@ export function renderSimulatorPage(
       }
     }
 
-    selectedPreparedBuild = build;
+    selectedPreparedBuild = normalizePreparedBuild(build);
     preparedLevelIndex = 0;
     applyPreparedView();
     syncHash(navHref('build', 'prepared', { build: id }).slice(1));

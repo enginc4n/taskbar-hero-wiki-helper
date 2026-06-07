@@ -103,7 +103,46 @@ export function milestoneForStep(
 ): PreparedBuildMilestone | undefined {
   const level = PREPARED_LEVEL_STEPS[stepIndex];
   if (level == null) return undefined;
-  return build.milestones.find((m) => m.level === level);
+
+  const exact = build.milestones.find((m) => legacyMilestoneLevel(m.level) === level);
+  if (exact) return exact;
+
+  let best: PreparedBuildMilestone | undefined;
+  let bestStepIndex = -1;
+  for (const milestone of build.milestones) {
+    const mapped = legacyMilestoneLevel(milestone.level);
+    const mappedIndex = PREPARED_LEVEL_STEPS.indexOf(mapped);
+    if (mappedIndex >= 0 && mappedIndex <= stepIndex && mappedIndex > bestStepIndex) {
+      best = milestone;
+      bestStepIndex = mappedIndex;
+    }
+  }
+  return best;
+}
+
+/** Normalize legacy milestone files (levels 1/10/20, heroLevel drift) after load. */
+export function normalizePreparedBuild(build: PreparedBuild): PreparedBuild {
+  return {
+    ...build,
+    milestones: build.milestones.map((milestone) => {
+      const step = legacyMilestoneLevel(milestone.level);
+      return {
+        ...milestone,
+        level: step,
+        heroLevel: Math.max(milestone.heroLevel ?? 0, step),
+      };
+    }),
+  };
+}
+
+function findPreparedItem(
+  itemKey: number,
+  itemsByKey: Map<number, EnrichedItem>,
+  allItems: EnrichedItem[],
+): EnrichedItem | undefined {
+  const key = Number(itemKey);
+  if (!Number.isFinite(key)) return undefined;
+  return itemsByKey.get(key) ?? allItems.find((item) => Number(item.key) === key);
 }
 
 /** Apply a prepared milestone onto a fresh hero save (read-only preview). */
@@ -113,6 +152,7 @@ export function applyPreparedMilestone(
   milestone: PreparedBuildMilestone,
   allItems: EnrichedItem[],
   itemsByKey: Map<number, EnrichedItem>,
+  previewHeroLevel?: number,
 ): void {
   const heroKey = heroDef.key;
   const fresh = createEmptySave(heroKey);
@@ -122,8 +162,9 @@ export function applyPreparedMilestone(
   save.attributeSaveDatas = [];
 
   const hero = getSelectedHero(save, heroKey)!;
-  hero.Level = milestone.heroLevel;
-  hero.HeroLevel = milestone.heroLevel;
+  const heroLevel = previewHeroLevel ?? milestone.heroLevel;
+  hero.Level = heroLevel;
+  hero.HeroLevel = heroLevel;
   hero.equippedItemIds = new Array(hero.equippedItemIds.length).fill(null);
 
   for (const row of milestone.passives ?? []) {
@@ -133,8 +174,7 @@ export function applyPreparedMilestone(
     setRuneLevel(save, row.key, row.level, 999);
   }
   for (const row of milestone.gear ?? []) {
-    const item =
-      itemsByKey.get(row.itemKey) ?? allItems.find((i) => i.key === row.itemKey);
+    const item = findPreparedItem(row.itemKey, itemsByKey, allItems);
     if (!item) continue;
     equipItem(save, hero, row.part, item, itemsByKey);
     if (row.enchants?.length) {
