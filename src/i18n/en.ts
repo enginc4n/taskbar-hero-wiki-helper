@@ -209,7 +209,7 @@ export const en = {
   'buildHelper.milestoneLevel': 'Milestone Hero Level',
   'buildHelper.skillBudget': 'Skill points {spent} / {budget}',
   'buildHelper.skillOrderHint':
-    'Chapter order: first point on any skill; extra points on later skills need the previous one ahead or maxed. Undo removes the last point only.',
+    'Chapters unlock every 10 SP (Ch.2 at 10, Ch.3 at 20, …). Max 2 active skills with points at once — zero one to pick another.',
   'buildHelper.copyPrevious': 'Copy previous',
   'buildHelper.clearMilestone': 'Clear milestone',
   'buildHelper.editingMilestone': 'Editing milestone Lv.{level}',

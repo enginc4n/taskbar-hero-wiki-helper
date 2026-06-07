@@ -42,6 +42,7 @@ import {
   syncSaveItemKeys,
   type SocketSlotState,
 } from '../simulator/build-state';
+import { canAddActiveSkillPoint } from '../simulator/skill-invest';
 import type {
   EffectMaterial,
   EnrichedHero,
@@ -1362,6 +1363,8 @@ export function renderSimulatorPage(
         if (!canInvestMoreSkillPoints(state.working)) return;
         const key = Number(el.getAttribute('data-key'));
         const max = Number(el.getAttribute('data-max'));
+        const def = heroDef();
+        if (!def || !canAddActiveSkillPoint(state.working, def, key)) return;
         setPassiveLevel(state.working, key, getPassiveLevel(state.working, key) + 1, max);
         syncHeroTreeUnlocks();
         draw();

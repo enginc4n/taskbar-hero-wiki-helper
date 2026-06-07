@@ -32,14 +32,7 @@ import {
   unequipPart,
   type SocketSlotState,
 } from '../simulator/build-state';
-import {
-  canDecrementSkillAtKey,
-  canIncrementSkillAtKey,
-  milestoneSkillBudget,
-  popSkillInvest,
-  pushSkillInvest,
-  reconstructInvestHistory,
-} from '../simulator/skill-invest';
+import { canIncrementSkillAtKey, milestoneSkillBudget } from '../simulator/skill-invest';
 import type { SimulatorContext } from './simulator-page';
 import type { EnrichedHero, EnrichedItem, HeroPart } from '../types';
 import { openGearPickerModal } from './gear-picker-modal';
@@ -103,7 +96,6 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
   let milestones = emptyMilestones();
   let working = createEmptySave(heroKey);
   let itemsByKey = syncSaveItemKeys(working, ctx.allItems);
-  let investHistory: number[] = [];
   const socketDraft = new Map<string, SocketSlotState[]>();
   const effectsByKey = new Map(ctx.effects.map((e) => [e.key, e]));
   const refs = mergeRefMaps(buildRefMaps(ctx.wiki), {
@@ -143,7 +135,6 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
     socketDraft.clear();
     applyPreparedMilestone(working, def, milestone, ctx.allItems, itemsByKey);
     syncHeroUnlocks();
-    investHistory = reconstructInvestHistory(working, def);
     draw();
   }
 
@@ -169,7 +160,6 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
     socketDraft.clear();
     milestones = emptyMilestones();
     milestoneIndex = 0;
-    investHistory = [];
     syncHeroUnlocks();
     draw();
   }
@@ -208,7 +198,6 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
     const def = heroDef();
     if (def) {
       applyPreparedMilestone(working, def, milestones[0], ctx.allItems, itemsByKey);
-      investHistory = reconstructInvestHistory(working, def);
     }
     syncHeroUnlocks();
     draw();
@@ -224,7 +213,6 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
       working,
       heroData,
       skillBudget: skillBudget(),
-      investHistory,
     };
   }
 
@@ -522,16 +510,14 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
         const max = Number(el.getAttribute('data-max'));
         if (!canIncrementSkillAtKey(key, working, def, heroData, skillBudget())) return;
         setPassiveLevel(working, key, getPassiveLevel(working, key) + 1, max);
-        investHistory = pushSkillInvest(investHistory, key);
         syncHeroUnlocks();
         refreshWorkspace();
         return;
       }
       if (action === 'passive-dec') {
         const key = Number(el.getAttribute('data-key'));
-        if (!canDecrementSkillAtKey(key, investHistory)) return;
+        if (getPassiveLevel(working, key) <= 0) return;
         setPassiveLevel(working, key, getPassiveLevel(working, key) - 1, 999);
-        investHistory = popSkillInvest(investHistory);
         syncHeroUnlocks();
         refreshWorkspace();
         return;
@@ -600,7 +586,5 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
   working = createEmptySave(heroKey);
   itemsByKey = syncSaveItemKeys(working, ctx.allItems);
   syncHeroUnlocks();
-  const def = heroDef();
-  if (def) investHistory = reconstructInvestHistory(working, def);
   draw();
 }

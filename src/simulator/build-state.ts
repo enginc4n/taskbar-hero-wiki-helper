@@ -28,12 +28,11 @@ export function heroLevelFromSave(hero: HeroSaveData): number {
 export const MAX_HERO_SKILL_POINTS = 101;
 
 /**
- * Chapter unlock gate by index: 0, 11, 21, 31, … (not 10, 20, 30).
- * Index 0 is the starter chapter; later chapters unlock every 10 points starting at 11.
+ * Chapter unlock gate by index: 0, 10, 20, 30, … (matches wiki levelGate on each tier).
+ * Spend 10 total SP to unlock Chapter 2, 20 for Chapter 3, etc.
  */
 export function chapterLevelGate(groupIndex: number): number {
-  if (groupIndex <= 0) return 0;
-  return groupIndex * 10 + 1;
+  return groupIndex * 10;
 }
 
 export function canInvestMoreSkillPoints(save: PlayerSaveData): boolean {
@@ -103,7 +102,7 @@ export function isAttributeGroupUnlocked(
 ): boolean {
   const group = groups[groupIndex];
   if (!group) return false;
-  const gate = chapterLevelGate(groupIndex);
+  const gate = group.levelGate ?? chapterLevelGate(groupIndex);
   if (heroLevel >= gate) return true;
   if (totalInvestedSkillPoints(save) >= gate) return true;
   if ((hero.unlockedAttributeGroupKeys ?? []).includes(group.group)) return true;

@@ -6,6 +6,9 @@ import {
   totalInvestedSkillPoints,
 } from './build-state';
 
+/** Max active skills that can hold skill points at the same time (in-game loadout cap). */
+export const MAX_INVESTED_ACTIVE_SKILLS = 2;
+
 /** Skill point budget for a prepared-build milestone tab (Lv.11 → 11 SP, etc.). */
 export function milestoneSkillBudget(milestoneLevel: number): number {
   return milestoneLevel;
@@ -29,10 +32,6 @@ export function chapterSkillNodes(group: HeroTreeGroup, chapterIndex: number): C
   }));
 }
 
-export function heroChapterSkillNodes(hero: EnrichedHero): ChapterNodeSlot[] {
-  return hero.tree.flatMap((group, chapterIndex) => chapterSkillNodes(group, chapterIndex));
-}
-
 function findChapterSlot(
   hero: EnrichedHero,
   key: number,
@@ -45,25 +44,42 @@ function findChapterSlot(
   return undefined;
 }
 
-function canIncrementSlotAtCounts(
-  slot: ChapterNodeSlot,
-  chapterNodes: ChapterNodeSlot[],
-  counts: Map<number, number>,
-): boolean {
-  const cur = counts.get(slot.key) ?? 0;
-  if (cur >= slot.maxLevel) return false;
-  // Any skill can receive its first point once the chapter is unlocked.
-  if (cur === 0) return true;
-  if (slot.nodeIndex === 0) return true;
-  const prev = chapterNodes[slot.nodeIndex - 1];
-  const prevLv = counts.get(prev.key) ?? 0;
-  return prevLv > cur || prevLv >= prev.maxLevel;
+export function isActiveSkillKey(hero: EnrichedHero, key: number): boolean {
+  for (const group of hero.tree) {
+    const node = group.nodes.find((n) => n.key === key);
+    if (node) return node.kind === 'active';
+  }
+  return false;
+}
+
+/** Active skills with at least one invested point. */
+export function investedActiveSkillCount(save: PlayerSaveData, hero: EnrichedHero): number {
+  let count = 0;
+  for (const group of hero.tree) {
+    for (const node of group.nodes) {
+      if (node.kind === 'active' && getPassiveLevel(save, node.key) > 0) count++;
+    }
+  }
+  return count;
 }
 
 /**
- * Within-chapter investment order:
- * - First point on any skill in the chapter is allowed.
- * - Further points on later skills require the previous skill to be ahead or maxed.
+ * First point on a new active requires a free loadout slot (max 2 actives invested).
+ * Actives that already have points can still be leveled up.
+ */
+export function canAddActiveSkillPoint(
+  save: PlayerSaveData,
+  hero: EnrichedHero,
+  key: number,
+): boolean {
+  if (!isActiveSkillKey(hero, key)) return true;
+  if (getPassiveLevel(save, key) > 0) return true;
+  return investedActiveSkillCount(save, hero) < MAX_INVESTED_ACTIVE_SKILLS;
+}
+
+/**
+ * Author skill investment: milestone budget, chapter unlocked, and per-skill max only.
+ * Within an unlocked chapter, points can go to any passive or active freely.
  */
 export function canIncrementSkillAtKey(
   key: number,
@@ -77,70 +93,17 @@ export function canIncrementSkillAtKey(
   const found = findChapterSlot(hero, key);
   if (!found) return false;
 
-  const { slot, chapterNodes } = found;
-  const unlocked = isAttributeGroupUnlocked(
+  const { slot } = found;
+  const cur = getPassiveLevel(save, slot.key);
+  if (cur >= slot.maxLevel) return false;
+
+  if (!canAddActiveSkillPoint(save, hero, key)) return false;
+
+  return isAttributeGroupUnlocked(
     slot.chapterIndex,
     hero.tree,
     heroLevelFromSave(heroData),
     save,
     heroData,
   );
-  if (!unlocked) return false;
-
-  const counts = new Map<number, number>();
-  for (const s of chapterNodes) counts.set(s.key, getPassiveLevel(save, s.key));
-  return canIncrementSlotAtCounts(slot, chapterNodes, counts);
-}
-
-/** Decrement only removes the most recently invested point (LIFO). */
-export function canDecrementSkillAtKey(key: number, history: number[]): boolean {
-  return history.length > 0 && history[history.length - 1] === key;
-}
-
-export function pushSkillInvest(history: number[], key: number): number[] {
-  return [...history, key];
-}
-
-export function popSkillInvest(history: number[]): number[] {
-  return history.slice(0, -1);
-}
-
-/** Rebuild investment history from passive levels for LIFO decrement. */
-export function reconstructInvestHistory(save: PlayerSaveData, hero: EnrichedHero): number[] {
-  const targets = new Map<number, number>();
-  let totalTarget = 0;
-  for (const slot of heroChapterSkillNodes(hero)) {
-    const lv = getPassiveLevel(save, slot.key);
-    if (lv > 0) {
-      targets.set(slot.key, lv);
-      totalTarget += lv;
-    }
-  }
-
-  const history: number[] = [];
-  const counts = (): Map<number, number> => {
-    const m = new Map<number, number>();
-    for (const k of history) m.set(k, (m.get(k) ?? 0) + 1);
-    return m;
-  };
-
-  let guard = 0;
-  while (history.length < totalTarget && guard++ < totalTarget * hero.tree.length * 20) {
-    let pushed = false;
-    for (let ci = 0; ci < hero.tree.length; ci++) {
-      const chapterNodes = chapterSkillNodes(hero.tree[ci], ci);
-      for (const slot of chapterNodes) {
-        const target = targets.get(slot.key) ?? 0;
-        const cur = counts().get(slot.key) ?? 0;
-        if (cur >= target) continue;
-        if (!canIncrementSlotAtCounts(slot, chapterNodes, counts())) continue;
-        history.push(slot.key);
-        pushed = true;
-        break;
-      }
-      if (pushed) break;
-    }
-    if (!pushed) break;
-  }
-  return history;
 }

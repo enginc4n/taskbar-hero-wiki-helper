@@ -6,10 +6,7 @@ import {
   isAttributeGroupUnlocked,
   totalInvestedSkillPoints,
 } from '../simulator/build-state';
-import {
-  canDecrementSkillAtKey,
-  canIncrementSkillAtKey,
-} from '../simulator/skill-invest';
+import { canIncrementSkillAtKey, canAddActiveSkillPoint } from '../simulator/skill-invest';
 import {
   passiveNodeLabel,
   skillIconUrl,
@@ -29,8 +26,6 @@ export interface SkillPathPanelContext {
   heroData: HeroSaveData;
   /** Author mode: max skill points for current milestone. */
   skillBudget?: number;
-  /** Author mode: LIFO invest order for decrement rules. */
-  investHistory?: number[];
   /** Simulator mode: prepared-build read-only preview. */
   readOnly?: boolean;
 }
@@ -72,9 +67,13 @@ function authorCanIncrement(
   );
 }
 
-function authorCanDecrement(ctx: SkillPathPanelContext, node: PassiveNode, tierUnlocked: boolean): boolean {
-  if (!tierUnlocked || !ctx.investHistory) return false;
-  return canDecrementSkillAtKey(node.key, ctx.investHistory);
+function authorCanDecrement(
+  ctx: SkillPathPanelContext,
+  node: PassiveNode,
+  tierUnlocked: boolean,
+): boolean {
+  if (!tierUnlocked) return false;
+  return getPassiveLevel(ctx.working, node.key) > 0;
 }
 
 function drawSkillNode(
@@ -161,7 +160,12 @@ function drawActiveNode(
     canInc = authorCanIncrement(ctx, node, tierUnlocked);
     canDec = authorCanDecrement(ctx, node, tierUnlocked);
   } else {
-    canInc = tierUnlocked && !readOnly && level < max && canInvestMoreSkillPoints(ctx.working);
+    canInc =
+      tierUnlocked &&
+      !readOnly &&
+      level < max &&
+      canInvestMoreSkillPoints(ctx.working) &&
+      canAddActiveSkillPoint(ctx.working, ctx.hero, node.key);
     canDec = tierUnlocked && !readOnly && level > 0;
   }
 
@@ -246,7 +250,7 @@ export function buildSkillPathTiersHtml(ctx: SkillPathPanelContext): string {
     .map((group, index) => {
       const unlocked = isAttributeGroupUnlocked(index, groups, heroLevel, working, heroData);
       const hasPoints = group.nodes.some((n) => getPassiveLevel(working, n.key) > 0);
-      const gate = chapterLevelGate(index);
+      const gate = group.levelGate ?? chapterLevelGate(index);
       const reached = heroLevel >= gate;
       const passives = group.nodes.filter((n) => n.kind === 'passive' && n.stat && n.stat !== 'NONE');
       const actives = group.nodes.filter((n) => n.kind === 'active');
@@ -333,6 +337,7 @@ function drawPanelHeader(ctx: SkillPathPanelContext): string {
               <p class="text-kicker">Skill Path</p>
               <h3 class="rpg-panel-title">${t('build.pathOf', { name: heroNameLabel(hero.name) })}</h3>
               <p class="helper-skill-budget text-ui">${t('buildHelper.skillBudget', { spent, budget })}</p>
+              <p class="helper-skill-order-hint text-ui">${t('buildHelper.skillOrderHint')}</p>
             </div>`;
   }
 
