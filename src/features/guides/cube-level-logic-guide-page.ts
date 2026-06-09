@@ -37,7 +37,7 @@ const CUBE_ROWS: CubeLevelRow[] = [
     farmTo: { difficulty: 'normal', map: '3-7' },
   },
   {
-    rangeFrom: 15,
+    rangeFrom: 20,
     rangeTo: 30,
     cubeLevel: 3,
     chestLevel: 30,
@@ -45,7 +45,7 @@ const CUBE_ROWS: CubeLevelRow[] = [
     farmTo: { difficulty: 'nightmare', map: '1-8' },
   },
   {
-    rangeFrom: 20,
+    rangeFrom: 30,
     rangeTo: 40,
     cubeLevel: 4,
     chestLevel: 40,
@@ -53,7 +53,7 @@ const CUBE_ROWS: CubeLevelRow[] = [
     farmTo: { difficulty: 'nightmare', map: '3-4' },
   },
   {
-    rangeFrom: 30,
+    rangeFrom: 40,
     rangeTo: 50,
     cubeLevel: 5,
     chestLevel: 50,
@@ -61,18 +61,25 @@ const CUBE_ROWS: CubeLevelRow[] = [
     farmTo: { difficulty: 'hell', map: '2-4' },
   },
   {
-    rangeFrom: 40,
-    rangeTo: 65,
+    rangeFrom: 50,
+    rangeTo: 60,
     cubeLevel: 6,
     chestLevel: 65,
     farmFrom: { difficulty: 'hell', map: '2-5' },
     farmTo: { difficulty: 'torment', map: '1-2' },
   },
   {
-    rangeFrom: 50,
-    rangeTo: 65,
+    rangeFrom: 60,
+    rangeTo: 70,
     cubeLevel: 7,
     chestLevel: 80,
+    farmFrom: { difficulty: 'torment', map: '1-3' },
+  },
+  {
+    rangeFrom: 70,
+    rangeTo: 100,
+    cubeLevel: 8,
+    chestLevel: 100,
     farmFrom: { difficulty: 'torment', map: '1-3' },
   },
 ];
@@ -87,6 +94,10 @@ const DIFFICULTY_LABEL_KEYS = {
 function zoneHtml(zone: ZoneRef): string {
   const label = t(DIFFICULTY_LABEL_KEYS[zone.difficulty]);
   return `<span class="cube-zone cube-zone--${zone.difficulty}">${label} ${zone.map}</span>`;
+}
+
+function maxXpItemLevel(row: CubeLevelRow): number {
+  return row.rangeFrom === 1 ? 1 : row.rangeTo;
 }
 
 function farmAdviceHtml(row: CubeLevelRow): string {
@@ -127,6 +138,9 @@ function renderTableRow(row: CubeLevelRow): string {
           ${t('guides.cubeLevelLogic.cubeLevel', { level: row.cubeLevel })}
         </span>
       </div>
+      <div class="cube-logic-table__cell cube-logic-table__feed" role="cell">
+        ${t('guides.cubeLevelLogic.feedItem', { level: maxXpItemLevel(row) })}
+      </div>
       <div class="cube-logic-table__cell cube-logic-table__farm" role="cell">
         ${farmAdviceHtml(row)}
       </div>
@@ -153,6 +167,7 @@ export function renderCubeLevelLogicGuidePage(root: HTMLElement, _ctx: AppContex
           <div class="cube-logic-table__head" role="row">
             <div class="cube-logic-table__cell" role="columnheader">${t('guides.cubeLevelLogic.colRange')}</div>
             <div class="cube-logic-table__cell" role="columnheader">${t('guides.cubeLevelLogic.colCube')}</div>
+            <div class="cube-logic-table__cell" role="columnheader">${t('guides.cubeLevelLogic.colFeed')}</div>
             <div class="cube-logic-table__cell" role="columnheader">${t('guides.cubeLevelLogic.colFarm')}</div>
           </div>
           ${CUBE_ROWS.map(renderTableRow).join('')}

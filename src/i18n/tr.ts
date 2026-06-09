@@ -168,6 +168,8 @@ export const tr: Record<TranslationKey, string> = {
   'guides.cubeLevelLogic.back': 'Rehberlere Dön',
   'guides.cubeLevelLogic.colRange': 'Küp Seviye Aralığı',
   'guides.cubeLevelLogic.colCube': 'Küp Seviyesi',
+  'guides.cubeLevelLogic.colFeed': 'Maks. XP Eşya Seviyesi',
+  'guides.cubeLevelLogic.feedItem': 'Maksimum Küp XP için Sv.{level} eşyalar kullan.',
   'guides.cubeLevelLogic.colFarm': 'Önerilen Farm Bölgeleri',
   'guides.cubeLevelLogic.levelRange': 'Sv.{from}-{to}',
   'guides.cubeLevelLogic.cubeLevel': 'Küp Sv.{level}',

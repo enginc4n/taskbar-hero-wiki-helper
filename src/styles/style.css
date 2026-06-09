@@ -1097,7 +1097,7 @@ button { cursor: pointer; border: none; background: none; }
 .cube-logic-table__head,
 .cube-logic-table__row {
   display: grid;
-  grid-template-columns: minmax(7rem, 0.85fr) minmax(8.5rem, 1fr) minmax(0, 2.15fr);
+  grid-template-columns: minmax(7rem, 0.8fr) minmax(8.5rem, 0.95fr) minmax(7.5rem, 1fr) minmax(0, 2.1fr);
   border-bottom: 2px solid var(--border-wood);
 }
 
@@ -1159,6 +1159,14 @@ button { cursor: pointer; border: none; background: none; }
   font-family: var(--font-title);
   font-size: var(--text-ui);
   font-weight: 700;
+  color: var(--parchment);
+}
+
+.cube-logic-table__feed {
+  background: linear-gradient(180deg, #2a3a5a 0%, #1a2438 100%);
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  line-height: 1.45;
   color: var(--parchment);
 }
 
@@ -1551,6 +1559,7 @@ button { cursor: pointer; border: none; background: none; }
     padding-top: 0.9rem;
   }
 
+  .cube-logic-table__feed,
   .cube-logic-table__farm {
     padding-bottom: 0.9rem;
   }

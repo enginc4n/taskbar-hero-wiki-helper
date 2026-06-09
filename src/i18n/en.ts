@@ -164,6 +164,8 @@ export const en = {
   'guides.cubeLevelLogic.back': 'Back to Guides',
   'guides.cubeLevelLogic.colRange': 'Cube Level Range',
   'guides.cubeLevelLogic.colCube': 'Cube Level',
+  'guides.cubeLevelLogic.colFeed': 'Max XP Item Level',
+  'guides.cubeLevelLogic.feedItem': 'Use Lv.{level} items for maximum Cube XP.',
   'guides.cubeLevelLogic.colFarm': 'Recommended Farm Zones',
   'guides.cubeLevelLogic.levelRange': 'Lv.{from}–{to}',
   'guides.cubeLevelLogic.cubeLevel': 'Cube Lv.{level}',
