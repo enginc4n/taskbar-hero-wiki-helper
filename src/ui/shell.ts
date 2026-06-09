@@ -37,6 +37,7 @@ const SUB_TITLE_KEYS: Partial<Record<string, TranslationKey>> = {
   forge: 'nav.sub.forge',
   prepared: 'nav.sub.prepared',
   'prepared-builds': 'nav.sub.preparedBuildGuides',
+  'cube-level-logic': 'guides.cubeLevelLogic.title',
   gear: 'nav.sub.gear',
   'build-author': 'nav.sub.buildAuthor',
 };

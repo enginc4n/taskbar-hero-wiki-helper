@@ -1044,6 +1044,162 @@ button { cursor: pointer; border: none; background: none; }
   font-style: italic;
 }
 
+.guide-back-link {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--amber);
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.guide-back-link:hover {
+  color: var(--gold-bright);
+}
+
+.page-cube-logic .page-lead {
+  max-width: none;
+}
+
+.cube-logic-section {
+  margin-top: 1rem;
+}
+
+.cube-logic-table {
+  overflow: hidden;
+  border: 3px solid var(--border-wood);
+  box-shadow: var(--shadow-pixel);
+}
+
+.cube-logic-table__head,
+.cube-logic-table__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.85fr) minmax(8.5rem, 1fr) minmax(0, 2.15fr);
+  border-bottom: 2px solid var(--border-wood);
+}
+
+.cube-logic-table__row:last-child {
+  border-bottom: 0;
+}
+
+.cube-logic-table__head {
+  background: linear-gradient(180deg, #1a2848 0%, #121c34 100%);
+}
+
+.cube-logic-table__head .cube-logic-table__cell {
+  padding: 0.7rem 0.85rem;
+  font-family: var(--font-title);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--parchment);
+  text-align: center;
+}
+
+.cube-logic-table__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5.5rem;
+  padding: 0.75rem 0.85rem;
+  border-right: 2px solid var(--border-wood);
+  text-align: center;
+}
+
+.cube-logic-table__cell:last-child {
+  border-right: 0;
+}
+
+.cube-logic-table__range {
+  background: linear-gradient(180deg, #6a3a1a 0%, #4a2810 100%);
+  font-family: var(--font-title);
+  font-size: var(--text-heading);
+  font-weight: 700;
+  color: var(--parchment);
+}
+
+.cube-logic-table__cube {
+  flex-direction: column;
+  gap: 0.45rem;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.cube-logic-table__cube-img {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55));
+}
+
+.cube-logic-table__cube-label {
+  font-family: var(--font-title);
+  font-size: var(--text-ui);
+  font-weight: 700;
+  color: var(--parchment);
+}
+
+.cube-logic-table__farm {
+  display: block;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.45);
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  line-height: 1.55;
+  color: var(--parchment);
+}
+
+.cube-zone {
+  font-weight: 700;
+}
+
+.cube-zone--normal {
+  color: #7fd86a;
+}
+
+.cube-zone--nightmare {
+  color: var(--amber);
+}
+
+.cube-zone--hell {
+  color: var(--crimson-glow);
+}
+
+.cube-zone--torment {
+  color: var(--gold-bright);
+}
+
+@media (max-width: 760px) {
+  .cube-logic-table__head {
+    display: none;
+  }
+
+  .cube-logic-table__row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .cube-logic-table__cell {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 2px solid var(--border-wood);
+  }
+
+  .cube-logic-table__cell:last-child {
+    border-bottom: 0;
+  }
+
+  .cube-logic-table__range {
+    padding-top: 0.9rem;
+  }
+
+  .cube-logic-table__farm {
+    padding-bottom: 0.9rem;
+  }
+}
+
 /* Utils hub */
 .util-tile-grid {
   display: grid;

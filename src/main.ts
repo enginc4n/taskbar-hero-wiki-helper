@@ -2,6 +2,7 @@ import { loadAllData } from './data/api';
 import { initLocale, onLocaleChange } from './i18n';
 import { parseRoute, type ParsedRoute } from './router';
 import { renderDashboardPage } from './ui/dashboard-page';
+import { renderCubeLevelLogicGuidePage } from './ui/cube-level-logic-guide-page';
 import { renderGuidesPage } from './ui/guides-page';
 import { renderPreparedBuildGuidesPage } from './ui/prepared-build-guides-page';
 import {
@@ -61,6 +62,8 @@ function renderRoute(route: ParsedRoute): void {
     case 'guides':
       if (route.sub === 'prepared-builds') {
         renderPreparedBuildGuidesPage(pageRoot, appContext);
+      } else if (route.sub === 'cube-level-logic') {
+        renderCubeLevelLogicGuidePage(pageRoot, appContext);
       } else {
         renderGuidesPage(pageRoot, appContext);
       }

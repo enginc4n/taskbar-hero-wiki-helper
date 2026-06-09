@@ -1,4 +1,5 @@
 import { t, type TranslationKey } from '../i18n';
+import { navHref } from '../router';
 import type { SimulatorContext } from './simulator-page';
 
 interface GuideCategory {
@@ -23,6 +24,24 @@ function guideCategoryLabel(categoryId: string): string {
   return key ? t(key) : categoryId;
 }
 
+const LIVE_GUIDES: {
+  id: string;
+  titleKey: TranslationKey;
+  descKey: TranslationKey;
+  icon: string;
+  category: string;
+  href: string;
+}[] = [
+  {
+    id: 'cube-level-logic',
+    titleKey: 'guides.cubeLevelLogic.title',
+    descKey: 'guides.cubeLevelLogic.desc',
+    icon: '🧊',
+    category: 'general',
+    href: navHref('guides', 'cube-level-logic'),
+  },
+];
+
 const PLACEHOLDER_GUIDES: {
   id: string;
   titleKey: TranslationKey;
@@ -42,6 +61,15 @@ export function renderGuidesPage(root: HTMLElement, _ctx: SimulatorContext): voi
   let searchQuery = '';
 
   function draw(): void {
+    const filteredLive = LIVE_GUIDES.filter((g) => {
+      const matchesCat = activeCategory === 'all' || g.category === activeCategory;
+      const q = searchQuery.trim().toLowerCase();
+      const title = t(g.titleKey);
+      const desc = t(g.descKey);
+      const matchesSearch = !q || title.toLowerCase().includes(q) || desc.toLowerCase().includes(q);
+      return matchesCat && matchesSearch;
+    });
+
     const filteredPlaceholders = PLACEHOLDER_GUIDES.filter((g) => {
       const matchesCat = activeCategory === 'all' || g.category === activeCategory;
       const q = searchQuery.trim().toLowerCase();
@@ -96,8 +124,19 @@ export function renderGuidesPage(root: HTMLElement, _ctx: SimulatorContext): voi
         <section class="guides-section" aria-labelledby="guides-featured-heading">
           <h2 id="guides-featured-heading" class="dash-section-title">${t('guides.featured')}</h2>
           <div class="guide-card-grid">
-            ${filteredPlaceholders
-              .map(
+            ${[
+              ...filteredLive.map(
+                (g) => `
+              <a class="guide-card rpg-panel guide-card--link" href="${g.href}">
+                <div class="rpg-panel-inner guide-card-inner">
+                  <span class="guide-card-icon" aria-hidden="true">${g.icon}</span>
+                  <h3 class="guide-card-title">${t(g.titleKey)}</h3>
+                  <p class="guide-card-desc">${t(g.descKey)}</p>
+                  <span class="guide-card-tag text-ui">${guideCategoryLabel(g.category)}</span>
+                </div>
+              </a>`,
+              ),
+              ...filteredPlaceholders.map(
                 (g) => `
               <article class="guide-card rpg-panel">
                 <div class="rpg-panel-inner guide-card-inner">
@@ -108,8 +147,8 @@ export function renderGuidesPage(root: HTMLElement, _ctx: SimulatorContext): voi
                   <p class="guide-card-soon text-muted">${t('guides.comingSoon')}</p>
                 </div>
               </article>`,
-              )
-              .join('')}
+              ),
+            ].join('')}
           </div>
         </section>
       </div>`;
