@@ -9,7 +9,8 @@ import {
   type PreparedBuild,
   type PreparedBuildManifestEntry,
 } from '../data/prepared-builds';
-import { heroCombatRunesForPanel, runeBenefitDescription, runeBenefitLabel } from '../data/runes';
+import { clearSimulatorModalRoot, ensureSimulatorModalRoot } from './modal-portal';
+import { openRuneChamberModal } from './rune-chamber-modal';
 import {
   HERO_GEAR_LEFT,
   HERO_GEAR_RIGHT,
@@ -19,10 +20,11 @@ import {
   preloadHeroIllustFrames,
   renderGearSlotHtml,
 } from '../data/game-ui';
-import { itemIconHtml, itemIconUrl, runeIconUrl } from '../data/icons';
+import { itemIconHtml, itemIconUrl } from '../data/icons';
 import { statIconHtml } from '../data/stat-icons';
-import { classGlyph, rarityClass, RUNE_VAULT_ICON } from '../data/rpg-ui';
-import { computeAllStats, computeBasicDps, compareStats, formatStatValue, formatDelta } from '../engine/stats';
+import { classGlyph, RUNE_VAULT_ICON } from '../data/rpg-ui';
+import { computeCombatSummary, formatDpsBarSummary } from '../engine/combat-summary';
+import { compareStats, formatStatValue, formatDelta } from '../engine/stats';
 import type { ComputedStats } from '../types';
 import { parseSaveFile, isSaveFileError, DEFAULT_ES3_PASSWORD } from '../engine/save-decrypt';
 import {
@@ -52,10 +54,10 @@ import type {
   PlayerSaveData,
   RefMaps,
   RuneGraph,
-  RuneNode,
 } from '../types';
 import { heroClassLabel, heroNameLabel } from '../i18n/hero-class';
 import { partLabel, t, type TranslationKey } from '../i18n';
+import type { EnrichedPet } from '../data/pets-farming';
 import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, itemMatchesHeroClass, type GearFilterState } from '../gear/filter';
 import { navHref, syncHash } from '../router';
 import { openSocketEditorModal } from './socket-editor-modal';
@@ -74,6 +76,7 @@ export interface SimulatorContext {
   effects: EffectMaterial[];
   runes: RuneGraph;
   meta: MetaData;
+  pets: EnrichedPet[];
   wiki: Parameters<typeof buildRefMaps>[0];
 }
 
@@ -98,15 +101,6 @@ const STAT_ROW_KEYS: { key: keyof ComputedStats; labelKey: TranslationKey; featu
   { key: 'CooldownReduction', labelKey: 'stat.cooldownReduction' },
   { key: 'CastSpeed', labelKey: 'stat.castSpeed' },
 ];
-
-const RUNE_STAT_LABEL_KEYS: Partial<Record<string, TranslationKey>> = {
-  AllHeroAttackDamage: 'stat.attackDamage',
-  AllHeroAttackDamagePercent: 'stat.attackDamage',
-  AllHeroArmor: 'stat.armor',
-  AllHeroArmorPercent: 'stat.armor',
-  AllHeroAttackSpeed: 'stat.attackSpeed',
-  AllHeroMoveSpeed: 'stat.movementSpeed',
-};
 
 export interface SimulatorPageOptions {
   initialMode?: 'forge' | 'prepared';
@@ -146,7 +140,7 @@ export function renderSimulatorPage(
   let portraitAnimTimer: ReturnType<typeof setInterval> | null = null;
   let portraitAnimGeneration = 0;
   let chronicleHeightObs: ResizeObserver | null = null;
-  let runeChamberOpen = options.runesOpen ?? false;
+  let runeModalPending = options.runesOpen ?? false;
 
   type WorkspaceMode = 'forge' | 'prepared';
   let workspaceMode: WorkspaceMode = options.initialMode ?? 'forge';
@@ -171,6 +165,8 @@ export function renderSimulatorPage(
     const previewLevel = PREPARED_LEVEL_STEPS[preparedLevelIndex] ?? milestone.heroLevel;
 
     state.heroKey = build.heroKey;
+    state.itemsByKey = syncSaveItemKeys(createEmptySave(build.heroKey), ctx.allItems);
+    state.socketDraft.clear();
     applyPreparedMilestone(
       state.working,
       def,
@@ -245,11 +241,16 @@ export function renderSimulatorPage(
     });
   }
 
-  function itemForPart(part: HeroPart): EnrichedItem | undefined {
+  function itemInstForPart(part: HeroPart) {
     const hero = heroSave();
     if (!hero) return undefined;
     const uid = hero.equippedItemIds[partIndex(part)];
-    const inst = uid ? state.working.itemSaveDatas.find((i) => String(i.UniqueId) === String(uid)) : null;
+    if (!uid) return undefined;
+    return state.working.itemSaveDatas.find((i) => String(i.UniqueId) === String(uid));
+  }
+
+  function itemForPart(part: HeroPart): EnrichedItem | undefined {
+    const inst = itemInstForPart(part);
     return inst ? state.itemsByKey.get(inst.ItemKey) : undefined;
   }
 
@@ -517,46 +518,34 @@ export function renderSimulatorPage(
       </section>`;
   }
 
+  function deltaHtml(positive: boolean, text: string): string {
+    return `<span class="attr-delta ${positive ? 'positive' : 'negative'}">${text}</span>`;
+  }
+
+  function combatSummary() {
+    const hero = heroSave();
+    if (!hero) return null;
+    return computeCombatSummary(hero, state.working, state.refs, state.baseline, state.heroKey);
+  }
+
   function computeDpsSummary(): {
     dpsValue: string;
     dpsDeltaHtml: string;
     dpsBarPct: number;
   } | null {
-    const hero = heroSave();
-    if (!hero) return null;
-
-    const current = computeAllStats(hero, state.working, state.refs);
-    const dps = computeBasicDps(current);
-    const baselineHero = state.baseline ? getSelectedHero(state.baseline, state.heroKey) : null;
-    const baselineStats = baselineHero ? computeAllStats(baselineHero, state.baseline!, state.refs) : current;
-    const baselineDps = computeBasicDps(baselineStats);
-    const dpsDelta = dps - baselineDps;
-    const dpsPct = baselineDps === 0 ? 0 : (dps / baselineDps - 1) * 100;
-
-    function deltaHtml(positive: boolean, text: string): string {
-      return `<span class="attr-delta ${positive ? 'positive' : 'negative'}">${text}</span>`;
-    }
-
-    const dpsValue = Math.round(dps).toLocaleString();
-    const dpsDeltaHtml = state.baseline
-      ? deltaHtml(
-          dpsDelta >= 0,
-          `${dpsDelta >= 0 ? '+' : ''}${Math.round(dpsDelta).toLocaleString()} (${dpsPct >= 0 ? '+' : ''}${dpsPct.toFixed(1)}%)`,
-        )
-      : '';
-
-    const dpsBarPct = state.baseline
-      ? Math.min(100, Math.max(8, 50 + dpsPct / 2))
-      : Math.min(100, Math.max(20, (dps / Math.max(baselineDps, dps, 1)) * 50));
-
-    return { dpsValue, dpsDeltaHtml, dpsBarPct };
+    const summary = combatSummary();
+    if (!summary) return null;
+    return formatDpsBarSummary(summary, !!state.baseline, deltaHtml);
   }
 
   function renderGearSlot(part: HeroPart): string {
     const item = itemForPart(part);
+    const inst = itemInstForPart(part);
     return renderGearSlotHtml({
       part,
       item,
+      enchants: inst?.EnchantData,
+      effects: ctx.effects,
       hasSockets: item ? itemHasSockets(item) : false,
       readOnly: isPreparedReadOnly(),
     });
@@ -633,16 +622,10 @@ export function renderSimulatorPage(
   }
 
   function drawCharacterSheet(): string {
-    const hero = heroSave();
-    if (!hero) return '';
-    const current = computeAllStats(hero, state.working, state.refs);
-    const baselineHero = state.baseline ? getSelectedHero(state.baseline, state.heroKey) : null;
-    const baselineStats = baselineHero ? computeAllStats(baselineHero, state.baseline!, state.refs) : current;
-    const deltas = new Map(compareStats(baselineStats, current).map((d) => [d.name, d]));
-
-    function deltaHtml(positive: boolean, text: string): string {
-      return `<span class="attr-delta ${positive ? 'positive' : 'negative'}">${text}</span>`;
-    }
+    const summary = combatSummary();
+    if (!summary) return '';
+    const current = summary.stats;
+    const deltas = new Map(compareStats(summary.baselineStats, current).map((d) => [d.name, d]));
 
     function statDelta(key: keyof ComputedStats): string {
       if (!state.baseline) return '';
@@ -687,16 +670,15 @@ export function renderSimulatorPage(
   }
 
   function drawRuneVaultButton(): string {
-    if (workspaceMode === 'prepared') return '';
+    if (workspaceMode === 'prepared' && !isPreparedReadOnly()) return '';
 
     return `
       <button
         type="button"
-        class="rune-vault-btn${runeChamberOpen ? ' is-open' : ''}"
-        data-action="toggle-rune-chamber"
-        aria-pressed="${runeChamberOpen}"
-        aria-label="${runeChamberOpen ? t('build.closeRuneVault') : t('build.openRuneVault')}"
-        title="${runeChamberOpen ? t('build.closeRuneChamber') : t('build.openRuneChamber')}"
+        class="rune-vault-btn"
+        data-action="open-rune-chamber"
+        aria-label="${t('build.openRuneVault')}"
+        title="${t('build.openRuneChamber')}"
       >
         <img class="rune-vault-btn-icon pixel-art" src="${RUNE_VAULT_ICON}" alt="" />
         <span class="rune-vault-btn-label text-ui">${t('build.runes')}</span>
@@ -800,19 +782,15 @@ export function renderSimulatorPage(
   function syncSidePanelHeights(): void {
     const heroHall = root.querySelector<HTMLElement>('.hero-hall');
     const chronicleCol = root.querySelector<HTMLElement>('.chronicle-col');
-    const runeSidebar = root.querySelector<HTMLElement>('.rune-sidebar');
-    if (!heroHall) return;
+    if (!heroHall || !chronicleCol) return;
 
     const height = heroHall.offsetHeight;
     if (height <= 0) return;
 
     const px = `${height}px`;
-    for (const panel of [chronicleCol, runeSidebar]) {
-      if (!panel) continue;
-      if (panel.style.height === px && panel.style.maxHeight === px) continue;
-      panel.style.height = px;
-      panel.style.maxHeight = px;
-    }
+    if (chronicleCol.style.height === px && chronicleCol.style.maxHeight === px) return;
+    chronicleCol.style.height = px;
+    chronicleCol.style.maxHeight = px;
   }
 
   function setupChronicleHeightSync(): void {
@@ -833,12 +811,14 @@ export function renderSimulatorPage(
     const showForgeWorkspace = workspaceMode === 'forge';
     const showWorkspace = showPreparedWorkspace || showForgeWorkspace;
 
+    clearSimulatorModalRoot();
+
     root.innerHTML = `
       <div class="rpg-screen${workspaceMode === 'prepared' ? ' is-prepared-mode' : ''}${showPreparedWorkspace ? ' is-prepared-active' : ''}${isPreparedReadOnly() ? ' is-readonly' : ''}">
         ${drawBuildToolbar()}
         ${drawPreparedBuildsRail()}
         ${showWorkspace ? `
-        <div class="rpg-workspace${showForgeWorkspace && runeChamberOpen ? ' rune-open' : ''}">
+        <div class="rpg-workspace">
           ${drawChronicleColumn()}
           <main class="hero-hall rpg-panel">
             <div class="rpg-panel-inner">
@@ -846,10 +826,8 @@ export function renderSimulatorPage(
               ${drawCharacterSheet()}
             </div>
           </main>
-          ${drawRuneChamber()}
         </div>` : ''}
       </div>
-      <div id="sim-modal" class="modal-root"></div>
     `;
     bindEvents();
     syncPreparedLevelPanelUi();
@@ -858,6 +836,10 @@ export function renderSimulatorPage(
       syncSidePanelHeights();
       setupChronicleHeightSync();
       restoreScrollState(scrollState);
+      if (runeModalPending && workspaceMode === 'forge') {
+        runeModalPending = false;
+        openRuneChamber();
+      }
     });
   }
 
@@ -876,6 +858,7 @@ export function renderSimulatorPage(
     syncSidePanelHeights();
     restoreScrollState(scrollState);
     startPortraitAnim();
+    bindRuneChamberTriggers();
   }
 
   function setPreparedLevel(index: number): void {
@@ -894,67 +877,28 @@ export function renderSimulatorPage(
     });
   }
 
-  function runeBenefitDisplayText(rune: RuneNode, level: number): string {
-    const description = runeBenefitDescription(rune, level);
-    if (!rune.stat) return description;
-    const labelKey = RUNE_STAT_LABEL_KEYS[rune.stat];
-    if (!labelKey) return description;
-    const localizedLabel = t(labelKey);
-    return description.replace(runeBenefitLabel(rune), localizedLabel);
+  function refreshCharacterSheet(): void {
+    const charSheet = root.querySelector('.char-sheet-bar');
+    if (charSheet) charSheet.outerHTML = drawCharacterSheet();
   }
 
-  function drawRuneChamber(): string {
-    if (workspaceMode === 'prepared') return '';
+  function openRuneChamber(): void {
+    if (workspaceMode === 'prepared' && !isPreparedReadOnly()) return;
 
-    const runeSlots = heroCombatRunesForPanel(ctx.runes.runes)
-      .map((rune) => {
-        const level = getRuneLevel(state.working, rune.key);
-        const max = rune.maxLevel ?? 1;
-        const icon = runeIconUrl(rune.icon);
-        const rarity = rarityClass(level, max);
-        const benefit = runeBenefitDisplayText(rune, level);
-
-        const decBtn = `
-              <button type="button" class="node-btn rune-slot-btn" data-action="rune-dec" data-key="${rune.key}" aria-label="${t('build.decrease', { name: rune.name })}">−</button>`;
-        const incBtn = `
-              <button type="button" class="node-btn rune-slot-btn" data-action="rune-inc" data-key="${rune.key}" data-max="${max}" aria-label="${t('build.increase', { name: rune.name })}">+</button>`;
-        const readonly = isPreparedReadOnly();
-
-        return `
-          <article class="rune-slot ${rarity}" aria-label="${rune.name}, ${benefit}, level ${level} of ${max}">
-            <div class="rune-slot-row${readonly ? ' rune-slot-row--readonly' : ''}">
-              ${readonly ? '' : decBtn}
-              <div class="rune-gem" title="${rune.name}">
-                ${icon ? `<img class="rune-gem-icon pixel-art" src="${icon}" alt="" loading="lazy" />` : '<span aria-hidden="true">◆</span>'}
-                <span class="rune-gem-lv ${rarity}">${level}/${max}</span>
-              </div>
-              ${readonly ? '' : incBtn}
-              <span class="rune-slot-benefit${level > 0 ? ' is-active' : ''}">${benefit}</span>
-            </div>
-          </article>`;
-      })
-      .join('');
-
-    if (!runeChamberOpen) return '';
-
-    return `
-      <aside class="rune-sidebar" id="panel-runes" aria-label="Rune Chamber">
-        <div class="rpg-panel rune-chamber-panel">
-          <div class="rpg-panel-inner rune-chamber-inner">
-            <header class="rune-chamber-head">
-              <p class="text-kicker rune-chamber-kicker">${t('build.runeChamber')}</p>
-              <button type="button" class="rpg-btn rpg-btn--ghost rpg-btn--icon rune-chamber-close" data-action="toggle-rune-chamber" aria-label="${t('build.closeRuneChamber')}">✕</button>
-            </header>
-            <div class="rune-inventory">${runeSlots}</div>
-          </div>
-        </div>
-      </aside>`;
+    openRuneChamberModal({
+      modalRoot: ensureSimulatorModalRoot(),
+      runes: ctx.runes,
+      getLevel: (key) => getRuneLevel(state.working, key),
+      setLevel: (key, level, max) => setRuneLevel(state.working, key, level, max),
+      readOnly: isPreparedReadOnly(),
+      hint: isPreparedReadOnly() ? t('build.runePreviewHint') : undefined,
+      onChanged: () => refreshCharacterSheet(),
+    });
   }
 
-  function captureScrollState(): { chronicleScrollTop: number; runeScrollTop: number; windowScrollY: number } {
+  function captureScrollState(): { chronicleScrollTop: number; windowScrollY: number } {
     return {
       chronicleScrollTop: captureSkillPathScrollTop(root),
-      runeScrollTop: root.querySelector<HTMLElement>('.rune-inventory')?.scrollTop ?? 0,
       windowScrollY: window.scrollY,
     };
   }
@@ -962,8 +906,6 @@ export function renderSimulatorPage(
   function restoreScrollState(saved: ReturnType<typeof captureScrollState>): void {
     requestAnimationFrame(() => {
       restoreSkillPathScrollTop(root, saved.chronicleScrollTop);
-      const runeInv = root.querySelector<HTMLElement>('.rune-inventory');
-      if (runeInv) runeInv.scrollTop = saved.runeScrollTop;
       if (window.scrollY !== saved.windowScrollY) window.scrollTo(0, saved.windowScrollY);
     });
   }
@@ -981,7 +923,7 @@ export function renderSimulatorPage(
     if (!hero) return;
     let filter: GearFilterState = { ...DEFAULT_GEAR_FILTER };
     let page = 1;
-    const modalRoot = root.querySelector('#sim-modal') as HTMLElement;
+    const modalRoot = ensureSimulatorModalRoot();
 
     function allowedGear(item: EnrichedItem): boolean {
       if (item.type !== 'GEAR') return false;
@@ -1107,7 +1049,7 @@ export function renderSimulatorPage(
     if (!inst || !item) return;
 
     openSocketEditorModal({
-      modalRoot: root.querySelector('#sim-modal') as HTMLElement,
+      modalRoot: ensureSimulatorModalRoot(),
       item,
       inst,
       effects: ctx.effects,
@@ -1168,7 +1110,7 @@ export function renderSimulatorPage(
     state.baseline = null;
     selectedPreparedBuild = null;
     preparedLevelIndex = 0;
-    runeChamberOpen = false;
+    clearSimulatorModalRoot();
     syncHash(navHref('build', 'prepared').slice(1));
     draw();
   }
@@ -1380,27 +1322,16 @@ export function renderSimulatorPage(
       });
     });
 
-    root.querySelectorAll('[data-action="rune-inc"]').forEach((el) => {
-      el.addEventListener('click', () => {
-        const key = Number(el.getAttribute('data-key'));
-        const max = Number(el.getAttribute('data-max'));
-        setRuneLevel(state.working, key, getRuneLevel(state.working, key) + 1, max);
-        draw();
-      });
-    });
+    bindRuneChamberTriggers();
+  }
 
-    root.querySelectorAll('[data-action="rune-dec"]').forEach((el) => {
-      el.addEventListener('click', () => {
-        const key = Number(el.getAttribute('data-key'));
-        setRuneLevel(state.working, key, getRuneLevel(state.working, key) - 1, 999);
-        draw();
-      });
-    });
-
-    root.querySelectorAll('[data-action="toggle-rune-chamber"]').forEach((el) => {
-      el.addEventListener('click', () => {
-        runeChamberOpen = !runeChamberOpen;
-        draw();
+  function bindRuneChamberTriggers(): void {
+    root.querySelectorAll('[data-action="open-rune-chamber"]').forEach((el) => {
+      if (el.getAttribute('data-rune-bound') === '1') return;
+      el.setAttribute('data-rune-bound', '1');
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        openRuneChamber();
       });
     });
   }

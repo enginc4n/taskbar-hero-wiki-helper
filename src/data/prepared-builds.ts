@@ -155,11 +155,13 @@ export function applyPreparedMilestone(
   previewHeroLevel?: number,
 ): void {
   const heroKey = heroDef.key;
-  const fresh = createEmptySave(heroKey);
-  save.heroSaveDatas = clonePlayerSave(fresh).heroSaveDatas;
-  save.itemSaveDatas = [];
-  save.RuneSaveData = [];
-  save.attributeSaveDatas = [];
+  const reset = clonePlayerSave(createEmptySave(heroKey));
+  // Match Build Helper: reset all combat-relevant slices so forge leftovers (pets, etc.) cannot leak in.
+  save.heroSaveDatas = reset.heroSaveDatas;
+  save.itemSaveDatas = reset.itemSaveDatas;
+  save.RuneSaveData = reset.RuneSaveData;
+  save.attributeSaveDatas = reset.attributeSaveDatas;
+  save.PetSaveData = reset.PetSaveData;
 
   const hero = getSelectedHero(save, heroKey)!;
   const heroLevel = previewHeroLevel ?? milestone.heroLevel;

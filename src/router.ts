@@ -1,4 +1,4 @@
-export type AppSection = 'dashboard' | 'build' | 'guides' | 'utils';
+export type AppSection = 'dashboard' | 'build' | 'guides' | 'utils' | 'about';
 
 export interface ParsedRoute {
   section: AppSection;
@@ -7,7 +7,7 @@ export interface ParsedRoute {
   query: URLSearchParams;
 }
 
-const SECTIONS = new Set<AppSection>(['dashboard', 'build', 'guides', 'utils']);
+const SECTIONS = new Set<AppSection>(['dashboard', 'build', 'guides', 'utils', 'about']);
 
 function normalizeHash(raw: string): string {
   const trimmed = raw.replace(/^#/, '').trim();
@@ -19,6 +19,7 @@ function normalizeHash(raw: string): string {
 function legacyRedirect(normalized: string): string {
   if (normalized === '/helper' || normalized === 'helper') return '/utils/build-author';
   if (normalized === '/panel-runes' || normalized === 'panel-runes') return '/build/forge?runes=1';
+  if (normalized === '/utils/about') return '/about';
   return normalized;
 }
 

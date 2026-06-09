@@ -1,3 +1,4 @@
+import type { EnrichedPet } from './pets-farming';
 import type {
   EffectMaterial,
   EnrichedHero,
@@ -64,15 +65,16 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 export async function loadEnrichedData() {
   const base = getEnrichedBase();
-  const [items, heroes, effects, runes, meta] = await Promise.all([
+  const [items, heroes, effects, runes, meta, pets] = await Promise.all([
     fetchJson<EnrichedItem[]>(`${base}/items.json`),
     fetchJson<EnrichedHero[]>(`${base}/heroes.json`),
     fetchJson<EffectMaterial[]>(`${base}/effects.json`),
     fetchJson<RuneGraph>(`${base}/runes.json`),
     fetchJson<MetaData>(`${base}/meta.json`),
+    fetchJson<EnrichedPet[]>(`${base}/pets.json`),
   ]);
 
-  return { items, heroes, effects, runes, meta };
+  return { items, heroes, effects, runes, meta, pets };
 }
 
 export async function loadWikiRefData() {

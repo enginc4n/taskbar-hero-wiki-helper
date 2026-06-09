@@ -41,6 +41,13 @@ export function buildRefMaps(wiki: {
   };
 }
 
+/** Enriched hero stats use display units; engine/wiki raw data uses per-mille for these. */
+const ENRICHED_PER_MILLE_STATS = new Set(['CriticalChance', 'CriticalDamage']);
+
+function enrichedStatToEngineRaw(stat: string, value: number): number {
+  return ENRICHED_PER_MILLE_STATS.has(stat) ? value * 10 : value;
+}
+
 export function enrichedHeroToWikiHero(hero: EnrichedHero): WikiHero {
   const mapped: WikiHero = {
     HeroKey: hero.key,
@@ -48,7 +55,7 @@ export function enrichedHeroToWikiHero(hero: EnrichedHero): WikiHero {
   };
 
   for (const s of hero.stats) {
-    (mapped as unknown as Record<string, number>)[s.stat] = s.value;
+    (mapped as unknown as Record<string, number>)[s.stat] = enrichedStatToEngineRaw(s.stat, s.value);
   }
 
   for (const group of hero.tree) {
@@ -137,7 +144,17 @@ export function mergeRefMaps(
   }
 
   for (const hero of enriched.heroes) {
-    heroByKey.set(hero.key, enrichedHeroToWikiHero(hero));
+    const wikiHero = heroByKey.get(hero.key);
+    const mapped = enrichedHeroToWikiHero(hero);
+    if (wikiHero) {
+      // Wiki datamine has engine-raw stat values; enriched only supplies tree/attributes.
+      heroByKey.set(hero.key, {
+        ...wikiHero,
+        attributes: mapped.attributes?.length ? mapped.attributes : wikiHero.attributes,
+      });
+    } else {
+      heroByKey.set(hero.key, mapped);
+    }
   }
 
   for (const [key, passive] of enrichedPassiveMap(enriched.heroes)) {
@@ -145,7 +162,7 @@ export function mergeRefMaps(
   }
 
   for (const node of enriched.runes.runes) {
-    if (!node.stat) continue;
+    if (!node.stat || runeNodeByKey.has(node.key)) continue;
     const levels = (node.levels ?? []).map((l) => ({
       level: l.level,
       value:

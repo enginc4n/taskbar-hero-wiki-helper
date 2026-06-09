@@ -107,21 +107,30 @@ export function runeBenefitDescription(rune: RuneNode, level: number): string {
   return `${formatRuneBonusAmount(total, isPercent)} ${label}`;
 }
 
-/** One rune card per hero combat stat (lowest tree key wins). */
+export interface HeroCombatRuneGroup {
+  stat: string;
+  runes: RuneNode[];
+}
+
+/** Combat runes grouped by stat type (preserves HERO_COMBAT_RUNE_STATS order). */
+export function heroCombatRuneGroups(runes: RuneNode[]): HeroCombatRuneGroup[] {
+  const all = heroCombatRunesForPanel(runes);
+  return HERO_COMBAT_RUNE_STATS.map((stat) => ({
+    stat,
+    runes: all.filter((rune) => rune.stat === stat),
+  })).filter((group) => group.runes.length > 0);
+}
+
+/** All account runes that affect hero combat stats (full tree, not one-per-stat). */
 export function heroCombatRunesForPanel(runes: RuneNode[]): RuneNode[] {
   const order = new Map<string, number>(
     HERO_COMBAT_RUNE_STATS.map((stat, index) => [stat, index]),
   );
-  const byStat = new Map<string, RuneNode>();
 
-  for (const rune of runes) {
-    if (!isHeroCombatRune(rune) || !rune.stat) continue;
-    const current = byStat.get(rune.stat);
-    if (!current || rune.key < current.key) byStat.set(rune.stat, rune);
-  }
-
-  return [...byStat.values()].sort(
-    (a, b) =>
-      (order.get(a.stat!) ?? 99) - (order.get(b.stat!) ?? 99),
-  );
+  return runes
+    .filter((rune) => isHeroCombatRune(rune) && rune.stat)
+    .sort((a, b) => {
+      const statCmp = (order.get(a.stat!) ?? 99) - (order.get(b.stat!) ?? 99);
+      return statCmp !== 0 ? statCmp : a.key - b.key;
+    });
 }

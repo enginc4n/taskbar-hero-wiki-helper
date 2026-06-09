@@ -3,6 +3,7 @@ import { initLocale, onLocaleChange } from './i18n';
 import { parseRoute, type ParsedRoute } from './router';
 import { renderDashboardPage } from './ui/dashboard-page';
 import { renderCubeLevelLogicGuidePage } from './ui/cube-level-logic-guide-page';
+import { renderPetsFarmingGuidePage } from './ui/pets-farming-guide-page';
 import { renderGuidesPage } from './ui/guides-page';
 import { renderPreparedBuildGuidesPage } from './ui/prepared-build-guides-page';
 import {
@@ -13,6 +14,8 @@ import {
   updateShellNav,
 } from './ui/shell';
 import { renderSimulatorPage, type SimulatorContext } from './ui/simulator-page';
+import { ensureGearSlotTooltips } from './ui/gear-slot-tooltips';
+import { renderAboutPage } from './ui/about-page';
 import { renderUtilsPage } from './ui/utils-page';
 
 function publicAssetUrl(relativePath: string): string {
@@ -28,6 +31,7 @@ function applyShellTheme(): void {
 
 applyShellTheme();
 initLocale();
+ensureGearSlotTooltips();
 
 let appContext: SimulatorContext | null = null;
 let pageRoot: HTMLElement | null = null;
@@ -64,12 +68,17 @@ function renderRoute(route: ParsedRoute): void {
         renderPreparedBuildGuidesPage(pageRoot, appContext);
       } else if (route.sub === 'cube-level-logic') {
         renderCubeLevelLogicGuidePage(pageRoot, appContext);
+      } else if (route.sub === 'pets-farming') {
+        renderPetsFarmingGuidePage(pageRoot, appContext);
       } else {
         renderGuidesPage(pageRoot, appContext);
       }
       break;
     case 'utils':
       renderUtilsPage(pageRoot, appContext, route.sub);
+      break;
+    case 'about':
+      renderAboutPage(pageRoot);
       break;
     default:
       renderDashboardPage(pageRoot, appContext);
@@ -100,6 +109,7 @@ async function boot(): Promise<void> {
         effects: data.effects,
         runes: data.runes,
         meta: data.meta,
+        pets: data.pets,
         wiki: data.wiki,
       };
     } catch (err) {

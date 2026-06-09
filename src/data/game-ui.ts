@@ -1,5 +1,6 @@
-import type { EnrichedHero, EnrichedItem, HeroPart } from '../types';
+import type { EffectMaterial, EnchantEntry, EnrichedHero, EnrichedItem, HeroPart } from '../types';
 import { HERO_PARTS } from '../types';
+import { buildGearTooltipHtml } from './gear-tooltip';
 import { itemIconUrl } from './icons';
 
 export const GAME_UI_BASE = 'https://www.taskbarhero.wiki/game/ui';
@@ -116,17 +117,21 @@ export function heroIllustClass(hero: EnrichedHero): string {
 export function renderGearSlotHtml(options: {
   part: HeroPart;
   item?: EnrichedItem | null;
+  enchants?: EnchantEntry[];
+  effects?: EffectMaterial[];
   hasSockets?: boolean;
   readOnly?: boolean;
 }): string {
-  const { part, item, hasSockets, readOnly } = options;
+  const { part, item, enchants, effects, hasSockets, readOnly } = options;
   const iconUrl = item?.icon ? itemIconUrl(item.icon) : null;
   const gradeBg = item ? gradeBgUrl(item.grade) : null;
 
+  const slotLabel = item?.name ?? part.replace('_', ' ');
+  const slotA11y = slotLabel.replace(/"/g, '&quot;');
   const slotTag = readOnly ? 'div' : 'button';
   const slotAttrs = readOnly
-    ? `class="game-slot game-slot--readonly${item ? ' filled' : ''}" title="${item?.name ?? part.replace('_', ' ')}"`
-    : `type="button" class="game-slot${item ? ' filled' : ''}" data-action="pick-gear" data-part="${part}" title="${item?.name ?? part.replace('_', ' ')}"`;
+    ? `class="game-slot game-slot--readonly${item ? ' filled' : ''}"${item ? ` aria-label="${slotA11y}"` : ` title="${slotA11y}"`}`
+    : `type="button" class="game-slot${item ? ' filled' : ''}" data-action="pick-gear" data-part="${part}"${item ? ` aria-label="${slotA11y}"` : ` title="${slotA11y}"`}`;
 
   return `
     <div class="game-slot-wrap${item ? ' is-filled' : ''}${readOnly ? ' is-readonly' : ''}">
@@ -138,6 +143,11 @@ export function renderGearSlotHtml(options: {
       ${
         item && hasSockets && !readOnly
           ? `<button type="button" class="game-socket-btn" data-action="edit-sockets" data-part="${part}" title="Sockets">◆</button>`
+          : ''
+      }
+      ${
+        item
+          ? `<div class="rpg-tooltip gear-tooltip" role="tooltip">${buildGearTooltipHtml(item, enchants, effects)}</div>`
           : ''
       }
     </div>`;

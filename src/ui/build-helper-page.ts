@@ -275,11 +275,16 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
     return slots.decoration + slots.engraving + slots.inscription > 0;
   }
 
-  function itemForPart(part: HeroPart): EnrichedItem | undefined {
+  function itemInstForPart(part: HeroPart) {
     const hero = heroSave();
     if (!hero) return undefined;
     const uid = hero.equippedItemIds[partIndex(part)];
-    const inst = uid ? working.itemSaveDatas.find((i) => String(i.UniqueId) === String(uid)) : null;
+    if (!uid) return undefined;
+    return working.itemSaveDatas.find((i) => String(i.UniqueId) === String(uid));
+  }
+
+  function itemForPart(part: HeroPart): EnrichedItem | undefined {
+    const inst = itemInstForPart(part);
     return inst ? itemsByKey.get(inst.ItemKey) : undefined;
   }
 
@@ -336,9 +341,12 @@ export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext):
         <div class="equip-row">${row
           .map((part) => {
             const item = itemForPart(part);
+            const inst = itemInstForPart(part);
             return renderGearSlotHtml({
               part,
               item,
+              enchants: inst?.EnchantData,
+              effects: ctx.effects,
               hasSockets: item ? itemHasSockets(item) : false,
             });
           })

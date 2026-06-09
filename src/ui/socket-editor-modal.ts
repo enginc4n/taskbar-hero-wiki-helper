@@ -31,6 +31,33 @@ function formatRollHint(group: EffectGroup): string {
   return group.disp ?? `${group.min} – ${group.max}`;
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+const MATERIAL_TOOLTIP_EFFECT_LIMIT = 5;
+
+function formatMaterialEffectLines(material: EffectMaterial, item: EnrichedItem): string[] {
+  const groups = getEffectGroupsForGear(material, item);
+  const lines = groups.map((group) => {
+    const range = formatRollHint(group);
+    return `${formatStatLabel(group.stat)} ${range}`;
+  });
+  if (lines.length <= MATERIAL_TOOLTIP_EFFECT_LIMIT) return lines;
+  const shown = lines.slice(0, MATERIAL_TOOLTIP_EFFECT_LIMIT - 1);
+  shown.push(`+${lines.length - (MATERIAL_TOOLTIP_EFFECT_LIMIT - 1)} more`);
+  return shown;
+}
+
+function renderMaterialChipTooltip(material: EffectMaterial, item: EnrichedItem): string {
+  const effects = formatMaterialEffectLines(material, item);
+  return `
+    <span class="material-chip-tooltip">
+      <span class="material-chip-tooltip-name">${escapeHtml(material.name)}</span>
+      ${effects.length ? `<span class="material-chip-tooltip-effects">${effects.map(escapeHtml).join('<br>')}</span>` : ''}
+    </span>`;
+}
+
 function draftForItem(
   item: EnrichedItem,
   inst: ItemSaveData,
@@ -134,10 +161,12 @@ function renderActiveSlotEditor(
       ${filteredMats
         .map((m) => {
           const label = m.name.replace(/"/g, '&quot;');
+          const effectHint = formatMaterialEffectLines(m, item).join(' · ').replace(/"/g, '&quot;');
+          const ariaLabel = effectHint ? `${m.name} — ${effectHint}` : m.name;
           return `
-        <button type="button" class="material-chip${slot.materialKey === m.key ? ' selected' : ''}" data-action="pick-material" data-key="${m.key}" data-label="${label}" title="${label}" role="option" aria-selected="${slot.materialKey === m.key}">
+        <button type="button" class="material-chip${slot.materialKey === m.key ? ' selected' : ''}" data-action="pick-material" data-key="${m.key}" data-label="${label}" aria-label="${ariaLabel.replace(/"/g, '&quot;')}" role="option" aria-selected="${slot.materialKey === m.key}">
           ${itemIconHtml(m.icon, m.name, 'material-chip-icon')}
-          <span class="material-chip-tooltip">${m.name}</span>
+          ${renderMaterialChipTooltip(m, item)}
         </button>`;
         })
         .join('')}

@@ -135,7 +135,7 @@ export function renderDashboardPage(root: HTMLElement, ctx: SimulatorContext): v
       <section class="dash-section" aria-labelledby="dash-builds-heading">
         <div class="dash-section-head">
           <h2 id="dash-builds-heading" class="dash-section-title">${t('dashboard.preparedBuildsSection')}</h2>
-          <a class="rpg-btn rpg-btn--ghost rpg-btn--sm" href="${navHref('build', 'prepared')}">${t('dashboard.viewAll')}</a>
+          <a class="rpg-btn rpg-btn--gold dash-hall-cta" href="${navHref('build', 'prepared')}">${t('dashboard.viewAll')}</a>
         </div>
         <div class="dash-builds-rail" id="dash-builds-rail">
           <p class="dash-loading text-muted">${t('dashboard.loadingBuilds')}</p>

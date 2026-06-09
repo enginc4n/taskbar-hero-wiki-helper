@@ -49,6 +49,8 @@
 
   --success: #6ab85a;
   --danger: #c45a5a;
+  --pet-chest: #5a9fd4;
+  --pet-rare: #9a72d4;
 
   --header-h: 108px;
   --content-max: 1680px;
@@ -194,6 +196,19 @@ button { cursor: pointer; border: none; background: none; }
   gap: 0.75rem;
   padding: 1.15rem 1.15rem;
   border-bottom: 2px dashed rgba(201, 162, 39, 0.25);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.rpg-nav-brand:hover {
+  background: rgba(201, 162, 39, 0.08);
+}
+
+.rpg-nav-brand:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: -2px;
 }
 
 .rpg-nav-crest {
@@ -678,6 +693,7 @@ button { cursor: pointer; border: none; background: none; }
 
 .page-guides,
 .page-utils,
+.page-about,
 .page-gear,
 .helper-page {
   width: 100%;
@@ -708,6 +724,11 @@ button { cursor: pointer; border: none; background: none; }
 
 .dash-section-head .dash-section-title {
   margin-bottom: 0;
+}
+
+.dash-section-head .rpg-btn {
+  font-size: var(--text-ui);
+  min-height: 2.25rem;
 }
 
 .dash-action-grid {
@@ -1171,6 +1192,341 @@ button { cursor: pointer; border: none; background: none; }
   color: var(--gold-bright);
 }
 
+/* Pets farming guide — database layout */
+.pets-farming-header {
+  margin-bottom: 0.85rem;
+}
+
+.pets-farming-title {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-title);
+  font-size: var(--text-title);
+  font-weight: 700;
+  color: var(--parchment);
+  line-height: 1.15;
+}
+
+.pets-farming-lead {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  line-height: 1.4;
+  color: var(--text-muted);
+  max-width: 48rem;
+}
+
+.page-pets-farming .guide-back-link {
+  color: var(--brass);
+}
+
+.page-pets-farming .guide-back-link:hover {
+  color: var(--parchment);
+}
+
+.pets-farming-section {
+  margin-top: 1.15rem;
+}
+
+.pets-farming-section .dash-section-title {
+  margin-bottom: 0.55rem;
+  color: var(--parchment-dim);
+}
+
+.pets-db-table {
+  overflow: hidden;
+  border: 3px solid var(--border-wood);
+  box-shadow: var(--shadow-pixel);
+}
+
+.pets-db-table__head,
+.pets-db-table__row {
+  display: grid;
+  grid-template-columns:
+    2.5rem minmax(7rem, 0.9fr) minmax(8rem, 1fr) minmax(10rem, 1.4fr) minmax(9rem, 1.2fr)
+    minmax(8rem, 1fr);
+  border-bottom: 2px solid var(--border-wood);
+}
+
+.pets-db-table--dlc .pets-db-table__head,
+.pets-db-table--dlc .pets-db-table__row {
+  grid-template-columns: minmax(8rem, 1fr) minmax(10rem, 1.2fr) minmax(10rem, 1fr);
+}
+
+.pets-db-table__row:last-child {
+  border-bottom: 0;
+}
+
+.pets-db-table__head {
+  background: linear-gradient(180deg, #1a2848 0%, #121c34 100%);
+}
+
+.pets-db-table__head .pets-db-table__cell {
+  padding: 0.55rem 0.65rem;
+  font-family: var(--font-title);
+  font-size: var(--text-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--parchment);
+  text-align: center;
+}
+
+.pets-db-table__cell {
+  display: flex;
+  align-items: center;
+  min-height: 5.5rem;
+  padding: 0.5rem 0.65rem;
+  border-right: 2px solid var(--border-wood);
+  min-width: 0;
+}
+
+.pets-db-table__cell:last-child {
+  border-right: 0;
+}
+
+.pets-db-table__cell--rank {
+  justify-content: center;
+  font-family: var(--font-title);
+  font-size: var(--text-ui);
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.pets-db-table__cell--pet {
+  justify-content: flex-start;
+}
+
+.pets-db-table__cell--bonus {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.pets-db-table__cell--farm {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.55rem 0.65rem;
+  background: rgba(139, 105, 20, 0.06);
+  border-left: 2px solid var(--brass);
+}
+
+.pets-db-table__cell--alt {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+  font-family: var(--font-body);
+  font-size: var(--text-label);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.pets-db-table__cell--unlock {
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.2rem;
+  text-align: right;
+}
+
+.pets-db-table__pet {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.pets-db-table__icon-wrap {
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 5rem;
+  display: grid;
+  place-items: end center;
+  overflow: hidden;
+}
+
+.pets-db-table__icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  transform: scale(var(--pet-slot-scale-x, 1), var(--pet-slot-scale-y, 1));
+  transform-origin: center bottom;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.5));
+}
+
+.pets-db-table__pet-name {
+  font-family: var(--font-title);
+  font-size: var(--text-ui);
+  font-weight: 700;
+  color: var(--parchment);
+  line-height: 1.2;
+}
+
+.pets-db-table__dlc-tag {
+  flex-shrink: 0;
+}
+
+.pets-db-best-farm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pets-db-best-farm__runs {
+  font-family: var(--font-ui);
+  font-size: var(--text-ui);
+  font-weight: 700;
+  color: var(--parchment);
+}
+
+.pets-db-alt-route {
+  white-space: nowrap;
+}
+
+.pets-db-alt-sep {
+  color: var(--text-faint);
+}
+
+.pets-db-unlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.pets-db-unlock__text {
+  font-family: var(--font-body);
+  font-size: var(--text-label);
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.pet-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid;
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  line-height: 1.2;
+}
+
+.pet-stat-chip__value {
+  font-weight: 700;
+}
+
+.pet-stat-chip__label {
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.pet-stat-chip--exp {
+  color: var(--success);
+  border-color: rgba(106, 184, 90, 0.45);
+  background: rgba(106, 184, 90, 0.1);
+}
+
+.pet-stat-chip--gold {
+  color: var(--gold);
+  border-color: rgba(201, 162, 39, 0.45);
+  background: rgba(201, 162, 39, 0.1);
+}
+
+.pet-stat-chip--chest {
+  color: var(--pet-chest);
+  border-color: rgba(90, 159, 212, 0.45);
+  background: rgba(90, 159, 212, 0.1);
+}
+
+.pet-stat-chip--rare {
+  color: var(--pet-rare);
+  border-color: rgba(154, 114, 212, 0.45);
+  background: rgba(154, 114, 212, 0.1);
+}
+
+.pet-zone-tag {
+  display: inline-block;
+  padding: 0.12rem 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--parchment-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.pet-steam-link {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--brass);
+  text-decoration: none;
+}
+
+.pet-steam-link:hover {
+  color: var(--parchment);
+}
+
+@media (max-width: 760px) {
+  .pets-db-table__head {
+    display: none;
+  }
+
+  .pets-db-table__row {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .pets-db-table__cell {
+    min-height: auto;
+    padding: 0.2rem 0;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .pets-db-table__cell::before {
+    content: attr(data-label);
+    flex: 0 0 5.5rem;
+    font-family: var(--font-ui);
+    font-size: var(--text-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .pets-db-table__cell--rank::before {
+    content: none;
+  }
+
+  .pets-db-table__cell--farm {
+    border-left: 0;
+    background: transparent;
+  }
+
+  .pets-db-table__cell--unlock {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .pets-db-unlock {
+    align-items: flex-start;
+  }
+}
+
 @media (max-width: 760px) {
   .cube-logic-table__head {
     display: none;
@@ -1244,6 +1600,80 @@ button { cursor: pointer; border: none; background: none; }
   font-size: 0.9rem;
   color: var(--text-muted);
   line-height: 1.35;
+}
+
+/* About page */
+.about-section {
+  margin-top: 1rem;
+}
+
+.about-content .rpg-panel-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.about-content p {
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: 1.55;
+  color: var(--parchment);
+}
+
+.about-credit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.65rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border-wood);
+}
+
+.about-credit-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-label);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.about-credit-name {
+  font-family: var(--font-title);
+  font-size: clamp(1.25rem, 2.5vw, 1.55rem);
+  font-weight: 700;
+  color: var(--gold-bright);
+}
+
+.about-discord {
+  margin-top: 0.35rem;
+  padding: 0.85rem 1rem;
+  border: 2px solid var(--border-wood);
+  background: rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.about-discord-text {
+  color: var(--text-muted) !important;
+  font-size: 0.92rem !important;
+}
+
+.about-discord-handle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-family: var(--font-stat);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+}
+
+.about-discord-icon {
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
 /* Gear database page */
@@ -2164,10 +2594,6 @@ button { cursor: pointer; border: none; background: none; }
   align-items: stretch;
 }
 
-.rpg-workspace.rune-open {
-  grid-template-columns: auto minmax(0, 1fr) minmax(200px, auto);
-}
-
 .rpg-workspace > * { min-width: 0; }
 
 .chronicle-col {
@@ -2482,8 +2908,9 @@ button { cursor: pointer; border: none; background: none; }
   max-width: none;
 }
 
-.rpg-screen.is-readonly .game-slot-wrap.is-readonly {
-  pointer-events: none;
+.rpg-screen.is-readonly .game-slot-wrap.is-readonly.is-filled {
+  pointer-events: auto;
+  cursor: default;
 }
 
 .game-slot--readonly {
@@ -3232,25 +3659,6 @@ button { cursor: pointer; border: none; background: none; }
   }
 }
 
-.rpg-workspace.rune-open .hero-hall .game-slot-wrap {
-  width: 72px;
-  height: 72px;
-}
-
-.rpg-workspace.rune-open .hero-hall .loadout-hero-center .hero-portrait {
-  max-width: 300px;
-  max-height: 380px;
-}
-
-.rpg-workspace.rune-open .hero-hall .loadout-hero-center .equip-portrait-frame {
-  max-width: 320px;
-}
-
-.rpg-workspace.rune-open .hero-hall .loadout-grid {
-  grid-template-columns: minmax(10rem, 1fr) auto minmax(10rem, 1fr);
-  gap: 0.6rem 0.8rem;
-}
-
 .equip-center {
   display: flex;
   justify-content: center;
@@ -3288,12 +3696,6 @@ button { cursor: pointer; border: none; background: none; }
   object-fit: contain;
   margin: 0 auto;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5));
-}
-
-.rpg-workspace.rune-open .equip-center .hero-portrait {
-  width: 200px;
-  max-width: 200px;
-  min-width: 200px;
 }
 
 /* Gear slots */
@@ -3906,7 +4308,6 @@ button { cursor: pointer; border: none; background: none; }
 }
 
 .char-sheet-panel .rpg-panel-title,
-.rune-chamber-panel .rpg-panel-title,
 .chronicle-panel .rpg-panel-title {
   font-weight: 700;
 }
@@ -3919,181 +4320,213 @@ button { cursor: pointer; border: none; background: none; }
   font-size: calc(0.82rem * 1.2);
 }
 
-.rune-sidebar {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-  animation: rune-sidebar-in 0.25s ease;
+/* Rune Chamber modal */
+.rune-chamber-modal {
+  width: min(1040px, 100%);
+  max-height: min(88vh, 820px);
 }
 
-.rune-sidebar > .rune-chamber-panel {
+.rune-chamber-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+  max-width: 36rem;
+}
+
+.rune-chamber-modal-body {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem 1.15rem 1.25rem;
 }
 
-@keyframes rune-sidebar-in {
-  from { opacity: 0; transform: translateX(12px); }
-  to { opacity: 1; transform: translateX(0); }
+.rune-chamber-section + .rune-chamber-section {
+  margin-top: 1.15rem;
 }
 
-.rune-chamber-panel {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.rune-chamber-inner {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.rune-chamber-head {
+.rune-chamber-section-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
-  padding-bottom: 0.35rem;
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.45rem;
   border-bottom: 2px dashed rgba(201, 162, 39, 0.22);
+}
+
+.rune-section-icon {
+  width: 1.35rem;
+  height: 1.35rem;
   flex-shrink: 0;
 }
 
-.rune-chamber-kicker {
+.rune-chamber-section-title {
   margin: 0;
-  font-size: clamp(0.74rem, 1.5vw, 0.86rem);
-}
-
-.rune-sidebar .text-kicker {
-  font-size: clamp(0.74rem, 1.5vw, 0.86rem);
-}
-
-.rune-sidebar .node-btn {
-  font-size: 0.85rem;
-}
-
-.rune-chamber-close {
-  flex-shrink: 0;
-}
-
-.rune-inventory {
   flex: 1;
-  min-height: 0;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+  letter-spacing: 0.04em;
+}
+
+.rune-chamber-section-count {
+  font-family: var(--font-stat);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 0.12rem 0.45rem;
+  border: 1px solid var(--border-wood);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.rune-chamber-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.7rem;
+}
+
+.rune-card {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  justify-content: space-between;
-  gap: 0.35rem;
-  overflow: hidden;
-}
-
-.rune-slot {
-  position: relative;
-  display: flex;
-  flex: 1 1 0;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 0;
-  padding: 0.3rem 0.45rem;
+  gap: 0.65rem;
+  padding: 0.8rem 0.85rem;
   border: 2px solid var(--border-wood);
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.32);
   transition: border-color 0.15s, box-shadow 0.15s;
   min-width: 0;
 }
 
-.rune-slot-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.4rem;
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-}
-
-.rune-slot-row--readonly {
-  justify-content: flex-start;
-}
-
-.rune-slot-btn {
-  flex-shrink: 0;
-  width: clamp(1.65rem, 3.2vh, 2rem);
-  height: clamp(1.65rem, 3.2vh, 2rem);
-  font-size: clamp(0.82rem, 1.6vh, 0.95rem);
-}
-
-.rune-slot:hover {
+.rune-card:hover {
   border-color: var(--brass);
   box-shadow: var(--glow-gold);
 }
 
-.rune-slot.rarity-active { border-color: rgba(201, 162, 39, 0.5); }
-.rune-slot.rarity-max {
+.rune-card.rarity-active { border-color: rgba(201, 162, 39, 0.5); }
+.rune-card.rarity-max {
   border-color: rgba(106, 184, 90, 0.5);
   box-shadow: 0 0 10px rgba(106, 184, 90, 0.2);
 }
 
-.rune-gem {
+.rune-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.rune-card-gem {
   position: relative;
   flex-shrink: 0;
-  width: clamp(2.85rem, 7.5vh, 4rem);
-  height: clamp(2.85rem, 7.5vh, 4rem);
+  width: 4.5rem;
+  height: 4.5rem;
   display: grid;
   place-items: center;
   background: url('/assets/ui/frames/frame-rune-slot.png') center/contain no-repeat;
 }
 
-.rune-gem-icon {
-  width: 68%;
-  height: 68%;
+.rune-card-gem-icon {
+  width: 72%;
+  height: 72%;
   object-fit: contain;
 }
 
-.rune-gem-lv {
-  position: absolute;
-  bottom: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: var(--font-stat);
-  font-size: clamp(0.58rem, 1.4vh, 0.68rem);
-  font-weight: 700;
-  padding: 0.06rem 0.28rem;
-  color: #a8acb4;
-  background: #0e1014;
-  border: 1px solid #3a3e44;
-  white-space: nowrap;
+.rune-card-gem-fallback {
+  font-size: 1.5rem;
+  color: var(--gold);
 }
 
-.rune-gem-lv.rarity-active { color: #fce454; border-color: var(--brass); }
-.rune-gem-lv.rarity-max { color: #6ab85a; border-color: #2a5a18; }
-
-.rune-slot-benefit {
-  flex: 1 1 auto;
+.rune-card-meta {
+  flex: 1;
   min-width: 0;
+}
+
+.rune-card-name {
+  margin: 0 0 0.3rem;
   font-family: var(--font-ui);
-  font-size: clamp(0.62rem, 1.55vh, 0.74rem);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--parchment);
+  line-height: 1.25;
+}
+
+.rune-card-benefit {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-muted);
-  text-align: left;
-  line-height: 1.25;
-  padding: 0 0.1rem 0 0.15rem;
-  word-break: break-word;
+  line-height: 1.35;
 }
 
-.rune-slot-benefit.is-active {
+.rune-card-benefit.is-active {
   color: var(--parchment);
 }
 
-.rune-slot.rarity-active .rune-slot-benefit.is-active,
-.rune-slot.rarity-max .rune-slot-benefit.is-active {
+.rune-card.rarity-active .rune-card-benefit.is-active,
+.rune-card.rarity-max .rune-card-benefit.is-active {
   color: var(--gold-bright);
+}
+
+.rune-card-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.rune-card-btn {
+  width: 2.1rem;
+  height: 2.1rem;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.rune-card-level {
+  min-width: 3.25rem;
+  text-align: center;
+  font-family: var(--font-stat);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  color: #a8acb4;
+  background: #0e1014;
+  border: 1px solid #3a3e44;
+}
+
+.rune-card-level.rarity-active { color: #fce454; border-color: var(--brass); }
+.rune-card-level.rarity-max { color: #6ab85a; border-color: #2a5a18; }
+
+@media (max-width: 720px) {
+  .rune-chamber-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rune-chamber-modal {
+    max-height: 92vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .rune-chamber-modal-body {
+    padding: 0.75rem 0.85rem 1rem;
+  }
+
+  .rune-card-gem {
+    width: 3.75rem;
+    height: 3.75rem;
+  }
+
+  .rune-card-name {
+    font-size: 0.84rem;
+  }
+
+  .rune-card-benefit {
+    font-size: 0.78rem;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -4102,17 +4535,18 @@ button { cursor: pointer; border: none; background: none; }
 
 .rpg-tooltip {
   position: absolute;
-  bottom: calc(100% + 6px);
+  bottom: calc(100% + 8px);
   left: 50%;
   transform: translateX(-50%);
-  padding: 0.45rem 0.6rem;
-  min-width: 8rem;
-  max-width: 14rem;
-  font-size: 0.78rem;
+  padding: 0.65rem 0.85rem;
+  min-width: 11rem;
+  max-width: min(18rem, 88vw);
+  font-size: 0.875rem;
+  line-height: 1.4;
   color: var(--parchment);
   background: linear-gradient(180deg, #1a1612, #0c0a08);
   border: 2px solid var(--gold);
-  box-shadow: 0 4px 0 #0a0604, var(--glow-gold);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65), 0 4px 0 #0a0604, var(--glow-gold);
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
@@ -4121,14 +4555,122 @@ button { cursor: pointer; border: none; background: none; }
   text-align: center;
 }
 
-.rune-slot .rpg-tooltip {
-  font-size: 0.85rem;
+.rpg-tooltip.is-floating {
+  position: fixed;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  opacity: 0;
+  visibility: hidden;
 }
 
-.rune-slot:hover .rpg-tooltip,
-.game-slot-wrap:hover .rpg-tooltip {
+.rpg-tooltip.is-floating.is-visible {
   opacity: 1;
   visibility: visible;
+}
+
+.game-slot-wrap:hover .rpg-tooltip:not(.is-floating),
+.game-slot-wrap:focus-within .rpg-tooltip:not(.is-floating) {
+  opacity: 1;
+  visibility: visible;
+}
+
+.gear-tooltip {
+  text-align: left;
+  min-width: 12rem;
+  max-width: min(20rem, 88vw);
+}
+
+.gear-tooltip-name {
+  margin: 0 0 0.35rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.gear-tooltip-meta {
+  margin: 0 0 0.45rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.gear-tooltip-section {
+  margin: 0.45rem 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #c9a227;
+}
+
+.gear-tooltip-list {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  font-size: 0.84rem;
+  color: var(--parchment);
+  line-height: 1.45;
+}
+
+.gear-tooltip-sockets {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.gear-tooltip-socket {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.gear-tooltip-socket-icon {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.gear-tooltip-socket-empty {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.gear-tooltip-socket-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.gear-tooltip-socket-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #c9a227;
+}
+
+.gear-tooltip-socket-name {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--parchment);
+  line-height: 1.25;
+}
+
+.gear-tooltip-socket-effect {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.3;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -4136,6 +4678,17 @@ button { cursor: pointer; border: none; background: none; }
 /* -------------------------------------------------------------------------- */
 
 .modal-root { position: relative; z-index: 200; }
+
+.modal-root--portal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.modal-root--portal:not(:empty) {
+  pointer-events: auto;
+}
 
 .modal-backdrop {
   position: fixed;
@@ -4575,11 +5128,13 @@ input:focus, select:focus, textarea:focus {
 .socket-modal .material-picker {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(52px, 100%), 1fr));
   gap: 0.45rem;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding: 0.5rem;
+  padding: 0.5rem 0.5rem 3rem;
   border: 2px solid var(--border-wood);
   background: rgba(6, 4, 6, 0.6);
   align-content: start;
@@ -4589,8 +5144,10 @@ input:focus, select:focus, textarea:focus {
   position: relative;
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 100%;
+  max-width: 52px;
+  aspect-ratio: 1;
+  justify-self: center;
   padding: 2px;
   border: 2px solid var(--border-wood);
   background: linear-gradient(180deg, #221c18, #12100c);
@@ -4622,21 +5179,43 @@ input:focus, select:focus, textarea:focus {
 
 .material-chip-tooltip {
   position: absolute;
-  bottom: calc(100% + 4px);
+  top: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  padding: 0.2rem 0.5rem;
-  font-size: 0.78rem;
-  white-space: nowrap;
-  background: #14100c;
-  border: 1px solid var(--gold);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  text-align: center;
+  white-space: normal;
+  min-width: max-content;
+  max-width: min(240px, 80vw);
+  color: var(--parchment);
+  background: linear-gradient(180deg, #1a1612, #0c0a08);
+  border: 2px solid var(--gold);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.65), 0 4px 0 #0a0604, var(--glow-gold);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  z-index: 5;
+  z-index: 30;
 }
 
-.material-chip:hover .material-chip-tooltip {
+.material-chip-tooltip-name {
+  display: block;
+  font-weight: 700;
+  color: var(--gold-bright);
+  font-size: 0.9rem;
+}
+
+.material-chip-tooltip-effects {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--parchment);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.material-chip:hover .material-chip-tooltip,
+.material-chip:focus-visible .material-chip-tooltip {
   opacity: 1;
   visibility: visible;
 }
@@ -4927,8 +5506,26 @@ input:focus, select:focus, textarea:focus {
 }
 
 .equipment-layout--compact .game-slot-wrap {
+  overflow: visible;
+}
+
+.equipment-layout--compact .game-slot {
   transform: scale(0.92);
   transform-origin: center;
+}
+
+.equipment-layout--compact .game-slot:hover,
+.equipment-layout--compact .game-slot:focus-visible {
+  transform: scale(0.92) translateY(-2px);
+}
+
+.helper-equipment,
+.helper-equipment .rpg-panel-inner,
+.helper-equipment .equipment-layout,
+.helper-equipment .equip-side,
+.helper-equipment .equip-row,
+.game-slot-wrap {
+  overflow: visible;
 }
 
 .helper-export {
@@ -5100,17 +5697,6 @@ input:focus, select:focus, textarea:focus {
     justify-content: flex-start;
   }
 
-  .rune-sidebar {
-    min-height: 0;
-    align-self: stretch;
-    overflow: hidden;
-  }
-
-  .rune-chamber-panel {
-    flex: 1;
-    min-height: 0;
-  }
-
   /* Guides — page may scroll vertically */
   .rpg-page:has(.page-guides) {
     overflow-x: hidden;
@@ -5209,14 +5795,6 @@ input:focus, select:focus, textarea:focus {
 
   .rpg-workspace {
     grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .rpg-workspace.rune-open {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .rpg-workspace.rune-open .rune-sidebar {
-    grid-column: 1 / -1;
   }
 }
 
@@ -5496,11 +6074,10 @@ input:focus, select:focus, textarea:focus {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .loading-spinner,
-  .tree-tier.is-current .tree-gate-stone,
-  .rune-sidebar { animation: none; }
+  .tree-tier.is-current .tree-gate-stone { animation: none; }
   .rpg-btn-shine { display: none; }
   .game-slot:hover,
-  .rune-slot:hover,
+  .rune-card:hover,
   .material-chip:hover,
   .gear-card:hover,
   .hslot:hover { transform: none; }

@@ -24,6 +24,7 @@ const NAV_ITEMS: NavItem[] = [
     href: navHref('guides', 'prepared-builds'),
   },
   { section: 'utils', labelKey: 'nav.utils', icon: '🧰', href: navHref('utils') },
+  { section: 'about', labelKey: 'nav.about', icon: '👤', href: navHref('about') },
 ];
 
 const SECTION_TITLE_KEYS: Record<AppSection, TranslationKey> = {
@@ -31,6 +32,7 @@ const SECTION_TITLE_KEYS: Record<AppSection, TranslationKey> = {
   build: 'nav.build',
   guides: 'nav.guides',
   utils: 'nav.utilities',
+  about: 'nav.about',
 };
 
 const SUB_TITLE_KEYS: Partial<Record<string, TranslationKey>> = {
@@ -38,6 +40,7 @@ const SUB_TITLE_KEYS: Partial<Record<string, TranslationKey>> = {
   prepared: 'nav.sub.prepared',
   'prepared-builds': 'nav.sub.preparedBuildGuides',
   'cube-level-logic': 'guides.cubeLevelLogic.title',
+  'pets-farming': 'guides.petsFarming.title',
   gear: 'nav.sub.gear',
   'build-author': 'nav.sub.buildAuthor',
 };
@@ -71,13 +74,18 @@ export function mountAppShell(appRoot: HTMLElement): HTMLElement {
     <a class="skip-link" href="#page-content" id="shell-skip-link">${t('shell.skipLink')}</a>
     <div class="rpg-shell">
       <aside class="rpg-nav" aria-label="Guild menu">
-        <div class="rpg-nav-brand">
+        <a
+          class="rpg-nav-brand"
+          href="${navHref('dashboard')}"
+          id="shell-brand-link"
+          aria-label="${t('nav.dashboard')}"
+        >
           <div class="rpg-nav-crest" aria-hidden="true">⚜</div>
           <div class="rpg-nav-brand-text">
             <p class="rpg-nav-title" id="shell-brand-title">${t('shell.wikiHelper')}</p>
             <p class="rpg-nav-sub" id="shell-brand-sub">${t('shell.taskbarHero')}</p>
           </div>
-        </div>
+        </a>
         <nav class="rpg-nav-list" aria-label="Main navigation">
           ${NAV_ITEMS.map((item) => {
             const link = `
@@ -117,6 +125,9 @@ export function mountAppShell(appRoot: HTMLElement): HTMLElement {
 export function refreshShellTranslations(route: ParsedRoute): void {
   const skip = document.getElementById('shell-skip-link');
   if (skip) skip.textContent = t('shell.skipLink');
+
+  const brandLink = document.getElementById('shell-brand-link');
+  if (brandLink) brandLink.setAttribute('aria-label', t('nav.dashboard'));
 
   const brandTitle = document.getElementById('shell-brand-title');
   if (brandTitle) brandTitle.textContent = t('shell.wikiHelper');

@@ -11,7 +11,14 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'test
 const ENRICHED_BASE = 'https://www.taskbarherowiki.com/data';
 const WIKI_BASE = 'https://www.taskbarhero.wiki/data';
 
-const ENRICHED_FILES = ['items.json', 'heroes.json', 'effects.json', 'runes.json', 'meta.json'];
+const ENRICHED_FILES = [
+  'items.json',
+  'heroes.json',
+  'effects.json',
+  'runes.json',
+  'meta.json',
+  'pets.json',
+];
 
 const WIKI_FILES = [
   'heroes.json',
