@@ -1,4 +1,4 @@
-import type { EnrichedHero, HeroSaveData, HeroTreeGroup, PlayerSaveData } from '../types';
+import type { EnrichedHero, HeroSaveData, HeroTreeGroup, PlayerSaveData } from '@/core/types';
 import {
   getPassiveLevel,
   heroLevelFromSave,

@@ -5,17 +5,17 @@ import {
   heroLevelFromSave,
   isAttributeGroupUnlocked,
   totalInvestedSkillPoints,
-} from '../simulator/build-state';
-import { canIncrementSkillAtKey, canAddActiveSkillPoint } from '../simulator/skill-invest';
+} from '@/core/simulator/build-state';
+import { canIncrementSkillAtKey, canAddActiveSkillPoint } from '@/core/simulator/skill-invest';
 import {
   passiveNodeLabel,
   skillIconUrl,
   skillNodeFrameUrl,
   skillSectionLockedIconUrl,
-} from '../data/skill-ui';
-import { heroNameLabel } from '../i18n/hero-class';
-import { t } from '../i18n';
-import type { EnrichedHero, HeroSaveData, PassiveNode, PlayerSaveData } from '../types';
+} from '@/presentation/skill-ui';
+import { heroNameLabel } from '@/i18n/hero-class';
+import { t } from '@/i18n';
+import type { EnrichedHero, HeroSaveData, PassiveNode, PlayerSaveData } from '@/core/types';
 
 export type SkillPathPanelVariant = 'author' | 'simulator';
 

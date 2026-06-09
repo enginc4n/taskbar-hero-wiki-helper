@@ -1,5 +1,5 @@
-import { getSelectedHero } from '../simulator/build-state';
-import type { ComputedStats, HeroSaveData, PlayerSaveData, RefMaps } from '../types';
+import { getSelectedHero } from '@/core/simulator/build-state';
+import type { ComputedStats, HeroSaveData, PlayerSaveData, RefMaps } from '@/core/types';
 import { computeAllStats, computeBasicDps } from './stats';
 
 export interface CombatSummary {

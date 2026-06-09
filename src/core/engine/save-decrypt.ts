@@ -83,7 +83,7 @@ function parseSaveJson(text: string) {
   }
 
   return {
-    PlayerSaveData: unwrapEs3(parsed.PlayerSaveData) as import('../types').PlayerSaveData,
+    PlayerSaveData: unwrapEs3(parsed.PlayerSaveData) as import('@/core/types').PlayerSaveData,
     AccountSaveData: unwrapEs3(parsed.AccountSaveData),
     SystemInfo: unwrapEs3(parsed.SystemInfo),
     _raw: parsed,

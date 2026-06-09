@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
+const srcDir = path.resolve(rootDir, 'src');
 const testDataDir = path.resolve(rootDir, 'test');
 
 function serveTestData(): Plugin {
@@ -50,6 +51,11 @@ const wikiProxy = {
 
 export default defineConfig({
   base: process.env.BASE_PATH ?? '/',
+  resolve: {
+    alias: {
+      '@': srcDir,
+    },
+  },
   plugins: [serveTestData()],
   server: {
     port: 5173,

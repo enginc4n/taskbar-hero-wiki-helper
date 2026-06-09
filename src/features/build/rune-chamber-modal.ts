@@ -1,9 +1,9 @@
-import { heroCombatRuneGroups, runeBenefitDescription, runeBenefitLabel } from '../data/runes';
-import { runeIconUrl } from '../data/icons';
-import { rarityClass } from '../data/rpg-ui';
-import { statIconHtml, type StatIconKey } from '../data/stat-icons';
-import { t, type TranslationKey } from '../i18n';
-import type { RuneGraph, RuneNode } from '../types';
+import { heroCombatRuneGroups, runeBenefitDescription, runeBenefitLabel } from '@/presentation/runes';
+import { runeIconUrl } from '@/presentation/icons';
+import { rarityClass } from '@/presentation/rpg-ui';
+import { statIconHtml, type StatIconKey } from '@/presentation/stat-icons';
+import { t, type TranslationKey } from '@/i18n';
+import type { RuneGraph, RuneNode } from '@/core/types';
 
 const RUNE_STAT_LABEL_KEYS: Partial<Record<string, TranslationKey>> = {
   AllHeroAttackDamage: 'stat.attackDamage',

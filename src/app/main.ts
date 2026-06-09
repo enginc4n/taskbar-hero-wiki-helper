@@ -1,22 +1,24 @@
-import { loadAllData } from './data/api';
-import { initLocale, onLocaleChange } from './i18n';
-import { parseRoute, type ParsedRoute } from './router';
-import { renderDashboardPage } from './ui/dashboard-page';
-import { renderCubeLevelLogicGuidePage } from './ui/cube-level-logic-guide-page';
-import { renderPetsFarmingGuidePage } from './ui/pets-farming-guide-page';
-import { renderGuidesPage } from './ui/guides-page';
-import { renderPreparedBuildGuidesPage } from './ui/prepared-build-guides-page';
+import { loadAllData } from '@/data/api';
+import { initLocale, onLocaleChange } from '@/i18n';
+import { parseRoute, type ParsedRoute } from '@/app/router';
+import type { AppContext } from '@/app/context';
+import { renderDashboardPage } from '@/features/dashboard/dashboard-page';
+import { renderCubeLevelLogicGuidePage } from '@/features/guides/cube-level-logic-guide-page';
+import { renderPetsFarmingGuidePage } from '@/features/guides/pets-farming-guide-page';
+import { renderGuidesPage } from '@/features/guides/guides-page';
+import { renderPreparedBuildGuidesPage } from '@/features/guides/prepared-build-guides-page';
 import {
   mountAppShell,
   refreshShellTranslations,
   renderShellError,
   renderShellLoading,
   updateShellNav,
-} from './ui/shell';
-import { renderSimulatorPage, type SimulatorContext } from './ui/simulator-page';
-import { ensureGearSlotTooltips } from './ui/gear-slot-tooltips';
-import { renderAboutPage } from './ui/about-page';
-import { renderUtilsPage } from './ui/utils-page';
+} from '@/shared/shell';
+import { renderSimulatorPage } from '@/features/build/simulator-page';
+import { ensureGearSlotTooltips } from '@/shared/gear-slot-tooltips';
+import { renderAboutPage } from '@/features/about/about-page';
+import { renderUtilsPage } from '@/features/utils/utils-page';
+import '@/styles/style.css';
 
 function publicAssetUrl(relativePath: string): string {
   return `${import.meta.env.BASE_URL}${relativePath}`.replace(/\/{2,}/g, '/');
@@ -33,7 +35,7 @@ applyShellTheme();
 initLocale();
 ensureGearSlotTooltips();
 
-let appContext: SimulatorContext | null = null;
+let appContext: AppContext | null = null;
 let pageRoot: HTMLElement | null = null;
 
 function renderRoute(route: ParsedRoute): void {

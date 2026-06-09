@@ -7,8 +7,8 @@ import {
   setPassiveLevel,
   setRuneLevel,
   syncAttributeGroupUnlocks,
-} from '../simulator/build-state';
-import type { EnchantEntry, EnrichedHero, EnrichedItem, HeroPart, PlayerSaveData } from '../types';
+} from '@/core/simulator/build-state';
+import type { EnchantEntry, EnrichedHero, EnrichedItem, HeroPart, PlayerSaveData } from '@/core/types';
 
 export const PREPARED_LEVEL_STEPS = [11, 21, 31, 41, 51, 61, 71, 81, 91, 101] as const;
 

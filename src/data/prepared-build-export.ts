@@ -3,7 +3,7 @@ import {
   getRuneLevel,
   heroLevelFromSave,
   partIndex,
-} from '../simulator/build-state';
+} from '@/core/simulator/build-state';
 import type {
   PreparedBuild,
   PreparedBuildManifestEntry,
@@ -11,8 +11,8 @@ import type {
   PreparedGearEntry,
   PreparedLevelStep,
 } from './prepared-builds';
-import type { HeroPart, PlayerSaveData } from '../types';
-import { HERO_PARTS } from '../types';
+import type { HeroPart, PlayerSaveData } from '@/core/types';
+import { HERO_PARTS } from '@/core/types';
 
 export { type PreparedBuild, type PreparedBuildManifestEntry } from './prepared-builds';
 

@@ -1,8 +1,8 @@
-import { t, type TranslationKey } from '../i18n';
-import { navHref } from '../router';
-import type { SimulatorContext } from './simulator-page';
-import { renderGearPage } from './gear-page';
-import { renderBuildHelperPage } from './build-helper-page';
+import { t, type TranslationKey } from '@/i18n';
+import { navHref } from '@/app/router';
+import type { AppContext } from '@/app/context';
+import { renderGearPage } from '@/features/gear/gear-page';
+import { renderBuildHelperPage } from '@/features/build/build-helper-page';
 
 const UTIL_TILES: {
   id: string;
@@ -27,7 +27,7 @@ const UTIL_TILES: {
   },
 ];
 
-export function renderUtilsHub(root: HTMLElement, _ctx: SimulatorContext): void {
+export function renderUtilsHub(root: HTMLElement, _ctx: AppContext): void {
   root.innerHTML = `
     <div class="page-utils">
       <header class="page-hero rpg-panel">
@@ -57,7 +57,7 @@ export function renderUtilsHub(root: HTMLElement, _ctx: SimulatorContext): void 
 
 export function renderUtilsPage(
   root: HTMLElement,
-  ctx: SimulatorContext,
+  ctx: AppContext,
   sub?: string,
 ): void {
   switch (sub) {

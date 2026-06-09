@@ -1,4 +1,4 @@
-import { mergeRefMaps, buildRefMaps, enrichedItemToDetail } from '../data/adapters';
+import { mergeRefMaps, buildRefMaps, enrichedItemToDetail } from '@/data/adapters';
 import {
   PREPARED_LEVEL_STEPS,
   applyPreparedMilestone,
@@ -8,7 +8,7 @@ import {
   normalizePreparedBuild,
   type PreparedBuild,
   type PreparedBuildManifestEntry,
-} from '../data/prepared-builds';
+} from '@/data/prepared-builds';
 import { clearSimulatorModalRoot, ensureSimulatorModalRoot } from './modal-portal';
 import { openRuneChamberModal } from './rune-chamber-modal';
 import {
@@ -19,14 +19,14 @@ import {
   heroIllustUrl,
   preloadHeroIllustFrames,
   renderGearSlotHtml,
-} from '../data/game-ui';
-import { itemIconHtml, itemIconUrl } from '../data/icons';
-import { statIconHtml } from '../data/stat-icons';
-import { classGlyph, RUNE_VAULT_ICON } from '../data/rpg-ui';
-import { computeCombatSummary, formatDpsBarSummary } from '../engine/combat-summary';
-import { compareStats, formatStatValue, formatDelta } from '../engine/stats';
-import type { ComputedStats } from '../types';
-import { parseSaveFile, isSaveFileError, DEFAULT_ES3_PASSWORD } from '../engine/save-decrypt';
+} from '@/presentation/game-ui';
+import { itemIconHtml, itemIconUrl } from '@/presentation/icons';
+import { statIconHtml } from '@/presentation/stat-icons';
+import { classGlyph, RUNE_VAULT_ICON } from '@/presentation/rpg-ui';
+import { computeCombatSummary, formatDpsBarSummary } from '@/core/engine/combat-summary';
+import { compareStats, formatStatValue, formatDelta } from '@/core/engine/stats';
+import type { ComputedStats } from '@/core/types';
+import { parseSaveFile, isSaveFileError, DEFAULT_ES3_PASSWORD } from '@/core/engine/save-decrypt';
 import {
   clonePlayerSave,
   createEmptySave,
@@ -43,23 +43,20 @@ import {
   syncAttributeGroupUnlocks,
   syncSaveItemKeys,
   type SocketSlotState,
-} from '../simulator/build-state';
-import { canAddActiveSkillPoint } from '../simulator/skill-invest';
+} from '@/core/simulator/build-state';
+import { canAddActiveSkillPoint } from '@/core/simulator/skill-invest';
 import type {
   EffectMaterial,
   EnrichedHero,
   EnrichedItem,
   HeroPart,
-  MetaData,
   PlayerSaveData,
   RefMaps,
-  RuneGraph,
-} from '../types';
-import { heroClassLabel, heroNameLabel } from '../i18n/hero-class';
-import { partLabel, t, type TranslationKey } from '../i18n';
-import type { EnrichedPet } from '../data/pets-farming';
-import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, itemMatchesHeroClass, type GearFilterState } from '../gear/filter';
-import { navHref, syncHash } from '../router';
+} from '@/core/types';
+import { heroClassLabel, heroNameLabel } from '@/i18n/hero-class';
+import { partLabel, t, type TranslationKey } from '@/i18n';
+import { filterGear, DEFAULT_GEAR_FILTER, gradeClass, itemMatchesHeroClass, type GearFilterState } from '@/features/gear/filter';
+import { navHref, syncHash } from '@/app/router';
 import { openSocketEditorModal } from './socket-editor-modal';
 import {
   captureSkillPathScrollTop,
@@ -68,17 +65,7 @@ import {
   restoreSkillPathScrollTop,
   type SkillPathPanelContext,
 } from './skill-path-panel';
-
-export interface SimulatorContext {
-  items: EnrichedItem[];
-  allItems: EnrichedItem[];
-  heroes: EnrichedHero[];
-  effects: EffectMaterial[];
-  runes: RuneGraph;
-  meta: MetaData;
-  pets: EnrichedPet[];
-  wiki: Parameters<typeof buildRefMaps>[0];
-}
+import type { AppContext } from '@/app/context';
 
 interface SimState {
   baseline: PlayerSaveData | null;
@@ -111,7 +98,7 @@ export interface SimulatorPageOptions {
 
 export function renderSimulatorPage(
   root: HTMLElement,
-  ctx: SimulatorContext,
+  ctx: AppContext,
   options: SimulatorPageOptions = {},
 ): void {
   const refs = mergeRefMaps(buildRefMaps(ctx.wiki), {

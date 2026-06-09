@@ -1,4 +1,4 @@
-import { GAME_UI_BASE } from './game-ui';
+import { GAME_UI_BASE } from '@/presentation/game-ui';
 
 export interface PetSlotDisplay {
   scaleX: number;

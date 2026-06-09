@@ -1,8 +1,8 @@
-import { formatStatLabel, formatStatValue } from '../engine/stats';
-import { t, type TranslationKey } from '../i18n';
-import { getEffectGroupsForGear, getSocketSlots, modTypeToNumber } from '../simulator/build-state';
-import type { EffectGroup, EffectMaterial, EnchantEntry, EnrichedItem } from '../types';
-import { STAT_NAME_BY_TYPE } from '../types';
+import { formatStatLabel, formatStatValue } from '@/core/engine/stats';
+import { t, type TranslationKey } from '@/i18n';
+import { getEffectGroupsForGear, getSocketSlots, modTypeToNumber } from '@/core/simulator/build-state';
+import type { EffectGroup, EffectMaterial, EnchantEntry, EnrichedItem } from '@/core/types';
+import { STAT_NAME_BY_TYPE } from '@/core/types';
 import { itemIconHtml } from './icons';
 
 const STAT_SCALE: Record<string, number> = {

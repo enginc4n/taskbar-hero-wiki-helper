@@ -1,6 +1,6 @@
-import { t, type TranslationKey } from '../i18n';
-import { navHref } from '../router';
-import type { SimulatorContext } from './simulator-page';
+import { t, type TranslationKey } from '@/i18n';
+import { navHref } from '@/app/router';
+import type { AppContext } from '@/app/context';
 
 interface GuideCategory {
   id: string;
@@ -50,7 +50,7 @@ const LIVE_GUIDES: {
   },
 ];
 
-export function renderGuidesPage(root: HTMLElement, _ctx: SimulatorContext): void {
+export function renderGuidesPage(root: HTMLElement, _ctx: AppContext): void {
   let activeCategory = 'all';
   let searchQuery = '';
 

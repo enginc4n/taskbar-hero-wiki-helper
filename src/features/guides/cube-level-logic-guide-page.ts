@@ -1,7 +1,7 @@
-import { bundledGameUiUrl } from '../data/game-ui';
-import { t } from '../i18n';
-import { navHref } from '../router';
-import type { SimulatorContext } from './simulator-page';
+import { bundledGameUiUrl } from '@/presentation/game-ui';
+import { t } from '@/i18n';
+import { navHref } from '@/app/router';
+import type { AppContext } from '@/app/context';
 
 type Difficulty = 'normal' | 'nightmare' | 'hell' | 'torment';
 
@@ -133,7 +133,7 @@ function renderTableRow(row: CubeLevelRow): string {
     </div>`;
 }
 
-export function renderCubeLevelLogicGuidePage(root: HTMLElement, _ctx: SimulatorContext): void {
+export function renderCubeLevelLogicGuidePage(root: HTMLElement, _ctx: AppContext): void {
   root.innerHTML = `
     <div class="page-guides page-cube-logic">
       <header class="page-hero rpg-panel">

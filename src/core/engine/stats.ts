@@ -6,8 +6,8 @@ import type {
   RefMaps,
   StatContribution,
   StatDelta,
-} from '../types';
-import { STAT_NAME_BY_TYPE } from '../types';
+} from '@/core/types';
+import { STAT_NAME_BY_TYPE } from '@/core/types';
 
 const STAT_FMT: Record<string, { scale: number; fmt: string }> = {
   AttackDamage: { scale: 1, fmt: 'int' },

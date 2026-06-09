@@ -1,6 +1,6 @@
-import type { EnrichedItem, MetaData } from '../types';
-import { itemIconHtml } from '../data/icons';
-import { t } from '../i18n';
+import type { EnrichedItem, MetaData } from '@/core/types';
+import { itemIconHtml } from '@/presentation/icons';
+import { t } from '@/i18n';
 import {
   DEFAULT_GEAR_FILTER,
   filterGear,
@@ -8,7 +8,7 @@ import {
   gradeClass,
   paginate,
   type GearFilterState,
-} from '../gear/filter';
+} from '@/features/gear/filter';
 
 export interface GearPageContext {
   items: EnrichedItem[];

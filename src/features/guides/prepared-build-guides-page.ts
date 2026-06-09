@@ -1,16 +1,16 @@
-import { gameUiUrl } from '../data/game-ui';
-import { itemIconUrl } from '../data/icons';
-import { loadPreparedBuildIndex, type PreparedBuildManifestEntry } from '../data/prepared-builds';
-import { classGlyph } from '../data/rpg-ui';
-import { heroClassLabel, heroNameLabel } from '../i18n/hero-class';
-import { t } from '../i18n';
-import { navHref } from '../router';
-import type { EnrichedHero } from '../types';
-import type { SimulatorContext } from './simulator-page';
+import { gameUiUrl } from '@/presentation/game-ui';
+import { itemIconUrl } from '@/presentation/icons';
+import { loadPreparedBuildIndex, type PreparedBuildManifestEntry } from '@/data/prepared-builds';
+import { classGlyph } from '@/presentation/rpg-ui';
+import { heroClassLabel, heroNameLabel } from '@/i18n/hero-class';
+import { t } from '@/i18n';
+import { navHref } from '@/app/router';
+import type { EnrichedHero } from '@/core/types';
+import type { AppContext } from '@/app/context';
 
 const HERO_MENU_MIN_WIDTH = 220;
 
-export function renderPreparedBuildGuidesPage(root: HTMLElement, ctx: SimulatorContext): void {
+export function renderPreparedBuildGuidesPage(root: HTMLElement, ctx: AppContext): void {
   let searchQuery = '';
   let heroFilterKey: number | null = null;
   let preparedBuilds: PreparedBuildManifestEntry[] = [];

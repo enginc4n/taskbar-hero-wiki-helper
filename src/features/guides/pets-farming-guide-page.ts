@@ -8,11 +8,11 @@ import {
   type EnrichedPetStat,
   type PetFarmSpot,
   type PetStatCategory,
-} from '../data/pets-farming';
-import { t } from '../i18n';
-import type { TranslationKey } from '../i18n/en';
-import { navHref } from '../router';
-import type { SimulatorContext } from './simulator-page';
+} from '@/content/guides/pets-farming';
+import { t } from '@/i18n';
+import type { TranslationKey } from '@/i18n/en';
+import { navHref } from '@/app/router';
+import type { AppContext } from '@/app/context';
 
 const DIFFICULTY_LABEL_KEYS = {
   torment: 'guides.cubeLevelLogic.difficulty.torment',
@@ -217,7 +217,7 @@ function renderSection(
       </section>`;
 }
 
-export function renderPetsFarmingGuidePage(root: HTMLElement, ctx: SimulatorContext): void {
+export function renderPetsFarmingGuidePage(root: HTMLElement, ctx: AppContext): void {
   const pets = ctx.pets ?? [];
   const farmable = pets.filter((p) => !p.dlc);
   const dlc = pets.filter((p) => p.dlc);

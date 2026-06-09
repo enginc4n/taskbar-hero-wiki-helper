@@ -1,5 +1,5 @@
-import { t, type TranslationKey } from '../i18n';
-import { navHref, parseRoute, type AppSection, type ParsedRoute } from '../router';
+import { t, type TranslationKey } from '@/i18n';
+import { navHref, parseRoute, type AppSection, type ParsedRoute } from '@/app/router';
 
 export interface NavItem {
   section: AppSection;

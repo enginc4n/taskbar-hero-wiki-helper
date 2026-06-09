@@ -1,4 +1,4 @@
-import type { ComputedStats } from '../types';
+import type { ComputedStats } from '@/core/types';
 
 export type StatIconKey = keyof ComputedStats | 'Dps' | 'Attributes';
 

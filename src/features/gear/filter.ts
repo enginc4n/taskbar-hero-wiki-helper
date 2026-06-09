@@ -1,5 +1,5 @@
-import type { EnrichedItem, GearCategory } from '../types';
-import { GEAR_CATEGORY_SLOTS } from '../types';
+import type { EnrichedItem, GearCategory } from '@/core/types';
+import { GEAR_CATEGORY_SLOTS } from '@/core/types';
 
 export interface GearFilterState {
   grade: string;

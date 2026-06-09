@@ -1,6 +1,6 @@
 import { en, type TranslationKey } from './en';
 import { tr } from './tr';
-import type { HeroPart } from '../types';
+import type { HeroPart } from '@/core/types';
 
 export type Locale = 'en' | 'tr';
 

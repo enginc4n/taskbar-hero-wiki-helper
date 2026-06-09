@@ -1,5 +1,5 @@
-import { formatStatLabel } from '../engine/stats';
-import type { PassiveNode } from '../types';
+import { formatStatLabel } from '@/core/engine/stats';
+import type { PassiveNode } from '@/core/types';
 
 const GAME_UI = 'https://www.taskbarhero.wiki/game/ui';
 const SKILL_UI = 'https://www.taskbarhero.wiki/game/skills';

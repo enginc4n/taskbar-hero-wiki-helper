@@ -1,11 +1,11 @@
-import type { EnrichedPet } from './pets-farming';
+import type { EnrichedPet } from '@/content/guides/pets-farming';
 import type {
   EffectMaterial,
   EnrichedHero,
   EnrichedItem,
   MetaData,
   RuneGraph,
-} from '../types';
+} from '@/core/types';
 
 const ENRICHED_REMOTE = 'https://www.taskbarherowiki.com/data';
 const WIKI_REMOTE = 'https://www.taskbarhero.wiki/data';
@@ -89,14 +89,14 @@ export async function loadWikiRefData() {
     pets,
     petStats,
   ] = await Promise.all([
-    fetchJson<import('../types').WikiHero[]>(`${wikiBase}/heroes.json`),
-    fetchJson<import('../types').WikiPassive[]>(`${wikiBase}/passive_skills.json`),
-    fetchJson<import('../types').WikiItem[]>(`${wikiBase}/items.json`),
-    fetchJson<Record<string, import('../types').WikiItemDetail>>(`${wikiBase}/items_detail.json`),
-    fetchJson<import('../types').WikiGearType[]>(`${wikiBase}/gear_types.json`),
-    fetchJson<{ nodes: import('../types').WikiRuneNode[] }>(`${wikiBase}/rune_tree.json`),
-    fetchJson<import('../types').WikiPet[]>(`${wikiBase}/t/pets.json`),
-    fetchJson<import('../types').WikiPetStat[]>(`${wikiBase}/t/pet_stats.json`),
+    fetchJson<import('@/core/types').WikiHero[]>(`${wikiBase}/heroes.json`),
+    fetchJson<import('@/core/types').WikiPassive[]>(`${wikiBase}/passive_skills.json`),
+    fetchJson<import('@/core/types').WikiItem[]>(`${wikiBase}/items.json`),
+    fetchJson<Record<string, import('@/core/types').WikiItemDetail>>(`${wikiBase}/items_detail.json`),
+    fetchJson<import('@/core/types').WikiGearType[]>(`${wikiBase}/gear_types.json`),
+    fetchJson<{ nodes: import('@/core/types').WikiRuneNode[] }>(`${wikiBase}/rune_tree.json`),
+    fetchJson<import('@/core/types').WikiPet[]>(`${wikiBase}/t/pets.json`),
+    fetchJson<import('@/core/types').WikiPetStat[]>(`${wikiBase}/t/pet_stats.json`),
   ]);
 
   return { heroes, passives, items, itemsDetail, gearTypes, runeTree, pets, petStats };

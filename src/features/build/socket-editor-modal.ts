@@ -1,13 +1,13 @@
-import { formatStatLabel } from '../engine/stats';
-import { itemIconHtml } from '../data/icons';
-import { t, type TranslationKey } from '../i18n';
+import { formatStatLabel } from '@/core/engine/stats';
+import { itemIconHtml } from '@/presentation/icons';
+import { t, type TranslationKey } from '@/i18n';
 import {
   applySocketsToItem,
   getEffectGroupsForGear,
   getSocketSlots,
   type SocketSlotState,
-} from '../simulator/build-state';
-import type { EffectGroup, EffectMaterial, EnrichedItem, ItemSaveData } from '../types';
+} from '@/core/simulator/build-state';
+import type { EffectGroup, EffectMaterial, EnrichedItem, ItemSaveData } from '@/core/types';
 
 export interface SocketEditorModalOptions {
   modalRoot: HTMLElement;

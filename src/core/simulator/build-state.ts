@@ -10,9 +10,9 @@ import type {
   ItemSaveData,
   PlayerSaveData,
   RuneSaveEntry,
-} from '../types';
-import { HERO_PARTS, STAT_TYPE_BY_NAME } from '../types';
-import { enrichedItemToDetail } from '../data/adapters';
+} from '@/core/types';
+import { HERO_PARTS, STAT_TYPE_BY_NAME } from '@/core/types';
+import { enrichedItemToDetail } from '@/data/adapters';
 
 let nextUniqueId = 1_000_000;
 
@@ -39,7 +39,7 @@ export function canInvestMoreSkillPoints(save: PlayerSaveData): boolean {
   return totalInvestedSkillPoints(save) < MAX_HERO_SKILL_POINTS;
 }
 
-function normalizeAttributeSaveDatas(raw: unknown): import('../types').AttributeSaveEntry[] {
+function normalizeAttributeSaveDatas(raw: unknown): import('@/core/types').AttributeSaveEntry[] {
   const rows = Array.isArray(raw) ? raw : raw && typeof raw === 'object' ? Object.values(raw) : [];
   const byKey = new Map<number, number>();
 
@@ -350,7 +350,7 @@ export function getRuneLevel(save: PlayerSaveData, runeKey: number): number {
 export function ensureItemDetailsForSave(
   save: PlayerSaveData,
   itemsByKey: Map<number, EnrichedItem>,
-  itemDetailById: Map<string | number, import('../types').WikiItemDetail>,
+  itemDetailById: Map<string | number, import('@/core/types').WikiItemDetail>,
 ): void {
   for (const inst of save.itemSaveDatas) {
     if (itemDetailById.has(inst.ItemKey) || itemDetailById.has(String(inst.ItemKey))) continue;

@@ -8,16 +8,16 @@ import type {
   WikiItemDetail,
   WikiPassive,
   WikiPetStat,
-} from '../types';
+} from '@/core/types';
 
 export function buildRefMaps(wiki: {
   heroes: WikiHero[];
   passives: WikiPassive[];
   items: WikiItem[];
   itemsDetail: Record<string, WikiItemDetail>;
-  gearTypes: import('../types').WikiGearType[];
-  runeTree: { nodes: import('../types').WikiRuneNode[] };
-  pets: import('../types').WikiPet[];
+  gearTypes: import('@/core/types').WikiGearType[];
+  runeTree: { nodes: import('@/core/types').WikiRuneNode[] };
+  pets: import('@/core/types').WikiPet[];
   petStats: WikiPetStat[];
 }): RefMaps {
   const petStatsByKey = new Map<number, WikiPetStat[]>();

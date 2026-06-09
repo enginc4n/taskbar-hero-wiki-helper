@@ -1,9 +1,9 @@
-import { mergeRefMaps, buildRefMaps, enrichedItemToDetail } from '../data/adapters';
+import { mergeRefMaps, buildRefMaps, enrichedItemToDetail } from '@/data/adapters';
 import {
   HERO_GEAR_LEFT,
   HERO_GEAR_RIGHT,
   renderGearSlotHtml,
-} from '../data/game-ui';
+} from '@/presentation/game-ui';
 import {
   PREPARED_LEVEL_STEPS,
   applyPreparedMilestone,
@@ -11,14 +11,14 @@ import {
   type PreparedBuild,
   type PreparedBuildMilestone,
   type PreparedLevelStep,
-} from '../data/prepared-builds';
+} from '@/data/prepared-builds';
 import {
   downloadJsonFile,
   manifestEntryFromBuild,
   milestoneFromWorking,
   normalizeMilestone,
-} from '../data/prepared-build-export';
-import { t } from '../i18n';
+} from '@/data/prepared-build-export';
+import { t } from '@/i18n';
 import {
   createEmptySave,
   equipItem,
@@ -31,10 +31,10 @@ import {
   totalInvestedSkillPoints,
   unequipPart,
   type SocketSlotState,
-} from '../simulator/build-state';
-import { canIncrementSkillAtKey, milestoneSkillBudget } from '../simulator/skill-invest';
-import type { SimulatorContext } from './simulator-page';
-import type { EnrichedHero, EnrichedItem, HeroPart } from '../types';
+} from '@/core/simulator/build-state';
+import { canIncrementSkillAtKey, milestoneSkillBudget } from '@/core/simulator/skill-invest';
+import type { AppContext } from '@/app/context';
+import type { EnrichedHero, EnrichedItem, HeroPart } from '@/core/types';
 import { openGearPickerModal } from './gear-picker-modal';
 import { bindHeroPicker, drawHeroPicker } from './hero-picker';
 import { openSocketEditorModal } from './socket-editor-modal';
@@ -87,7 +87,7 @@ function createBuildId(): string {
   return crypto.randomUUID();
 }
 
-export function renderBuildHelperPage(root: HTMLElement, ctx: SimulatorContext): void {
+export function renderBuildHelperPage(root: HTMLElement, ctx: AppContext): void {
   let buildId = createBuildId();
   let buildName = 'My Prepared Build';
   let buildDescription = '';

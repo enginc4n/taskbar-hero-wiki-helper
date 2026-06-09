@@ -1,13 +1,13 @@
-import { gameUiUrl } from '../data/game-ui';
-import { itemIconUrl } from '../data/icons';
-import { localeFlagHtml } from '../i18n/flags';
-import { heroClassLabel, heroNameLabel } from '../i18n/hero-class';
-import { getLocale, LOCALE_OPTIONS, setLocale, t, type Locale } from '../i18n';
-import { navHref } from '../router';
-import { loadPreparedBuildIndex, type PreparedBuildManifestEntry } from '../data/prepared-builds';
-import { classGlyph } from '../data/rpg-ui';
-import type { EnrichedHero } from '../types';
-import type { SimulatorContext } from './simulator-page';
+import { gameUiUrl } from '@/presentation/game-ui';
+import { itemIconUrl } from '@/presentation/icons';
+import { localeFlagHtml } from '@/i18n/flags';
+import { heroClassLabel, heroNameLabel } from '@/i18n/hero-class';
+import { getLocale, LOCALE_OPTIONS, setLocale, t, type Locale } from '@/i18n';
+import { navHref } from '@/app/router';
+import { loadPreparedBuildIndex, type PreparedBuildManifestEntry } from '@/data/prepared-builds';
+import { classGlyph } from '@/presentation/rpg-ui';
+import type { EnrichedHero } from '@/core/types';
+import type { AppContext } from '@/app/context';
 
 function localePickerHtml(locale: Locale): string {
   const current = LOCALE_OPTIONS.find((opt) => opt.value === locale) ?? LOCALE_OPTIONS[0];
@@ -71,7 +71,7 @@ function heroCardHtml(hero: EnrichedHero): string {
     </a>`;
 }
 
-export function renderDashboardPage(root: HTMLElement, ctx: SimulatorContext): void {
+export function renderDashboardPage(root: HTMLElement, ctx: AppContext): void {
   const locale = getLocale();
 
   root.innerHTML = `

@@ -1,5 +1,5 @@
-import { formatStatLabel } from '../engine/stats';
-import type { RuneNode } from '../types';
+import { formatStatLabel } from '@/core/engine/stats';
+import type { RuneNode } from '@/core/types';
 
 /** Rune stat keys that affect hero combat stats (see engine/stats.ts RUNE_STAT_MAP). */
 export const HERO_COMBAT_RUNE_STATS = [

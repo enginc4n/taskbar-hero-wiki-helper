@@ -1,4 +1,4 @@
-import type { ComputedStats } from '../types';
+import type { ComputedStats } from '@/core/types';
 
 /** Local pixel-art UI assets under /public/assets/ui */
 export function rpgAssetUrl(relativePath: string): string {

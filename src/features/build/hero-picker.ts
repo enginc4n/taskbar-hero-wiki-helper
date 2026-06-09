@@ -1,9 +1,9 @@
-import { gameUiUrl } from '../data/game-ui';
-import { itemIconUrl } from '../data/icons';
-import { heroClassLabel, heroNameLabel } from '../i18n/hero-class';
-import { t } from '../i18n';
-import { getSelectedHero } from '../simulator/build-state';
-import type { EnrichedHero, PlayerSaveData } from '../types';
+import { gameUiUrl } from '@/presentation/game-ui';
+import { itemIconUrl } from '@/presentation/icons';
+import { heroClassLabel, heroNameLabel } from '@/i18n/hero-class';
+import { t } from '@/i18n';
+import { getSelectedHero } from '@/core/simulator/build-state';
+import type { EnrichedHero, PlayerSaveData } from '@/core/types';
 
 const HERO_MENU_MIN_WIDTH = 220;
 

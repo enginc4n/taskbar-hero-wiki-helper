@@ -1,5 +1,5 @@
-import type { EffectMaterial, EnchantEntry, EnrichedHero, EnrichedItem, HeroPart } from '../types';
-import { HERO_PARTS } from '../types';
+import type { EffectMaterial, EnchantEntry, EnrichedHero, EnrichedItem, HeroPart } from '@/core/types';
+import { HERO_PARTS } from '@/core/types';
 import { buildGearTooltipHtml } from './gear-tooltip';
 import { itemIconUrl } from './icons';
 

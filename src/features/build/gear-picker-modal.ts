@@ -1,5 +1,5 @@
-import { itemIconHtml } from '../data/icons';
-import { partLabel, t } from '../i18n';
+import { itemIconHtml } from '@/presentation/icons';
+import { partLabel, t } from '@/i18n';
 import {
   DEFAULT_GEAR_FILTER,
   filterGear,
@@ -8,8 +8,8 @@ import {
   itemMatchesHeroClass,
   paginate,
   type GearFilterState,
-} from '../gear/filter';
-import type { EnrichedItem, HeroPart, MetaData } from '../types';
+} from '@/features/gear/filter';
+import type { EnrichedItem, HeroPart, MetaData } from '@/core/types';
 
 const GEAR_PAGE_SIZE = 60;
 
